@@ -559,6 +559,10 @@ void main() {
       // was needed.
       await tester.pageBack();
       await tester.pumpAndSettle();
+      // Previous levels start collapsed under their character.
+      expect(find.text('Level 9 (previous)'), findsNothing);
+      await tester.tap(find.text('Previous levels (1)'));
+      await tester.pumpAndSettle();
       expect(find.text('Level 9 (previous)'), findsOneWidget);
 
       // Promoting the backup demotes the (now Level 10) live character to

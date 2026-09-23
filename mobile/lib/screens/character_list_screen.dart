@@ -132,6 +132,7 @@ class CharacterListScreen extends StatelessWidget {
                   ),
                 for (final family in families)
                   _CharacterFamilyCard(
+                    key: ValueKey(family.first.familyId),
                     family: family,
                     onDelete: (c) => _confirmDelete(context, c),
                   ),
@@ -163,12 +164,27 @@ class CharacterListScreen extends StatelessWidget {
 /// character_sheet_screen.dart's Level Up action) listed underneath, and
 /// a Duplicate action. A family with just one snapshot (the common case,
 /// before any level-up has happened) renders identically to a flat
-/// character row.
-class _CharacterFamilyCard extends StatelessWidget {
-  const _CharacterFamilyCard({required this.family, required this.onDelete});
+/// character row. Older levels are collapsed under a "Previous levels"
+/// toggle, newest first.
+class _CharacterFamilyCard extends StatefulWidget {
+  const _CharacterFamilyCard({
+    super.key,
+    required this.family,
+    required this.onDelete,
+  });
 
   final List<Character> family;
   final ValueChanged<Character> onDelete;
+
+  @override
+  State<_CharacterFamilyCard> createState() => _CharacterFamilyCardState();
+}
+
+class _CharacterFamilyCardState extends State<_CharacterFamilyCard> {
+  bool _expanded = false;
+
+  List<Character> get family => widget.family;
+  ValueChanged<Character> get onDelete => widget.onDelete;
 
   Character get _current => family.where((c) => c.isCurrent).isEmpty
       ? family.first
@@ -204,7 +220,9 @@ class _CharacterFamilyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final current = _current;
-    final others = family.where((c) => c.id != current.id).toList();
+    // Newest level first.
+    final others = family.where((c) => c.id != current.id).toList()
+      ..sort((a, b) => b.level.compareTo(a.level));
 
     return Container(
       margin: const EdgeInsets.only(bottom: 4),
@@ -259,6 +277,30 @@ class _CharacterFamilyCard extends StatelessWidget {
             ),
           ),
           if (others.isNotEmpty)
+            InkWell(
+              onTap: () => setState(() => _expanded = !_expanded),
+              child: Padding(
+                padding: const EdgeInsets.only(left: 12, bottom: 8),
+                child: Row(
+                  children: [
+                    Icon(
+                      _expanded ? Icons.expand_more : Icons.chevron_right,
+                      size: 18,
+                      color: LedgerColors.inkDim,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Previous levels (${others.length})',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: LedgerColors.inkDim,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          if (others.isNotEmpty && _expanded)
             Padding(
               padding: const EdgeInsets.only(left: 12, bottom: 8),
               child: Column(
