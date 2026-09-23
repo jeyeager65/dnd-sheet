@@ -978,6 +978,15 @@ List<(String, Effect)> featureEffects(Character c) {
         result.add(('Wood Elf', const Effect(target: 'speed', formula: '5')));
       }
   }
+  // A homebrew species' own resistances.
+  final homebrewSpecies = homebrewRepo.entries
+      .where((e) => e.kind == 'species' && e.id == c.speciesKey)
+      .firstOrNull;
+  for (final type
+      in (homebrewSpecies?.data['resistances'] as List?)?.cast<String>() ??
+          const <String>[]) {
+    resist(homebrewSpecies!.name, type);
+  }
   final affinity = optionPick(c, 'Elemental Affinity');
   if (affinity != null && _has(c, 'Elemental Affinity')) {
     resist('Elemental Affinity', affinity);

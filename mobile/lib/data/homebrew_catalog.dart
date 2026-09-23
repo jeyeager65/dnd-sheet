@@ -177,3 +177,246 @@ void saveHomebrewData(String id, Map<String, dynamic> data) {
 
 HomebrewEntry? homebrewById(String id) =>
     homebrewRepo.entries.where((e) => e.id == id).firstOrNull;
+
+// ---------------------------------------------------------------------------
+// Homebrew species / backgrounds / classes / subclasses in the catalog.
+//
+// data keys:
+//  species:    size ("Medium" | "Small" | "Small or Medium"), speed (int),
+//              traits [{name, desc, shortDesc}], resistances [damage type]
+//  background: abilityScores [3 ability names], skills [2 skill names],
+//              tool (text), feat (feat name), equipment (text)
+//  class:      hitDie ("d8"), primaryAbility, saves [2 ability keys],
+//              skillCount (int), skillChoices [skill names],
+//              armorTraining [Light/Medium/Heavy/Shields],
+//              weaponProficiencies (text), toolProficiencies (text),
+//              casterType ("none" | "full" | "half" | "pact"),
+//              spellAbility (ability key), subclassLevel (int),
+//              standardFeatLevels (bool, default true: ASI at 4/8/12/16 and
+//              Epic Boon at 19), features [{level, name, desc, shortDesc}],
+//              equipment (text)
+//  subclass:   parentClass (class key), features [{level, name, desc,
+//              shortDesc}], spells [{level, spells: [names]}]
+//  spell:      level, school, castingTime, range, components, duration,
+//              concentration, ritual, classes [names], higherLevel
+//  magicItem:  itemCategory, rarity, requiresAttunement, charges (int),
+//              recharge ("dawn" | "long" | "short" | "none")
+// ---------------------------------------------------------------------------
+
+final _registered = <String>{};
+
+const _abilityNames = {
+  'str': 'Strength',
+  'dex': 'Dexterity',
+  'con': 'Constitution',
+  'int': 'Intelligence',
+  'wis': 'Wisdom',
+  'cha': 'Charisma',
+};
+
+List<Map<String, dynamic>> _maps(Object? list) => [
+  for (final item in (list as List?) ?? const [])
+    (item as Map).cast<String, dynamic>(),
+];
+
+List<SrdClassFeature> _features(Object? list) => [
+  for (final f in _maps(list))
+    SrdClassFeature(
+      level: f['level'] as int? ?? 1,
+      name: f['name'] as String? ?? '',
+      desc: f['desc'] as String? ?? '',
+    ),
+];
+
+Map<String, String> _shortTexts(Object? list) => {
+  for (final f in _maps(list))
+    if ((f['shortDesc'] as String? ?? '').isNotEmpty)
+      f['name'] as String: f['shortDesc'] as String,
+};
+
+/// Puts every homebrew species, background, class, and subclass into the
+/// SRD catalog's own maps (keyed by the homebrew id), replacing what an
+/// earlier call put there - so pickers, rules, the sheet, and the PDF
+/// treat them exactly like SRD entries. Safe to call repeatedly.
+void registerHomebrewInCatalog() {
+  for (final id in _registered) {
+    srdCatalog.speciesByKey.remove(id);
+    srdCatalog.backgroundsByKey.remove(id);
+    srdCatalog.classesByKey.remove(id);
+    srdCatalog.sheetText.remove(id);
+  }
+  _registered.clear();
+  srdCatalog.homebrewSubclasses.clear();
+
+  for (final e in homebrewRepo.entries) {
+    final d = e.data;
+    switch (e.kind) {
+      case 'species':
+        srdCatalog.speciesByKey[e.id] = SrdSpeciesInfo(
+          key: e.id,
+          name: e.name,
+          size: d['size'] as String? ?? 'Medium',
+          speed: '${d['speed'] ?? 30} feet',
+          traits: [
+            for (final t in _maps(d['traits']))
+              SrdSpeciesTrait(
+                name: t['name'] as String? ?? '',
+                desc: t['desc'] as String? ?? '',
+              ),
+          ],
+          tables: const [],
+        );
+        srdCatalog.sheetText[e.id] = _shortTexts(d['traits']);
+      case 'background':
+        srdCatalog.backgroundsByKey[e.id] = SrdBackgroundInfo(
+          key: e.id,
+          name: e.name,
+          skillProficiencies:
+              (d['skills'] as List?)?.cast<String>() ?? const [],
+          feat: d['feat'] as String?,
+          abilityScores:
+              (d['abilityScores'] as List?)?.cast<String>() ?? const [],
+          toolProficiency: d['tool'] as String?,
+          equipment: d['equipment'] as String?,
+        );
+      case 'class':
+        srdCatalog.classesByKey[e.id] = _homebrewClass(e);
+        srdCatalog.sheetText[e.id] = _shortTexts(d['features']);
+      case 'subclass':
+        final parent = d['parentClass'] as String?;
+        if (parent == null) continue;
+        srdCatalog.homebrewSubclasses
+            .putIfAbsent(parent, () => [])
+            .add(
+              SrdSubclass(
+                key: e.id,
+                name: e.name,
+                features: _features(d['features']),
+                spellsByLevel: {
+                  for (final row in _maps(d['spells']))
+                    row['level'] as int? ?? 3:
+                        (row['spells'] as List?)?.cast<String>() ?? const [],
+                },
+              ),
+            );
+        srdCatalog.sheetText[e.id] = _shortTexts(d['features']);
+      default:
+        continue;
+    }
+    _registered.add(e.id);
+  }
+}
+
+SrdClass _homebrewClass(HomebrewEntry e) {
+  final d = e.data;
+  final features = _features(d['features']);
+  final subclassLevel = d['subclassLevel'] as int? ?? 3;
+  final standardFeats = d['standardFeatLevels'] as bool? ?? true;
+  final allFeatures = [
+    ...features,
+    SrdClassFeature(
+      level: subclassLevel,
+      name: '${e.name} Subclass',
+      desc: 'Choose a ${e.name} subclass.',
+    ),
+    if (standardFeats) ...[
+      for (final level in const [4, 8, 12, 16])
+        SrdClassFeature(
+          level: level,
+          name: 'Ability Score Improvement',
+          desc: 'Gain the Ability Score Improvement feat or another feat.',
+        ),
+      const SrdClassFeature(
+        level: 19,
+        name: 'Epic Boon',
+        desc: 'Gain an Epic Boon feat or another feat.',
+      ),
+    ],
+  ]..sort((a, b) => a.level.compareTo(b.level));
+
+  // Spell progression borrowed from the SRD caster of the same kind.
+  final casterType = d['casterType'] as String? ?? 'none';
+  final reference = switch (casterType) {
+    'full' => srdCatalog.byKey('srd-2024_wizard-class'),
+    'half' => srdCatalog.byKey('srd-2024_paladin-class'),
+    'pact' => srdCatalog.byKey('srd-2024_warlock-class'),
+    _ => null,
+  };
+
+  final levels = <SrdLevelRow>[
+    for (var level = 1; level <= 20; level++)
+      {
+        'Level': '$level',
+        'Proficiency Bonus': '+${((level - 1) ~/ 4) + 2}',
+        'Class Features': [
+          for (final f in allFeatures)
+            if (f.level == level) f.name,
+        ].join(', '),
+        if (reference != null) ...{
+          for (final column in const [
+            'Cantrips',
+            'Prepared Spells',
+            'Spell Slots',
+            'Slot Level',
+          ])
+            column: ?reference.levelValue(level, column),
+        },
+      },
+  ];
+  final saves = (d['saves'] as List?)?.cast<String>() ?? const [];
+  final skills = (d['skillChoices'] as List?)?.cast<String>() ?? const [];
+  final armor = (d['armorTraining'] as List?)?.cast<String>() ?? const [];
+  return SrdClass(
+    key: e.id,
+    name: e.name,
+    traits: {
+      'Primary Ability': _abilityNames[d['primaryAbility']] ?? '',
+      'Hit Point Die':
+          '${(d['hitDie'] as String? ?? 'd8').toUpperCase()} '
+          'per ${e.name} level',
+      'Saving Throw Proficiencies': saves
+          .map((k) => _abilityNames[k] ?? k)
+          .join(' and '),
+      'Skill Proficiencies': skills.isEmpty
+          ? 'Choose any ${d['skillCount'] ?? 2} skills'
+          : 'Choose ${d['skillCount'] ?? 2}: ${skills.join(', ')}',
+      'Weapon Proficiencies':
+          d['weaponProficiencies'] as String? ?? 'Simple weapons',
+      'Armor Training': armor.isEmpty
+          ? 'None'
+          : '${armor.where((a) => a != 'Shields').join(', ')} armor'
+                '${armor.contains('Shields') ? ' and Shields' : ''}',
+      'Tool Proficiencies': d['toolProficiencies'] as String? ?? 'None',
+      'Starting Equipment': d['equipment'] as String? ?? '',
+      if (casterType != 'none' && d['spellAbility'] != null)
+        'Spellcasting Ability': d['spellAbility'] as String,
+    },
+    levels: levels,
+    features: allFeatures,
+    spellSlotsByLevel: reference?.spellSlotsByLevel ?? const {},
+  );
+}
+
+/// A homebrew spell as the SRD spell shape, from its entry's data - null
+/// if the entry has no spell data yet (a quick-added name only).
+SrdSpellRef? homebrewSpellRef(HomebrewEntry e, {int? fallbackLevel}) {
+  final d = e.data;
+  if (d['level'] == null && fallbackLevel == null) return null;
+  return SrdSpellRef(
+    key: e.id,
+    name: e.name,
+    level: d['level'] as int? ?? fallbackLevel ?? 1,
+    school: d['school'] as String? ?? 'Homebrew',
+    classes: (d['classes'] as List?)?.cast<String>() ?? const [],
+    ritual: d['ritual'] as bool? ?? false,
+    castingTime: d['castingTime'] as String? ?? '',
+    range: d['range'] as String? ?? '',
+    components: d['components'] as String? ?? '',
+    concentration: d['concentration'] as bool? ?? false,
+    duration: d['duration'] as String? ?? '',
+    desc: e.desc,
+    higherLevel: (d['higherLevel'] as String?)?.isEmpty ?? true
+        ? null
+        : d['higherLevel'] as String,
+  );
+}

@@ -8,6 +8,7 @@ import '../models/effect.dart';
 import '../models/homebrew.dart';
 import '../theme/ledger_theme.dart';
 import '../widgets/ledger_bits.dart';
+import 'homebrew_rules_editor.dart';
 import 'share_json.dart';
 
 const _kindLabels = {
@@ -16,6 +17,7 @@ const _kindLabels = {
   'background': 'Backgrounds',
   'feat': 'Feats',
   'class': 'Classes',
+  'subclass': 'Subclasses',
   'weapon': 'Weapons',
   'armor': 'Armor',
   'gear': 'Gear',
@@ -261,6 +263,9 @@ enum _EffectCategory {
   damageRoll,
   spellAttack,
   spellSaveDc,
+  ac,
+  speed,
+  maxHp,
   save,
   skill,
   damageResistance,
@@ -281,6 +286,9 @@ _EffectCategory _categoryOf(String target) {
     'damageRoll' => _EffectCategory.damageRoll,
     'spellAttack' => _EffectCategory.spellAttack,
     'spellSaveDc' => _EffectCategory.spellSaveDc,
+    'ac' => _EffectCategory.ac,
+    'speed' => _EffectCategory.speed,
+    'maxHp' => _EffectCategory.maxHp,
     _ => _EffectCategory.initiative,
   };
 }
@@ -311,6 +319,10 @@ const _conditionLabels = {
   'anyDamage': 'Below Max HP (any damage taken)',
   'bloodied': 'Bloodied',
   'heavyArmor': 'Wearing Heavy Armor',
+  'wearingArmor': 'Wearing Any Armor',
+  'noArmor': 'Wearing No Armor',
+  'rangedWeapon': 'Ranged Weapon',
+  'meleeWeapon': 'Melee Weapon',
 };
 
 const _fullNameToAbilityKey = {
@@ -636,6 +648,7 @@ class _HomebrewEditScreenState extends State<HomebrewEditScreen> {
   late String? _category;
   late final TextEditingController _prerequisiteController;
   late final TextEditingController _shortDescController;
+  late Map<String, dynamic> _data;
 
   @override
   void initState() {
@@ -648,6 +661,7 @@ class _HomebrewEditScreenState extends State<HomebrewEditScreen> {
       text: widget.entry.prerequisite ?? '',
     );
     _shortDescController = TextEditingController(text: widget.entry.shortDesc);
+    _data = {...widget.entry.data};
   }
 
   @override
@@ -698,7 +712,7 @@ class _HomebrewEditScreenState extends State<HomebrewEditScreen> {
             ? _prerequisiteController.text.trim()
             : null,
         shortDesc: _isFeat ? _shortDescController.text.trim() : '',
-        data: widget.entry.data,
+        data: _data,
       ),
     );
     Navigator.of(context).pop();
@@ -827,6 +841,12 @@ class _HomebrewEditScreenState extends State<HomebrewEditScreen> {
                     'entry appears on the sheet.',
               ),
             ),
+            HomebrewRulesEditor(
+              kind: widget.entry.kind,
+              entryId: widget.entry.id,
+              data: _data,
+              onChanged: (d) => _data = d,
+            ),
             if (_isFeat) ...[
               const SectionLabel('Sheet Text'),
               TextField(
@@ -916,6 +936,9 @@ class _EffectRow extends StatelessWidget {
       _EffectCategory.damageRoll => 'damageRoll',
       _EffectCategory.spellAttack => 'spellAttack',
       _EffectCategory.spellSaveDc => 'spellSaveDc',
+      _EffectCategory.ac => 'ac',
+      _EffectCategory.speed => 'speed',
+      _EffectCategory.maxHp => 'maxHp',
       _EffectCategory.save => 'save:str',
       _EffectCategory.skill =>
         'skill:${srdCatalog.skillsByName.values.first.name}',
@@ -974,6 +997,18 @@ class _EffectRow extends StatelessWidget {
                     DropdownMenuItem(
                       value: _EffectCategory.spellSaveDc,
                       child: Text('Your Spell Save DC'),
+                    ),
+                    DropdownMenuItem(
+                      value: _EffectCategory.ac,
+                      child: Text('Your Armor Class'),
+                    ),
+                    DropdownMenuItem(
+                      value: _EffectCategory.speed,
+                      child: Text('Your Speed'),
+                    ),
+                    DropdownMenuItem(
+                      value: _EffectCategory.maxHp,
+                      child: Text('Your Hit Point Maximum'),
                     ),
                     DropdownMenuItem(
                       value: _EffectCategory.save,

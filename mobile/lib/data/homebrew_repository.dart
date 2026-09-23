@@ -20,6 +20,12 @@ class HomebrewRepository {
   Box<String>? _box;
   final List<HomebrewEntry> entries = [];
 
+  /// Called after any change to [entries] - main.dart points it at
+  /// homebrew_catalog.dart's registerHomebrewInCatalog, so a homebrew
+  /// species/class/background/subclass shows up in the catalog (and every
+  /// picker/rule reading it) the moment it's saved.
+  void Function()? afterChange;
+
   Future<void> init() async {
     final box = await Hive.openBox<String>(_boxName);
     _box = box;
@@ -52,6 +58,7 @@ class HomebrewRepository {
     );
     entries.add(entry);
     _box?.put(entry.id, jsonEncode(entry.toJson()));
+    afterChange?.call();
     return entry;
   }
 
@@ -64,6 +71,7 @@ class HomebrewRepository {
     if (idx == -1) return;
     entries[idx] = updated;
     _box?.put(updated.id, jsonEncode(updated.toJson()));
+    afterChange?.call();
   }
 
   /// Permanently removes an entry. Irreversible - callers should confirm
@@ -74,6 +82,7 @@ class HomebrewRepository {
   void delete(String id) {
     entries.removeWhere((e) => e.id == id);
     _box?.delete(id);
+    afterChange?.call();
   }
 
   /// The whole catalog as pretty-printed JSON - the counterpart to
@@ -101,6 +110,7 @@ class HomebrewRepository {
     if (exists) return;
     entries.add(incoming);
     _box?.put(incoming.id, jsonEncode(incoming.toJson()));
+    afterChange?.call();
   }
 }
 

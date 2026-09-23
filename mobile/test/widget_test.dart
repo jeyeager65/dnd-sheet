@@ -656,7 +656,9 @@ void main() {
   testWidgets(
     'Category and Prerequisite are hidden for a non-feat homebrew entry (only feats have a category to restrict)',
     (WidgetTester tester) async {
-      final entry = homebrewRepo.create('magicItem', 'Test Item');
+      // A tool: no feat Category, and no rules fields of its own that
+      // would have their own "Category" (weapons and items do).
+      final entry = homebrewRepo.create('tool', 'Test Tool');
 
       await tester.pumpWidget(
         MaterialApp(home: HomebrewEditScreen(entry: entry)),
@@ -859,6 +861,9 @@ void main() {
       // Defaults to 'feat' - switch the kind to 'magicItem' to confirm the
       // dropdown selection actually drives what gets created.
       await tester.tap(find.text('Feats'));
+      await tester.pumpAndSettle();
+      // The kind list is longer than the menu - scroll the item into view.
+      await tester.ensureVisible(find.text('Magic Items').last);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Magic Items').last);
       await tester.pumpAndSettle();

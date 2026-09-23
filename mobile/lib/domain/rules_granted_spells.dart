@@ -142,8 +142,14 @@ List<_Grant> _grantsFor(Character c) {
 
   // Subclass "... Spells" tables (Life Domain, Oath of Devotion, Draconic,
   // Fiend) and Circle of the Land's land table.
-  final subclass = classData?.subclass;
-  if (subclass != null && c.subclassKey == subclass.key) {
+  final subclass = chosenSubclass(c);
+  if (subclass != null) {
+    for (final entry in subclass.spellsByLevel.entries) {
+      if (entry.key > c.level) continue;
+      for (final spell in entry.value) {
+        grants.add(_Grant(spell, subclass.name));
+      }
+    }
     for (final f in subclass.features) {
       if (!f.name.endsWith(' Spells') || !names.contains(f.name)) continue;
       final land = optionPick(c, 'Circle of the Land Spells');

@@ -673,4 +673,14 @@ void main() {
     expect(text, contains('48000'));
     expect(text, contains('Small'));
   });
+
+  test('COINS prints each nonzero denomination', () async {
+    final c = buildSampleJarson()..currency = const Currency(gp: 123, pp: 4);
+    final result = await fillCharacterSheetTopSection(await _blankBasePdf(), c);
+    final document = PdfDocument(inputBytes: result);
+    final page2 = PdfTextExtractor(document).extractText(startPageIndex: 1);
+    document.dispose();
+    expect(page2, contains('123'));
+    expect(page2, contains('4'));
+  });
 }

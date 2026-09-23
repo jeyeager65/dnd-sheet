@@ -223,6 +223,18 @@ const _equipmentArea = (411.4, 409.0, 586.8, 585.0);
 // centered ~603/623/643), level with it rather than below its rule line.
 const _attunementLineTops = [608.5, 628.5, 648.5];
 const _attunementLineX = (433.0, 585.0);
+
+/// COINS - the five boxes' centers, measured from their CP/SP/EP/GP/PP
+/// labels' own x and the boxes' drawn outline (y ~705-724).
+const _coinCenters = [
+  ('cp', 428.4),
+  ('sp', 464.2),
+  ('ep', 499.6),
+  ('gp', 534.8),
+  ('pp', 569.9),
+];
+const _coinCenterY = 714.0;
+
 const _attunementDiamonds = [(423.2, 603.25), (423.2, 623.25), (423.2, 643.25)];
 
 /// Page 2's spellcasting block, measured the same way as everything else
@@ -562,10 +574,7 @@ String _speciesDisplay(Character c) {
     final parts = c.classLabel.split(' · ');
     return (parts.first, parts.length > 1 ? parts.sublist(1).join(' · ') : '');
   }
-  final subclass = classInfo.subclass;
-  final subclassName = (subclass != null && subclass.key == c.subclassKey)
-      ? subclass.name
-      : '';
+  final subclassName = rules.chosenSubclass(c)?.name ?? '';
   return (classInfo.name, subclassName);
 }
 
@@ -1028,9 +1037,17 @@ const _abilityNames = {
 
 /// Page 2: SPELLCASTING (see [_fillSpellcasting]), APPEARANCE, BACKSTORY &
 /// PERSONALITY (+ Alignment), LANGUAGES, and EQUIPMENT (+ its Magic Item
-/// Attunement sub-list). Coins are still future work.
+/// Attunement sub-list), and COINS.
 void _fillPageTwo(PdfPage page, Character c) {
   _fillSpellcasting(page, c);
+  // Coins are character state like the equipment list above them - the
+  // current amounts, blank when a denomination is 0.
+  final coins = c.currency.toJson();
+  for (final (key, x) in _coinCenters) {
+    final amount = coins[key] as int? ?? 0;
+    if (amount == 0) continue;
+    _drawCentered(page.graphics, x, _coinCenterY, 11, '$amount', width: 32);
+  }
   _drawWrapped(page, c.appearance, _appearanceArea);
   _drawWrapped(page, c.notes, _backstoryArea);
   if (c.alignment != null) {

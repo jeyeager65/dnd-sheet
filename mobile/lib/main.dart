@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'data/character_repository.dart';
+import 'data/homebrew_catalog.dart';
 import 'data/homebrew_repository.dart';
 import 'data/local_official_content.dart';
 import 'data/sheet_text_repository.dart';
@@ -19,6 +20,10 @@ Future<void> main() async {
   // no-op on any build that doesn't have that file, which is every
   // shared/public build.
   await loadLocalOfficialContent();
+  // Homebrew species/classes/backgrounds/subclasses join the catalog, and
+  // stay current as they're edited.
+  registerHomebrewInCatalog();
+  homebrewRepo.afterChange = registerHomebrewInCatalog;
   runApp(const DndSheetApp());
 }
 

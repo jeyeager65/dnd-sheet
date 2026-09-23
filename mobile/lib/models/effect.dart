@@ -12,6 +12,7 @@ class Effect {
 
   /// What this modifies: 'initiative', 'attackRoll', 'damageRoll',
   /// 'spellAttack' (spell attack bonus), 'spellSaveDc' (spell save DC),
+  /// 'ac', 'speed', 'maxHp' (formula may use "Level"),
   /// 'save:[ability key]' (e.g. 'save:dex'), 'skill:[Skill Name]'
   /// (matching SrdSkillRef.name exactly), 'damageResistance:[damage type
   /// key]' (halves that damage type when taken - [formula] is unused/

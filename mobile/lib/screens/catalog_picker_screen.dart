@@ -86,7 +86,8 @@ class _CatalogPickerScreenState extends State<CatalogPickerScreen> {
   @override
   Widget build(BuildContext context) {
     final allOptions = [
-      ...(_broad ? widget.broaderOptions! : widget.options),
+      for (final o in (_broad ? widget.broaderOptions! : widget.options))
+        if (!(widget.homebrewKind != null && o.key.startsWith('homebrew_'))) o,
       if (widget.homebrewKind != null)
         for (final entry in homebrewRepo.byKind(widget.homebrewKind!))
           if (widget.homebrewFilter == null || widget.homebrewFilter!(entry))

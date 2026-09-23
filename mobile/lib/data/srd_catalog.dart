@@ -34,10 +34,16 @@ class SrdSubclass {
     required this.key,
     required this.name,
     required this.features,
+    this.spellsByLevel = const {},
   });
   final String key;
   final String name;
   final List<SrdClassFeature> features;
+
+  /// Always-prepared spells by class level - a homebrew subclass's own
+  /// list. (An SRD subclass keeps its list in a "... Spells" feature's
+  /// table instead; see rules_granted_spells.dart.)
+  final Map<int, List<String>> spellsByLevel;
 }
 
 class SrdClass {
@@ -1183,6 +1189,21 @@ class SrdCatalog {
   }
 
   SrdClass? byKey(String key) => classesByKey[key];
+
+  /// Homebrew subclasses, by parent class key - filled in by
+  /// homebrew_catalog.dart's registerHomebrewInCatalog.
+  final Map<String, List<SrdSubclass>> homebrewSubclasses = {};
+
+  /// Every subclass a class offers: its SRD one, plus any homebrew.
+  List<SrdSubclass> subclassesFor(String classKey) => [
+    ?classesByKey[classKey]?.subclass,
+    ...?homebrewSubclasses[classKey],
+  ];
+
+  SrdSubclass? subclassByKey(String classKey, String? subclassKey) =>
+      subclassKey == null
+      ? null
+      : subclassesFor(classKey).where((s) => s.key == subclassKey).firstOrNull;
 
   Future<void> _loadSheetText() async {
     final raw = await rootBundle.loadString('assets/srd/sheet-text.json');
