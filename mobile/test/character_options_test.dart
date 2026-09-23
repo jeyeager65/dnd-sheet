@@ -98,8 +98,19 @@ void main() {
       );
       expect(barbarian.currency.gp, 15 + 14);
 
-      final cleric = _make(cls: 'Cleric', classEquipment: 'A');
+      final cleric = _make(
+        cls: 'Cleric',
+        background: 'Acolyte',
+        increases: const {'wis': 2, 'cha': 1},
+        classEquipment: 'A',
+        backgroundEquipment: 'A',
+      );
       expect(cleric.equippedArmor?.name, 'Chain Shirt');
+      // Both packages include a Holy Symbol - one line, quantity 2.
+      expect(
+        cleric.inventory.where((i) => i.name == 'Holy Symbol').single.quantity,
+        2,
+      );
       expect(cleric.shieldEquipped, isTrue);
 
       // A focus named after a weapon is also that weapon.

@@ -127,10 +127,17 @@ void applyEquipmentOption(Character c, EquipmentOption option) {
       );
       continue;
     }
-    c.inventory = [
-      ...c.inventory,
-      InventoryEntry(name: name, quantity: quantity),
-    ];
+    // The same item from the class and the background (two Holy Symbols)
+    // stacks into one line.
+    final existing = c.inventory.where((i) => i.name == name).firstOrNull;
+    if (existing != null) {
+      existing.quantity += quantity;
+    } else {
+      c.inventory = [
+        ...c.inventory,
+        InventoryEntry(name: name, quantity: quantity),
+      ];
+    }
   }
   c.currency = Currency(
     cp: c.currency.cp,

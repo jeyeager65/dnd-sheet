@@ -780,14 +780,17 @@ class _HomebrewEditScreenState extends State<HomebrewEditScreen> {
               const SizedBox(height: 16),
             ],
             const SectionLabel('Source'),
-            Row(
+            // Wrap, not Row: the two chips don't fit side by side on a
+            // narrow phone.
+            Wrap(
+              spacing: 8,
+              runSpacing: 6,
               children: [
                 ChoiceChip(
                   label: const Text('Homebrew'),
                   selected: _source == 'homebrew',
                   onSelected: (_) => setState(() => _source = 'homebrew'),
                 ),
-                const SizedBox(width: 8),
                 ChoiceChip(
                   label: const Text('Official (non-SRD)'),
                   selected: _source == 'official',
