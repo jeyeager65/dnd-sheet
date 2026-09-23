@@ -1426,4 +1426,34 @@ void main() {
       sheetTextRepo.overrides.clear();
     },
   );
+
+  testWidgets(
+    'Level Up lets you record a Hit Die roll instead of the average',
+    (WidgetTester tester) async {
+      final jarson = charactersRepo.characters.single;
+      final before = jarson.maxHp;
+      await tester.pumpWidget(const DndSheetApp());
+      await tester.tap(find.text('Jarson').first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Level Up'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Take the average: 6'), findsOneWidget);
+      await tester.tap(find.text('I rolled: '));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(DropdownButton<int>));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('9').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Level Up'));
+      await tester.pumpAndSettle();
+
+      final leveled = charactersRepo.characters.firstWhere(
+        (c) => c.isCurrent && c.name == 'Jarson',
+      );
+      expect(leveled.level, 10);
+      expect(leveled.hitPointRolls[10], 9);
+      expect(leveled.maxHp, before + 9 + 2);
+    },
+  );
 }

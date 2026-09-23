@@ -1,42 +1,8 @@
 part of 'rules.dart';
 
 // Character-level edits that touch many derived things at once: changing
-// species, class, or background after creation; XP; size; and the
+// species, class, or background after creation; size; and the
 // proficiency lists the sheet's Equipment Training box shows.
-
-/// 2024 Character Advancement table: the XP needed to reach each level
-/// (index 0 = level 1).
-const xpThresholds = [
-  0,
-  300,
-  900,
-  2700,
-  6500,
-  14000,
-  23000,
-  34000,
-  48000,
-  64000,
-  85000,
-  100000,
-  120000,
-  140000,
-  165000,
-  195000,
-  225000,
-  265000,
-  305000,
-  355000,
-];
-
-/// XP needed to reach [c]'s next level - null at level 20.
-int? xpForNextLevel(Character c) => c.level < 20 ? xpThresholds[c.level] : null;
-
-/// Enough XP for the next level (the Level Up button can go ahead).
-bool readyToLevelUp(Character c) {
-  final next = xpForNextLevel(c);
-  return next != null && c.experiencePoints >= next;
-}
 
 /// The size categories a species offers, in the order its SRD text lists
 /// them - ["Medium"], or ["Medium", "Small"] for Human and Tiefling
@@ -119,7 +85,6 @@ void refreshWeaponProficiency(Character c) {
 /// HP bonus (Dwarven Toughness).
 void changeSpecies(Character c, String? speciesKey, String label) {
   if (speciesKey == c.speciesKey && label == c.speciesLabel) return;
-  final hpBefore = maxHpBonus(c);
   final oldLabel = c.speciesLabel;
   c.speciesKey = speciesKey;
   c.speciesLabel = label;
@@ -135,7 +100,7 @@ void changeSpecies(Character c, String? speciesKey, String label) {
       if (!_speciesOptionSets.contains(e.key)) e.key: e.value,
   };
   recalculateClassResources(c);
-  applyMaxHpBonusChange(c, hpBefore);
+  refreshMaxHp(c);
   c.pendingChoices = [...c.pendingChoices, ...speciesPendingChoices(c)];
   syncGrantedSpells(c);
   logHistory(c, 'Species changed: $oldLabel → $label');
@@ -187,6 +152,7 @@ void changeBackground(
     ];
   }
   applyBackgroundAbilityIncreases(c, abilityIncreases);
+  refreshMaxHp(c);
   syncGrantedSpells(c);
   final diff = _abilityScoreDiff(before, c.abilityScores);
   logHistory(
@@ -239,6 +205,7 @@ void changeClass(Character c, String classKey, String label) {
       classData.traits['Saving Throw Proficiencies'],
     );
   }
+  c.hitPointRolls = const {};
   c.features = [
     ...c.features.where((f) => f.source == 'species'),
     ...classFeaturesForLevelUp(c..features = [], 0, c.level),

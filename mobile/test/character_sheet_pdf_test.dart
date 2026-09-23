@@ -661,16 +661,14 @@ void main() {
     },
   );
 
-  test('XP is printed when there is any; Size uses the chosen size', () async {
+  test('Size uses the chosen size', () async {
     final c = buildSampleJarson()
-      ..experiencePoints = 48000
       ..speciesKey = 'srd-2024_human-species'
       ..sizeChoice = 'Small';
     final result = await fillCharacterSheetTopSection(await _blankBasePdf(), c);
     final document = PdfDocument(inputBytes: result);
     final text = PdfTextExtractor(document).extractText();
     document.dispose();
-    expect(text, contains('48000'));
     expect(text, contains('Small'));
   });
 

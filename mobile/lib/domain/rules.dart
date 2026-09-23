@@ -56,6 +56,7 @@ void setAbilityScores(
 }) {
   final diff = _abilityScoreDiff(c.abilityScores, next);
   c.abilityScores = next;
+  refreshMaxHp(c); // a Constitution change moves Max HP
   if (diff.isNotEmpty) {
     logHistory(c, label, detail: diff.join(', '));
   }
@@ -76,7 +77,6 @@ void grantFeat(
   Map<String, int>? abilityScoreDeltas,
 }) {
   final beforeWeapons = weaponsSnapshot(c);
-  final hpBonusBefore = maxHpBonus(c);
   c.feats = [...c.feats, feat];
   final details = <String>[];
   if (abilityScoreDeltas != null && abilityScoreDeltas.isNotEmpty) {
@@ -89,7 +89,7 @@ void grantFeat(
   if (afterWeapons.isNotEmpty && afterWeapons != beforeWeapons) {
     details.add('Weapons: $afterWeapons');
   }
-  final hpGain = applyMaxHpBonusChange(c, hpBonusBefore);
+  final hpGain = refreshMaxHp(c);
   if (hpGain != 0) details.add('Max HP ${formatModifier(hpGain)}');
   c.pendingChoices = [...c.pendingChoices, ...featPendingChoices(c, feat)];
   syncGrantedSpells(c);
@@ -987,17 +987,57 @@ int speedFor(Character c) {
 /// per Sorcerer level after - i.e. the Sorcerer level), and any 'maxHp'
 /// Effect - e.g. a transcribed Tough feat, "Level + Level" (formulas only
 /// add and subtract terms).
-/// Adds the change in [maxHpBonus] since [before] to Max HP (and Current
-/// HP, the way gaining max HP mid-adventure works) - used when a feat or
-/// subclass is gained, so a hand-set Max HP isn't recomputed from scratch.
-/// Returns the change.
-int applyMaxHpBonusChange(Character c, int before) {
-  final delta = maxHpBonus(c) - before;
-  if (delta != 0) {
-    c.maxHp += delta;
-    c.currentHp = (c.currentHp + delta).clamp(0, c.maxHp);
+int _hitDieSides(Character c) =>
+    int.tryParse(
+      c.hitDiceDie.replaceFirst(RegExp('^d', caseSensitive: false), ''),
+    ) ??
+    8;
+
+/// The fixed-value Hit Die result for [c]'s die (d10 -> 6).
+int averageHitDieResult(Character c) => _hitDieSides(c) ~/ 2 + 1;
+
+/// The Hit Die result counted at [level]: the die's maximum at level 1,
+/// else the recorded roll (Character.hitPointRolls) or the average.
+int hitDieResultAt(Character c, int level) => level == 1
+    ? _hitDieSides(c)
+    : c.hitPointRolls[level] ?? averageHitDieResult(c);
+
+/// Max HP from its parts: each level's Hit Die result + Constitution
+/// modifier (at least 1 per level, per the rules), plus [maxHpBonus]
+/// (Dwarven Toughness, Draconic Resilience, 'maxHp' effects), plus the
+/// hand adjustment. Always at least 1.
+int computedMaxHp(Character c) {
+  final con = modifierOf(c, 'con');
+  var total = 0;
+  for (var level = 1; level <= c.level; level++) {
+    final gain = hitDieResultAt(c, level) + con;
+    total += gain < 1 ? 1 : gain;
   }
+  total += maxHpBonus(c) + c.maxHpAdjustment;
+  return total < 1 ? 1 : total;
+}
+
+/// Brings Max HP up to date with its parts after something changed (a Con
+/// increase, a feat, an attuned item, a new species). A gain also raises
+/// Current HP by the same amount, the way gaining Max HP works; a loss
+/// only caps it. Returns the change.
+int refreshMaxHp(Character c) {
+  final before = c.maxHp;
+  c.maxHp = computedMaxHp(c);
+  final delta = c.maxHp - before;
+  if (delta > 0) c.currentHp += delta;
+  c.currentHp = c.currentHp.clamp(0, c.maxHp);
   return delta;
+}
+
+/// One-time switch for a character saved before Max HP was built from its
+/// parts: whatever its stored Max HP differs from the computed value by
+/// becomes [Character.maxHpAdjustment], so nothing changes on screen.
+void adoptHpTracking(Character c) {
+  if (c.hpTracked) return;
+  c.maxHpAdjustment = 0;
+  c.maxHpAdjustment = c.maxHp - computedMaxHp(c);
+  c.hpTracked = true;
 }
 
 int maxHpBonus(Character c) {
@@ -1136,13 +1176,7 @@ int maxHpForLevel({
 /// ported yet (no SRD catalog behind this app so far). Deliberately
 /// avoids guessing those numbers rather than risking a wrong table.
 void recalculateHp(Character c) {
-  c.maxHp =
-      maxHpForLevel(
-        die: c.hitDiceDie,
-        conModifier: modifierOf(c, 'con'),
-        level: c.level,
-      ) +
-      maxHpBonus(c);
+  c.maxHp = computedMaxHp(c);
   c.hitDiceTotal = c.level;
   c.currentHp = c.currentHp.clamp(0, c.maxHp);
   c.hitDiceSpent = c.hitDiceSpent.clamp(0, c.hitDiceTotal);
@@ -2252,7 +2286,6 @@ void resolveSubclassChoice(Character c, String choiceId, String subclassKey) {
   final subclass = srdCatalog.subclassByKey(c.classKey!, subclassKey);
   if (subclass == null) return;
   final beforeWeapons = weaponsSnapshot(c);
-  final hpBonusBefore = maxHpBonus(c);
   c.subclassKey = subclass.key;
   if (!c.classLabel.contains(subclass.name)) {
     c.classLabel = '${c.classLabel} · ${subclass.name}';
@@ -2284,7 +2317,7 @@ void resolveSubclassChoice(Character c, String choiceId, String subclassKey) {
     ...featureOptionPendingChoices(c, 0, c.level),
   ];
   syncGrantedSpells(c);
-  applyMaxHpBonusChange(c, hpBonusBefore);
+  refreshMaxHp(c);
   final afterWeapons = weaponsSnapshot(c);
   final details = <String>[];
   if (newFeatures.isNotEmpty) {
@@ -2437,7 +2470,7 @@ class LevelUpSummary {
 /// _save) - this just packages it as its own reusable step advancing
 /// exactly one level, plus a summary of what actually changed, instead of
 /// leaving the caller to re-derive that from a before/after diff.
-LevelUpSummary levelUpOneLevel(Character c) {
+LevelUpSummary levelUpOneLevel(Character c, {int? hpRoll}) {
   final oldLevel = c.level;
   final newLevel = oldLevel + 1;
   final oldMaxHp = c.maxHp;
@@ -2446,7 +2479,11 @@ LevelUpSummary levelUpOneLevel(Character c) {
   final oldSlotLevels = c.spellcasting?.slots.keys.toSet() ?? const <int>{};
 
   c.level = newLevel;
-  recalculateHp(c);
+  if (hpRoll != null) {
+    c.hitPointRolls = {...c.hitPointRolls, newLevel: hpRoll};
+  }
+  c.hitDiceTotal = newLevel;
+  refreshMaxHp(c);
   recalculateClassResources(c);
 
   final newChoices = pendingChoicesForLevelUp(c, oldLevel, newLevel);

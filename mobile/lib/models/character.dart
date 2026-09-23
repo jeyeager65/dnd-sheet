@@ -777,8 +777,10 @@ class Character {
     this.spellcasting,
     this.mounts = const [],
     this.history = const [],
-    this.experiencePoints = 0,
     this.sizeChoice,
+    this.hitPointRolls = const {},
+    this.maxHpAdjustment = 0,
+    this.hpTracked = true,
     this.backgroundAbilityIncreases = const {},
     this.weaponMasteries = const [],
     this.featureChoices = const {},
@@ -787,9 +789,20 @@ class Character {
     this.extraToolProficiencies = const [],
   }) : familyId = familyId ?? id;
 
-  /// Experience Points - the sheet's XP box, and the "ready to level up"
-  /// hint (rules.xpForLevel). A milestone game can leave it at 0.
-  int experiencePoints;
+  /// The Hit Die result taken at each level from 2 up (level -> result),
+  /// rolled or the fixed average - a level with no entry uses the average.
+  /// Level 1 is always the die's maximum. See rules.computedMaxHp.
+  Map<int, int> hitPointRolls;
+
+  /// A hand adjustment to Max HP on top of everything computed (a DM
+  /// ruling, a curse, a boon the app doesn't model).
+  int maxHpAdjustment;
+
+  /// False only for a character saved before Max HP was built from its
+  /// parts - on load its difference from the computed value becomes
+  /// [maxHpAdjustment], so its Max HP doesn't change (see
+  /// rules.adoptHpTracking).
+  bool hpTracked;
 
   /// "Small" or "Medium" for a species that offers the choice (Human,
   /// Tiefling - see rules.speciesSizeOptions); null means the species'
@@ -993,8 +1006,9 @@ class Character {
     'spellcasting': spellcasting?.toJson(),
     'mounts': mounts.map((m) => m.toJson()).toList(),
     'history': history.map((h) => h.toJson()).toList(),
-    'experiencePoints': experiencePoints,
     'sizeChoice': sizeChoice,
+    'hitPointRolls': hitPointRolls.map((k, v) => MapEntry('$k', v)),
+    'maxHpAdjustment': maxHpAdjustment,
     'backgroundAbilityIncreases': backgroundAbilityIncreases,
     'weaponMasteries': weaponMasteries,
     'featureChoices': featureChoices,
@@ -1082,8 +1096,11 @@ class Character {
     history: (j['history'] as List? ?? const [])
         .map((e) => HistoryEntry.fromJson(e as Map<String, dynamic>))
         .toList(),
-    experiencePoints: j['experiencePoints'] as int? ?? 0,
     sizeChoice: j['sizeChoice'] as String?,
+    hitPointRolls: (j['hitPointRolls'] as Map<String, dynamic>? ?? const {})
+        .map((k, v) => MapEntry(int.parse(k), v as int)),
+    maxHpAdjustment: j['maxHpAdjustment'] as int? ?? 0,
+    hpTracked: j.containsKey('maxHpAdjustment'),
     backgroundAbilityIncreases:
         (j['backgroundAbilityIncreases'] as Map<String, dynamic>? ?? const {})
             .map((k, v) => MapEntry(k, v as int)),

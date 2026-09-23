@@ -61,6 +61,9 @@ class CharacterRepository extends ChangeNotifier {
       // hand-typed into sample_data.dart - stays the single source of
       // truth.
       rules.recalculateClassResources(character);
+      // Max HP is built from its parts now - a character saved before
+      // that keeps its Max HP (the difference becomes its adjustment).
+      rules.adoptHpTracking(character);
       // One-time repair for data saved before a choice-driven feature
       // (e.g. Champion's Additional Fighting Style) was correctly turned
       // into a Pending Choice on level-up instead of silently granted as
@@ -132,10 +135,13 @@ class CharacterRepository extends ChangeNotifier {
   /// always reversible (Promote the backup back) rather than a one-way
   /// mutation; this replaces the old manual "Create Snapshot" step, which
   /// this app no longer offers on its own.
-  Future<rules.LevelUpSummary> levelUpCharacter(String currentId) async {
+  Future<rules.LevelUpSummary> levelUpCharacter(
+    String currentId, {
+    int? hpRoll,
+  }) async {
     final current = byId(currentId);
     await _snapshotBackup(current);
-    final summary = rules.levelUpOneLevel(current);
+    final summary = rules.levelUpOneLevel(current, hpRoll: hpRoll);
     await save(current);
     return summary;
   }
@@ -165,6 +171,9 @@ class CharacterRepository extends ChangeNotifier {
   /// then call this to save + broadcast; for a new one (from New
   /// Character), it's added to the in-memory list too.
   Future<void> save(Character c) async {
+    // Keeps Max HP in step with whatever just changed (an attuned item's
+    // effect, a Con edit) - every change to a character comes through here.
+    if (c.hpTracked) rules.refreshMaxHp(c);
     await _box?.put(c.id, jsonEncode(c.toJson()));
     if (!characters.any((existing) => existing.id == c.id)) {
       characters.add(c);
@@ -290,6 +299,7 @@ class CharacterRepository extends ChangeNotifier {
       json['id'] = idMap[oldId];
       json['familyId'] = idMap[oldFamilyId] ?? idMap[oldId]!;
       final character = Character.fromJson(json);
+      rules.adoptHpTracking(character);
       rules.recalculateClassResources(character);
       rules.syncGrantedSpells(character);
       imported.add(character);

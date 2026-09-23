@@ -7,6 +7,7 @@ import 'package:dnd_sheet/data/srd_catalog.dart';
 import 'package:dnd_sheet/data/starting_equipment.dart';
 import 'package:dnd_sheet/domain/rules.dart' as rules;
 import 'package:dnd_sheet/models/character.dart';
+import 'package:dnd_sheet/models/effect.dart';
 
 SrdRefItem _pick(List<SrdRefItem> items, String name) =>
     items.firstWhere((i) => i.name == name);
@@ -470,12 +471,8 @@ void main() {
     );
   });
 
-  test('XP thresholds, size options', () {
-    final c = _make()..experiencePoints = 250;
-    expect(rules.xpForNextLevel(c), 300);
-    expect(rules.readyToLevelUp(c), isFalse);
-    c.experiencePoints = 300;
-    expect(rules.readyToLevelUp(c), isTrue);
+  test('size options', () {
+    final c = _make();
     expect(rules.speciesSizeOptions('srd-2024_human-species'), [
       'Medium',
       'Small',
@@ -562,5 +559,85 @@ void main() {
         expect(rules.pdfAttackRowCount(c), c.weapons.length + 1);
       },
     );
+  });
+
+  group('hit points', () {
+    test('Max HP is built from each level: max die at 1, then rolls or the average, plus Con', () {
+      final c = _make(increases: const {'str': 2, 'con': 1}); // Con 15 (+2)
+      expect(c.maxHp, 10 + 2);
+      rules.levelUpOneLevel(c); // average 6
+      expect(c.maxHp, 12 + 6 + 2);
+      rules.levelUpOneLevel(c, hpRoll: 9);
+      expect(c.hitPointRolls, {3: 9});
+      expect(c.maxHp, 20 + 9 + 2);
+      expect(c.currentHp, c.maxHp); // a gain raises current HP too
+    });
+
+    test(
+      'each level gains at least 1 HP, even with a low roll and negative Con',
+      () {
+        final c = _make(increases: const {'str': 2, 'dex': 1})
+          ..abilityScores = const AbilityScores(
+            str: 16,
+            dex: 14,
+            con: 6, // -2
+            intel: 10,
+            wis: 10,
+            cha: 10,
+          );
+        rules.recalculateHp(c);
+        rules.levelUpOneLevel(c, hpRoll: 1);
+        expect(rules.computedMaxHp(c), (10 - 2) + 1);
+      },
+    );
+
+    test(
+      'raising Constitution raises Max HP and current HP for every level',
+      () {
+        final c = _make(increases: const {'str': 2, 'dex': 1}); // Con 14
+        rules.levelUpOneLevel(c);
+        rules.levelUpOneLevel(c);
+        final before = c.maxHp;
+        final next = c.abilityScores.increase({'con': 2});
+        rules.setAbilityScores(c, next);
+        expect(c.maxHp, before + 3); // +1 Con modifier x 3 levels
+        expect(c.currentHp, c.maxHp);
+      },
+    );
+
+    test('a character saved before HP tracking keeps its Max HP', () {
+      final c = _make();
+      final json = c.toJson()
+        ..remove('maxHpAdjustment')
+        ..['maxHp'] = c.maxHp + 4;
+      final loaded = Character.fromJson(json);
+      expect(loaded.hpTracked, isFalse);
+      rules.adoptHpTracking(loaded);
+      expect(loaded.maxHpAdjustment, 4);
+      expect(rules.computedMaxHp(loaded), loaded.maxHp);
+    });
+
+    test('changing class clears rolls made with the old Hit Die', () {
+      final c = _make(level: 3);
+      c.hitPointRolls = {2: 10, 3: 1};
+      rules.changeClass(c, 'srd-2024_wizard-class', 'Wizard');
+      expect(c.hitPointRolls, isEmpty);
+    });
+
+    test('an attuned item with a Max HP effect is picked up on refresh', () {
+      final c = _make();
+      final entry = homebrewRepo.create('magicItem', 'Amulet of Vigor');
+      homebrewRepo.update(
+        entry.copyWith(
+          effects: const [Effect(target: 'maxHp', formula: '5')],
+        ),
+      );
+      c.inventory = [
+        InventoryEntry(name: 'Amulet of Vigor', quantity: 1, attuned: true),
+      ];
+      final before = c.maxHp;
+      rules.refreshMaxHp(c);
+      expect(c.maxHp, before + 5);
+    });
   });
 }

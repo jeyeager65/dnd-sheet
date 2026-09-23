@@ -62,9 +62,6 @@ const _fields = {
   'species': _Field(26, 70, 10, width: 115),
   'subclass': _Field(150, 70, 10, width: 105),
   'level': _Field(276, 44, 13, align: PdfTextAlignment.center, width: 30),
-  // XP sits under LEVEL on the same kind of rule line (y 68.0, x 258.7-
-  // 294.2), so the same "value above the line" placement.
-  'xp': _Field(276.5, 65, 8, align: PdfTextAlignment.center, width: 36),
 
   'ac': _Field(339, 57, 22, align: PdfTextAlignment.center, width: 40),
 
@@ -633,9 +630,6 @@ Future<Uint8List> fillCharacterSheetTopSection(
     'speed': '${rules.speedFor(c)} ft',
     'passivePerception': _passivePerception(c),
     'size': rules.sizeFor(c),
-    // XP is character state, not a play-time tally - printed when there
-    // is any (a milestone game leaves it at 0, and the box blank).
-    'xp': c.experiencePoints > 0 ? '${c.experiencePoints}' : '',
   };
   for (final entry in values.entries) {
     _draw(graphics, _fields[entry.key]!, entry.value);

@@ -46,31 +46,95 @@ class _CharacterSheetScreenState extends State<CharacterSheetScreen> {
   /// Pending Choices (Ability Score Improvement, Fighting Style, a
   /// subclass pick, ...) instead of leaving them to be discovered later.
   Future<void> _levelUp(BuildContext context, Character character) async {
+    // Hit Points for the new level: the fixed average, or a roll of the
+    // Hit Die (the player rolls; this records it).
+    final sides = int.tryParse(character.hitDiceDie.substring(1)) ?? 8;
+    final average = rules.averageHitDieResult(character);
+    final conMod = rules.modifierOf(character, 'con');
+    var rolled = false;
+    var roll = average;
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Level Up to ${character.level + 1}?'),
-        content: Text(
-          "Saves ${character.name}'s current Level ${character.level} "
-          'state as a backup first (Promote it back later if you need '
-          'to undo this), then advances the live sheet to Level '
-          '${character.level + 1}.',
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: Text('Level Up to ${character.level + 1}?'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Saves ${character.name}'s current Level ${character.level} "
+                  'state as a backup first (Promote it back later if you '
+                  'need to undo this), then advances the live sheet to '
+                  'Level ${character.level + 1}.',
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Hit Points (${character.hitDiceDie} '
+                  '${rules.formatModifier(conMod)} Con)',
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                RadioGroup<bool>(
+                  groupValue: rolled,
+                  onChanged: (v) => setState(() => rolled = v ?? false),
+                  child: Column(
+                    children: [
+                      RadioListTile<bool>(
+                        value: false,
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(
+                          'Take the average: $average '
+                          '(+${(average + conMod).clamp(1, 99)} HP)',
+                        ),
+                      ),
+                      RadioListTile<bool>(
+                        value: true,
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        title: Row(
+                          children: [
+                            const Text('I rolled: '),
+                            DropdownButton<int>(
+                              value: roll,
+                              items: [
+                                for (var n = 1; n <= sides; n++)
+                                  DropdownMenuItem(value: n, child: Text('$n')),
+                              ],
+                              onChanged: (v) => setState(() {
+                                roll = v ?? roll;
+                                rolled = true;
+                              }),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Level Up'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Level Up'),
-          ),
-        ],
       ),
     );
     if (confirmed != true) return;
 
-    final summary = await charactersRepo.levelUpCharacter(character.id);
+    final summary = await charactersRepo.levelUpCharacter(
+      character.id,
+      hpRoll: rolled ? roll : null,
+    );
     if (!context.mounted) return;
 
     final hasChoices = summary.newPendingChoices.isNotEmpty;
@@ -602,8 +666,6 @@ class _OverviewTab extends StatelessWidget {
             style: TextStyle(fontSize: 11, color: LedgerColors.inkDim),
           ),
         ),
-        const SectionLabel('Experience'),
-        _ExperienceSection(character: character, onChanged: onChanged),
         const SectionLabel('Proficiencies'),
         _ProficienciesSection(character: character, onChanged: onChanged),
         if (character.history.isNotEmpty) ...[
@@ -892,7 +954,16 @@ class _CombatTab extends StatelessWidget {
             ),
           ],
         ),
-        const SectionLabel('Hit Points'),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const SectionLabel('Hit Points'),
+            TextButton(
+              onPressed: () => _showMaxHpDialog(context, character, onChanged),
+              child: const Text('Max HP'),
+            ),
+          ],
+        ),
         Row(
           children: [
             Text(
@@ -1337,6 +1408,134 @@ Future<Map<String, int>?> _showAsiDialog(BuildContext context) {
       );
     },
   );
+}
+
+/// Max HP, part by part: each level's Hit Die result (level 1 is the
+/// die's maximum; later levels are a recorded roll or the average - both
+/// editable here), Constitution per level, bonuses from features and
+/// items, and a hand adjustment.
+Future<void> _showMaxHpDialog(
+  BuildContext context,
+  Character character,
+  VoidCallback onChanged,
+) async {
+  final sides = int.tryParse(character.hitDiceDie.substring(1)) ?? 8;
+  final average = rules.averageHitDieResult(character);
+  final rolls = {...character.hitPointRolls};
+  final adjustmentController = TextEditingController(
+    text: '${character.maxHpAdjustment}',
+  );
+  final conMod = rules.modifierOf(character, 'con');
+  final bonus = rules.maxHpBonus(character);
+
+  final saved = await showDialog<bool>(
+    context: context,
+    builder: (context) => StatefulBuilder(
+      builder: (context, setState) {
+        final dice = [
+          for (var l = 1; l <= character.level; l++)
+            l == 1 ? sides : rolls[l] ?? average,
+        ];
+        final adjustment = int.tryParse(adjustmentController.text.trim()) ?? 0;
+        final perLevel = [
+          for (final d in dice) (d + conMod) < 1 ? 1 : d + conMod,
+        ];
+        final total = perLevel.fold(0, (a, b) => a + b) + bonus + adjustment;
+        return AlertDialog(
+          title: Text('Max HP: ${total < 1 ? 1 : total}'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView(
+              shrinkWrap: true,
+              children: [
+                Text(
+                  '${character.hitDiceDie} per level '
+                  '${rules.formatModifier(conMod)} Con each (at least 1 per '
+                  'level).',
+                  style: const TextStyle(fontSize: 12),
+                ),
+                const SizedBox(height: 6),
+                for (var l = 1; l <= character.level; l++)
+                  Row(
+                    children: [
+                      SizedBox(width: 70, child: Text('Level $l')),
+                      if (l == 1)
+                        Text('$sides (maximum)')
+                      else
+                        DropdownButton<int?>(
+                          value: rolls[l],
+                          items: [
+                            DropdownMenuItem(
+                              value: null,
+                              child: Text('Average ($average)'),
+                            ),
+                            for (var n = 1; n <= sides; n++)
+                              DropdownMenuItem(
+                                value: n,
+                                child: Text('Rolled $n'),
+                              ),
+                          ],
+                          onChanged: (v) => setState(() {
+                            if (v == null) {
+                              rolls.remove(l);
+                            } else {
+                              rolls[l] = v;
+                            }
+                          }),
+                        ),
+                      const Spacer(),
+                      Text(
+                        '+${perLevel[l - 1]}',
+                        style: LedgerTheme.dataStyle(fontSize: 13),
+                      ),
+                    ],
+                  ),
+                if (bonus != 0)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Text(
+                      'Features, feats, and items: ${rules.formatModifier(bonus)}',
+                    ),
+                  ),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: adjustmentController,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    signed: true,
+                  ),
+                  decoration: const InputDecoration(
+                    labelText: 'Adjustment',
+                    helperText: 'A DM ruling, a curse, anything else',
+                  ),
+                  onChanged: (_) => setState(() {}),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    ),
+  );
+  if (saved != true) return;
+  final before = character.maxHp;
+  character.hitPointRolls = rolls;
+  character.maxHpAdjustment =
+      int.tryParse(adjustmentController.text.trim()) ?? 0;
+  rules.refreshMaxHp(character);
+  if (character.maxHp != before) {
+    rules.logHistory(character, 'Max HP: $before → ${character.maxHp}');
+  }
+  onChanged();
 }
 
 /// Sets (never adds to) Temporary Hit Points - see rules.setTempHp for why
@@ -4507,82 +4706,6 @@ Future<void> _showCastDialog(
   messenger.showSnackBar(
     SnackBar(content: Text('Cast ${spell.name}$how$endedText.')),
   );
-}
-
-/// XP toward the next level, with "+ Add XP" for awards in play and a
-/// nudge when there's enough to level up (the AppBar's Level Up does it).
-class _ExperienceSection extends StatelessWidget {
-  const _ExperienceSection({required this.character, required this.onChanged});
-  final Character character;
-  final VoidCallback onChanged;
-
-  Future<void> _addXp(BuildContext context) async {
-    final controller = TextEditingController();
-    final amount = await showDialog<int>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add Experience Points'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(labelText: 'XP gained'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () =>
-                Navigator.of(context).pop(int.tryParse(controller.text.trim())),
-            child: const Text('Add'),
-          ),
-        ],
-      ),
-    );
-    if (amount == null || amount == 0) return;
-    final before = character.experiencePoints;
-    character.experiencePoints = (before + amount).clamp(0, 999999999);
-    rules.logHistory(
-      character,
-      'XP ${amount > 0 ? '+' : ''}$amount',
-      detail: '$before → ${character.experiencePoints}',
-    );
-    onChanged();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final next = rules.xpForNextLevel(character);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                next == null
-                    ? '${character.experiencePoints} XP'
-                    : '${character.experiencePoints} / $next XP '
-                          'to level ${character.level + 1}',
-                style: LedgerTheme.dataStyle(fontSize: 14),
-              ),
-            ),
-            TextButton(
-              onPressed: () => _addXp(context),
-              child: const Text('+ Add XP'),
-            ),
-          ],
-        ),
-        if (rules.readyToLevelUp(character) && character.isCurrent)
-          const Text(
-            'Enough XP to level up - use Level Up at the top.',
-            style: TextStyle(fontSize: 12, color: LedgerColors.accent),
-          ),
-      ],
-    );
-  }
 }
 
 /// Armor training, weapon, and tool proficiencies: what the class and

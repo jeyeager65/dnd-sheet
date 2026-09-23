@@ -67,7 +67,7 @@ class _CharacterFormScreenState extends State<CharacterFormScreen> {
   late final TextEditingController _speedController;
   late final TextEditingController _acOverrideController;
   late final TextEditingController _initiativeController;
-  late final TextEditingController _xpController;
+  late final TextEditingController _hpAdjustmentController;
   String? _hitDie;
   String? _sizeChoice;
   // The picked option from the species' own embedded choice table (e.g.
@@ -124,7 +124,9 @@ class _CharacterFormScreenState extends State<CharacterFormScreen> {
     _initiativeController = TextEditingController(
       text: '${c?.initiativeBonus ?? 0}',
     );
-    _xpController = TextEditingController(text: '${c?.experiencePoints ?? 0}');
+    _hpAdjustmentController = TextEditingController(
+      text: '${c?.maxHpAdjustment ?? 0}',
+    );
     _hitDie = c?.hitDiceDie;
     _sizeChoice = c?.sizeChoice;
     if (c != null) {
@@ -364,7 +366,7 @@ class _CharacterFormScreenState extends State<CharacterFormScreen> {
     _speedController.dispose();
     _acOverrideController.dispose();
     _initiativeController.dispose();
-    _xpController.dispose();
+    _hpAdjustmentController.dispose();
     super.dispose();
   }
 
@@ -480,12 +482,14 @@ class _CharacterFormScreenState extends State<CharacterFormScreen> {
     c.armorClassOverride = int.tryParse(_acOverrideController.text.trim());
     c.initiativeBonus =
         int.tryParse(_initiativeController.text.trim()) ?? c.initiativeBonus;
-    c.experiencePoints =
-        int.tryParse(_xpController.text.trim()) ?? c.experiencePoints;
+    c.maxHpAdjustment =
+        int.tryParse(_hpAdjustmentController.text.trim()) ?? c.maxHpAdjustment;
     c.sizeChoice = _sizeChoice;
     if (_hitDie != null && _hitDie != c.hitDiceDie) {
       c.hitDiceDie = _hitDie!;
+      c.hitPointRolls = const {}; // rolls of the old die no longer apply
     }
+    rules.refreshMaxHp(c);
     charactersRepo.save(c);
     Navigator.of(context).pop();
   }
@@ -803,12 +807,12 @@ class _CharacterFormScreenState extends State<CharacterFormScreen> {
 
   /// Edit mode's stats not derived from anything else: base Speed (the
   /// species' speed - class bonuses are added on top), an AC override,
-  /// the Initiative misc bonus, Hit Die, XP, and size where the species
+  /// the Initiative misc bonus, Hit Die, a Max HP adjustment, and size
+  /// where the species
   /// offers a choice.
   Widget _buildEditStats(Character c) {
     final speciesKey = _newSpecies?.key ?? c.speciesKey;
     final sizes = rules.speciesSizeOptions(speciesKey);
-    final nextXp = rules.xpForNextLevel(c);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -859,11 +863,11 @@ class _CharacterFormScreenState extends State<CharacterFormScreen> {
           ],
         ),
         _numberField(
-          'Experience Points',
-          _xpController,
-          helper: nextXp == null
-              ? 'Level 20 - the most there is.'
-              : 'Level ${c.level + 1} at $nextXp XP',
+          'Max HP adjustment',
+          _hpAdjustmentController,
+          helper:
+              'Added on top of Hit Dice, Con, and bonuses - see Max HP on '
+              'the Combat tab for the full breakdown',
         ),
         if (sizes.length > 1)
           Padding(
