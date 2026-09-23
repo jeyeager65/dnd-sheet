@@ -102,6 +102,63 @@ void grantFeat(
 
 int abilityModifier(int score) => ((score - 10) / 2).floor();
 
+/// [c]'s ability scores as they currently apply: their own scores
+/// (Character.abilityScores - what the player edits and what increases
+/// add to), with any "set score" effect on top - a Belt of Giant Strength
+/// making Strength 21 while attuned, a Headband of Intellect making
+/// Intelligence 19. A set score only applies if it's higher than the
+/// character's own, as those items say. Every calculation reads scores
+/// through this; only edits read Character.abilityScores directly.
+AbilityScores effectiveScores(Character c) {
+  final base = c.abilityScores;
+  final set = setScoreEffects(c);
+  if (set.isEmpty) return base;
+  int pick(String key) {
+    final own = base.of(key);
+    final best = set[key]?.$2;
+    return best != null && best > own ? best : own;
+  }
+
+  return AbilityScores(
+    str: pick('str'),
+    dex: pick('dex'),
+    con: pick('con'),
+    intel: pick('int'),
+    wis: pick('wis'),
+    cha: pick('cha'),
+  );
+}
+
+/// The highest 'setScore:[ability]' effect per ability, as (source,
+/// value) - from attuned items and feats. Only a plain number counts (a
+/// formula could depend on the very score it sets), and conditions are
+/// ignored for the same reason.
+Map<String, (String, int)> setScoreEffects(Character c) {
+  final result = <String, (String, int)>{};
+  void collect(String label, List<Effect> effects) {
+    for (final e in effects) {
+      if (!e.target.startsWith('setScore:')) continue;
+      final key = e.target.substring('setScore:'.length);
+      final value = int.tryParse(e.formula.trim());
+      if (value == null) continue;
+      final current = result[key];
+      if (current == null || value > current.$2) result[key] = (label, value);
+    }
+  }
+
+  for (final feat in c.feats) {
+    collect(feat.name, liveFeatureEffects(feat));
+  }
+  for (final item in c.inventory) {
+    collect(item.name, liveItemEffects(item));
+  }
+  return result;
+}
+
+/// The modifier of [c]'s effective [key] score.
+int modifierOf(Character c, String key) =>
+    abilityModifier(effectiveScores(c).of(key));
+
 /// Reads an SRD armor formula like "15 + Dex modifier (max 2)" or a flat
 /// "18" (heavy armor) and computes the resulting AC for a given Dex
 /// modifier. Every one of the 12 SRD armors was checked against this
@@ -123,7 +180,7 @@ int armorClassFromFormula(String formula, int dexModifier) {
 /// [Character.armorClassOverride] - see [armorClassFor] for the value
 /// the UI should actually display.
 int computeArmorClass(Character c) {
-  final dexMod = abilityModifier(c.abilityScores.dex);
+  final dexMod = modifierOf(c, 'dex');
   final int base;
   if (c.equippedArmor != null) {
     base = armorClassFromFormula(c.equippedArmor!.armorClassFormula, dexMod);
@@ -142,7 +199,7 @@ int computeArmorClass(Character c) {
 /// Draconic Resilience (10 + Dex + Cha). computeArmorClass uses the best of
 /// these and plain 10 + Dex while no armor is worn.
 List<(String, int)> unarmoredDefenseOptions(Character c) {
-  int mod(String key) => abilityModifier(c.abilityScores.of(key));
+  int mod(String key) => modifierOf(c, key);
   final dex = mod('dex');
   final names = c.features.map((f) => f.name).toSet();
   return [
@@ -299,7 +356,7 @@ int _evaluateTerm(String term, Character c) {
     caseSensitive: false,
   ).firstMatch(term);
   final key = m != null ? _abilityNameToKey[m.group(1)!.toLowerCase()] : null;
-  return key != null ? abilityModifier(c.abilityScores.of(key)) : 0;
+  return key != null ? modifierOf(c, key) : 0;
 }
 
 /// 2024 rules: +2 at level 1, +1 every 4 levels.
@@ -311,19 +368,19 @@ String formatModifier(int n) => n >= 0 ? '+$n' : '$n';
 /// Initiative Proficiency benefit), plus any other flat situational bonus
 /// recorded directly on the character.
 int initiativeModifier(Character c) {
-  final base = abilityModifier(c.abilityScores.dex);
+  final base = modifierOf(c, 'dex');
   return base + sumEffects(c, 'initiative') + c.initiativeBonus;
 }
 
 int savingThrowModifier(Character c, String abilityKey) {
-  final mod = abilityModifier(c.abilityScores.of(abilityKey));
+  final mod = modifierOf(c, abilityKey);
   final proficient = c.savingThrowProficiencies.contains(abilityKey);
   final base = proficient ? mod + proficiencyBonusForLevel(c.level) : mod;
   return base + sumEffects(c, 'save:$abilityKey');
 }
 
 int skillModifier(Character c, SkillEntry skill) {
-  final mod = abilityModifier(c.abilityScores.of(skill.ability));
+  final mod = modifierOf(c, skill.ability);
   final prof = proficiencyBonusForLevel(c.level);
   final base = skill.proficient
       ? mod + (skill.expertise ? prof * 2 : prof)
@@ -708,8 +765,8 @@ int pdfAttackRowCount(Character c) =>
 ({int attack, String damage, int grappleDc, String ability}) unarmedStrike(
   Character c,
 ) {
-  final str = abilityModifier(c.abilityScores.str);
-  final dex = abilityModifier(c.abilityScores.dex);
+  final str = modifierOf(c, 'str');
+  final dex = modifierOf(c, 'dex');
   final prof = proficiencyBonusForLevel(c.level);
   final monk = martialArtsActive(c);
   final useDex = monk && dex > str;
@@ -779,8 +836,8 @@ bool martialArtsActive(Character c) =>
 /// thrown melee weapon (Javelin, Handaxe) keeps its melee ability, as the
 /// Thrown property says.
 (String, int) weaponAbility(Character c, Weapon w) {
-  final str = abilityModifier(c.abilityScores.str);
-  final dex = abilityModifier(c.abilityScores.dex);
+  final str = modifierOf(c, 'str');
+  final dex = modifierOf(c, 'dex');
   if (isRangedWeapon(w)) return ('Dex', dex);
   final canUseDex =
       isFinesseWeapon(w) || (martialArtsActive(c) && isMonkWeapon(w));
@@ -1042,7 +1099,7 @@ void setTempHp(Character c, int amount) {
 void spendHitDie(Character c, int roll) {
   if (c.hitDiceSpent >= c.hitDiceTotal) return;
   c.hitDiceSpent += 1;
-  final heal = (roll + abilityModifier(c.abilityScores.con)).clamp(0, 999999);
+  final heal = (roll + modifierOf(c, 'con')).clamp(0, 999999);
   c.currentHp = (c.currentHp + heal).clamp(0, c.maxHp);
 }
 
@@ -1082,7 +1139,7 @@ void recalculateHp(Character c) {
   c.maxHp =
       maxHpForLevel(
         die: c.hitDiceDie,
-        conModifier: abilityModifier(c.abilityScores.con),
+        conModifier: modifierOf(c, 'con'),
         level: c.level,
       ) +
       maxHpBonus(c);
@@ -1529,7 +1586,7 @@ const _abilityShortLabels = {
 int spellcastingModifier(Character c, {String? ability}) {
   final key = ability ?? c.spellcasting?.ability;
   if (key == null) return 0;
-  return abilityModifier(c.abilityScores.of(key));
+  return modifierOf(c, key);
 }
 
 /// Spell save DC = 8 + spellcasting modifier + Proficiency Bonus, plus

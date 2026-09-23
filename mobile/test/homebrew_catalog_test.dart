@@ -6,6 +6,7 @@ import 'package:dnd_sheet/data/homebrew_repository.dart';
 import 'package:dnd_sheet/data/srd_catalog.dart';
 import 'package:dnd_sheet/domain/rules.dart' as rules;
 import 'package:dnd_sheet/models/character.dart';
+import 'package:dnd_sheet/models/effect.dart';
 import 'package:dnd_sheet/models/homebrew.dart';
 
 /// Creates a homebrew entry with [data] and registers it the way the app
@@ -221,5 +222,163 @@ void main() {
     c.inventory = [];
     rules.recalculateClassResources(c);
     expect(c.resources.any((r) => r.name == 'Wand of Sparks charges'), isFalse);
+  });
+
+  group('set scores, Pact of the Tome, Lessons, homebrew grants', () {
+    test(
+      'a Belt of Giant Strength sets Strength while attuned, only if higher',
+      () {
+        _entry('magicItem', 'Belt of Giant Strength', {'rarity': 'Rare'});
+        final belt = homebrewRepo.entries.firstWhere(
+          (e) => e.kind == 'magicItem',
+        );
+        homebrewRepo.update(
+          belt.copyWith(
+            effects: const [Effect(target: 'setScore:str', formula: '21')],
+          ),
+        );
+        final c = _build(
+          species: _srd(srdCatalog.species, 'Human'),
+          cls: _srd(srdCatalog.classOptions, 'Fighter'),
+        );
+        final item = InventoryEntry(
+          name: 'Belt of Giant Strength',
+          quantity: 1,
+        );
+        c.inventory = [item];
+        expect(rules.effectiveScores(c).str, 10); // not attuned
+        item.attuned = true;
+        expect(rules.effectiveScores(c).str, 21);
+        expect(rules.modifierOf(c, 'str'), 5);
+        expect(c.abilityScores.str, 10); // the character's own is unchanged
+        final greataxe = rules.weaponFromSrd(
+          c,
+          srdCatalog.weaponsByKey.values.firstWhere(
+            (w) => w.name == 'Greataxe',
+          ),
+        );
+        expect(rules.attackFor(c, greataxe).bonus, 5 + 2);
+        c.abilityScores = const AbilityScores(
+          str: 22,
+          dex: 10,
+          con: 10,
+          intel: 10,
+          wis: 10,
+          cha: 10,
+        );
+        expect(rules.effectiveScores(c).str, 22);
+      },
+    );
+
+    test(
+      'Pact of the Tome asks for its Book of Shadows spells and grants them',
+      () {
+        final c = _build(
+          species: _srd(srdCatalog.species, 'Human'),
+          cls: _srd(srdCatalog.classOptions, 'Warlock'),
+        );
+        rules.chooseOptions(
+          c,
+          rules.featureOptionSet(c, 'Eldritch Invocations')!,
+          ['Pact of the Tome'],
+        );
+        expect(
+          c.pendingChoices.map((p) => p.optionSet),
+          containsAll(['Book of Shadows Cantrips', 'Book of Shadows Rituals']),
+        );
+        final rituals = rules.featureOptionSet(c, 'Book of Shadows Rituals')!;
+        final options = rules.optionsFor(c, rituals).map((o) => o.name);
+        expect(options, contains('Detect Magic'));
+        expect(options, isNot(contains('Magic Missile'))); // not a Ritual
+        rules.chooseOptions(c, rituals, ['Detect Magic', 'Find Familiar']);
+        rules.chooseOptions(
+          c,
+          rules.featureOptionSet(c, 'Book of Shadows Cantrips')!,
+          ['Guidance', 'Light', 'Fire Bolt'],
+        );
+        final tome = c.spellcasting!.spells.where(
+          (s) => s.source == 'Pact of the Tome',
+        );
+        expect(tome, hasLength(5));
+      },
+    );
+
+    test('Lessons of the First Ones asks for an Origin feat', () {
+      final c = _build(
+        species: _srd(srdCatalog.species, 'Human'),
+        cls: _srd(srdCatalog.classOptions, 'Warlock'),
+      );
+      rules.levelUpOneLevel(c);
+      rules.chooseOptions(
+        c,
+        rules.featureOptionSet(c, 'Eldritch Invocations')!,
+        ['Lessons of the First Ones'],
+      );
+      final choice = c.pendingChoices.firstWhere(
+        (p) => p.label.startsWith('Lessons of the First Ones'),
+      );
+      expect(choice.featCategory, 'Origin Feat');
+    });
+
+    test('a homebrew feat can grant spells and a feat pick', () {
+      _entry('feat', 'Fey Touched', {
+        'featChoice': 'Origin Feat',
+        'grantedSpells': [
+          {
+            'name': 'Misty Step',
+            'freeCasts': 1,
+            'recovery': 'long',
+            'ability': 'cha',
+          },
+        ],
+      });
+      final c = _build(
+        species: _srd(srdCatalog.species, 'Human'),
+        cls: _srd(srdCatalog.classOptions, 'Fighter'),
+      );
+      rules.grantFeat(c, GrantedFeature(name: 'Fey Touched', source: 'feat'));
+      final misty = c.spellcasting!.spells.single;
+      expect(misty.source, 'Fey Touched');
+      expect(misty.freeCasts, 1);
+      expect(misty.abilityOverride, 'cha');
+      expect(
+        c.pendingChoices.any(
+          (p) =>
+              p.label == 'Fey Touched: choose a feat' &&
+              p.featCategory == 'Origin Feat',
+        ),
+        isTrue,
+      );
+    });
+
+    test(
+      'a homebrew species grants spells by level, including homebrew spells',
+      () {
+        _entry('spell', 'Moonbeam Whisper', {'level': 1, 'school': 'Illusion'});
+        final e = _entry('species', 'Moonkin', {
+          'speed': 30,
+          'featChoice': 'any',
+          'grantedSpells': [
+            {'name': 'Light', 'level': 1},
+            {'name': 'Moonbeam Whisper', 'level': 3, 'freeCasts': 1},
+          ],
+        });
+        final c = _build(
+          species: SrdRefItem(key: e.id, name: e.name, isHomebrew: true),
+          cls: _srd(srdCatalog.classOptions, 'Fighter'),
+        );
+        Iterable<String> names() => c.spellcasting!.spells
+            .where((s) => s.source == 'Moonkin')
+            .map((s) => rules.knownSpellRef(s)!.name);
+        expect(names(), ['Light']);
+        expect(
+          c.pendingChoices.map((p) => p.id),
+          contains('species:featChoice'),
+        );
+        rules.levelUpOneLevel(c);
+        rules.levelUpOneLevel(c);
+        expect(names(), containsAll(['Light', 'Moonbeam Whisper']));
+      },
+    );
   });
 }

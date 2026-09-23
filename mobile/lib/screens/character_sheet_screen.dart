@@ -414,7 +414,10 @@ class _OverviewTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scores = character.abilityScores;
+    // Effective scores (an attuned Belt of Giant Strength's 21), with the
+    // item noted below - Edit Scores still edits the character's own.
+    final scores = rules.effectiveScores(character);
+    final setBy = rules.setScoreEffects(character);
     String cell(int score) =>
         '${rules.abilityModifier(score) >= 0 ? '+' : ''}${rules.abilityModifier(score)}';
     final table = _choiceTable;
@@ -520,6 +523,19 @@ class _OverviewTab extends StatelessWidget {
             StatCell('${scores.cha}', 'Cha · ${cell(scores.cha)}'),
           ],
         ),
+        for (final MapEntry(key: key, value: (source, value)) in setBy.entries)
+          if (value > character.abilityScores.of(key))
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                '${key.toUpperCase()} $value from $source '
+                '(your own score: ${character.abilityScores.of(key)}).',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: LedgerColors.inkDim,
+                ),
+              ),
+            ),
         const SectionLabel('Saving Throws'),
         for (final ability in const ['str', 'dex', 'con', 'int', 'wis', 'cha'])
           Row(
@@ -1655,7 +1671,7 @@ Future<void> _showSpendHitDieDialog(
   Character character,
   VoidCallback onChanged,
 ) async {
-  final conMod = rules.abilityModifier(character.abilityScores.con);
+  final conMod = rules.modifierOf(character, 'con');
   var roll = rules.rollableAverage(character.hitDiceDie);
 
   await showDialog<void>(

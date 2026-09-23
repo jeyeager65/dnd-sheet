@@ -201,6 +201,11 @@ HomebrewEntry? homebrewById(String id) =>
 //              concentration, ritual, classes [names], higherLevel
 //  magicItem:  itemCategory, rarity, requiresAttunement, charges (int),
 //              recharge ("dawn" | "long" | "short" | "none")
+//  feat, species, class (also): grantedSpells [{name, level (character/
+//              class level it arrives at), freeCasts (0 none, -1 at will),
+//              recovery ("long" | "short"), ability (key)}]
+//  feat, species (also): featChoice (feat category, "any", or empty) - a
+//              feat pick it grants, like Human's Versatile
 // ---------------------------------------------------------------------------
 
 final _registered = <String>{};

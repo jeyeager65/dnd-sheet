@@ -622,7 +622,7 @@ Future<Uint8List> fillCharacterSheetTopSection(
     'hpMax': '${c.maxHp}',
     'hitDiceRef':
         '${c.hitDiceDie} '
-        '${rules.formatModifier(rules.abilityModifier(c.abilityScores.con))}',
+        '${rules.formatModifier(rules.modifierOf(c, 'con'))}',
     // Hit Dice spent is left blank too, same reasoning as Current HP - it
     // changes as dice are spent/recovered in play.
     'hdMax': '${c.hitDiceTotal}',
@@ -650,7 +650,7 @@ Future<Uint8List> fillCharacterSheetTopSection(
   // shape's middle.
   for (final entry in _abilityBlocks.entries) {
     final (x0, x1, nameTop) = entry.value;
-    final score = c.abilityScores.of(entry.key);
+    final score = rules.effectiveScores(c).of(entry.key);
     final modifier = rules.abilityModifier(score);
     final cx = (x0 + x1) / 2;
     _drawCentered(
@@ -691,7 +691,7 @@ Future<Uint8List> fillCharacterSheetTopSection(
       final entry = _skillEntryFor(c, skillName, abilityKey);
       modifier = rules.skillModifier(c, entry);
     }
-    final bareModifier = rules.abilityModifier(c.abilityScores.of(abilityKey));
+    final bareModifier = rules.modifierOf(c, abilityKey);
     // Not proficient (the row's number is identical to the ability's own
     // bare modifier, already shown in the bubble above) - the whole row
     // stays blank, not just the circle: an unfilled number here would

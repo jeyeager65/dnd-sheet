@@ -266,6 +266,7 @@ enum _EffectCategory {
   ac,
   speed,
   maxHp,
+  setScore,
   save,
   skill,
   damageResistance,
@@ -274,6 +275,7 @@ enum _EffectCategory {
 
 _EffectCategory _categoryOf(String target) {
   if (target.startsWith('save:')) return _EffectCategory.save;
+  if (target.startsWith('setScore:')) return _EffectCategory.setScore;
   if (target.startsWith('skill:')) return _EffectCategory.skill;
   if (target.startsWith('damageResistance:')) {
     return _EffectCategory.damageResistance;
@@ -943,6 +945,7 @@ class _EffectRow extends StatelessWidget {
       _EffectCategory.speed => 'speed',
       _EffectCategory.maxHp => 'maxHp',
       _EffectCategory.save => 'save:str',
+      _EffectCategory.setScore => 'setScore:str',
       _EffectCategory.skill =>
         'skill:${srdCatalog.skillsByName.values.first.name}',
       _EffectCategory.damageResistance =>
@@ -1014,6 +1017,10 @@ class _EffectRow extends StatelessWidget {
                       child: Text('Your Hit Point Maximum'),
                     ),
                     DropdownMenuItem(
+                      value: _EffectCategory.setScore,
+                      child: Text('Sets an Ability Score'),
+                    ),
+                    DropdownMenuItem(
                       value: _EffectCategory.save,
                       child: Text('Your Saving Throw'),
                     ),
@@ -1042,7 +1049,18 @@ class _EffectRow extends StatelessWidget {
               ),
             ],
           ),
-          if (category == _EffectCategory.save)
+          if (category == _EffectCategory.setScore)
+            const Padding(
+              padding: EdgeInsets.only(top: 6),
+              child: Text(
+                'Sets the score to a single number (e.g. 21 for a Belt of '
+                'Giant Strength) - only if higher than the score the character '
+                'already has. Use one flat number, no modifiers.',
+                style: TextStyle(fontSize: 11, color: LedgerColors.inkDim),
+              ),
+            ),
+          if (category == _EffectCategory.save ||
+              category == _EffectCategory.setScore)
             DropdownButtonFormField<String>(
               initialValue: effect.target.split(':').last,
               isExpanded: true,
@@ -1058,7 +1076,9 @@ class _EffectRow extends StatelessWidget {
                 if (v == null) return;
                 onChanged(
                   Effect(
-                    target: 'save:$v',
+                    target: category == _EffectCategory.setScore
+                        ? 'setScore:$v'
+                        : 'save:$v',
                     formula: effect.formula,
                     condition: effect.condition,
                   ),

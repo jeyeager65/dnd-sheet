@@ -39,6 +39,12 @@ SrdSpellRef? _spellNamed(String name) {
   for (final s in srdCatalog.spells) {
     if (s.name.toLowerCase() == lower) return s;
   }
+  // A homebrew/official spell named in a grant.
+  for (final e in homebrewRepo.entries) {
+    if (e.kind == 'spell' && e.name.toLowerCase() == lower) {
+      return spellRefFor(e.id);
+    }
+  }
   return null;
 }
 
@@ -231,6 +237,48 @@ List<_Grant> _grantsFor(Character c) {
             ability: lineageAbility,
           ),
         );
+    }
+  }
+
+  // Pact of the Tome's Book of Shadows.
+  for (final set in const [
+    'Book of Shadows Cantrips',
+    'Book of Shadows Rituals',
+  ]) {
+    if (!names.contains('Pact of the Tome')) break;
+    for (final spell in c.featureChoices[set] ?? const <String>[]) {
+      grants.add(_Grant(spell, 'Pact of the Tome'));
+    }
+  }
+
+  // Homebrew/official content that grants spells: a feat's list, a
+  // species' list by character level, a class's list by class level.
+  // Grant rows: {name, level?, freeCasts?, recovery?}.
+  void homebrewGrants(Map<String, dynamic>? data, String source) {
+    for (final row in (data?['grantedSpells'] as List?) ?? const []) {
+      final r = (row as Map).cast<String, dynamic>();
+      if ((r['level'] as int? ?? 1) > c.level) continue;
+      final name = r['name'] as String?;
+      if (name == null || name.isEmpty) continue;
+      grants.add(
+        _Grant(
+          name,
+          source,
+          freeCasts: r['freeCasts'] as int? ?? 0,
+          recovery: r['recovery'] as String? ?? 'long',
+          ability: r['ability'] as String?,
+        ),
+      );
+    }
+  }
+
+  for (final feat in c.feats) {
+    homebrewGrants(_homebrewFeat(feat.name)?.data, feat.name);
+  }
+  for (final e in homebrewRepo.entries) {
+    if ((e.kind == 'species' && e.id == c.speciesKey) ||
+        (e.kind == 'class' && e.id == c.classKey)) {
+      homebrewGrants(e.data, e.name);
     }
   }
 

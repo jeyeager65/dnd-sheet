@@ -135,6 +135,8 @@ Iterable<String> _allOptionSetNames(Character c) sync* {
     'Spell Mastery',
     'Signature Spells',
     'Magical Discoveries',
+    'Book of Shadows Cantrips',
+    'Book of Shadows Rituals',
     ..._speciesOptionSets,
   ];
   for (final feat in c.feats) {
@@ -308,6 +310,24 @@ FeatureOptionSet? featureOptionSet(Character c, String name) {
               changeable: true,
             )
           : null;
+    case 'Book of Shadows Cantrips':
+      return _has(c, 'Pact of the Tome')
+          ? set(
+              OptionKind.spells,
+              'Pact of the Tome: 3 cantrips (any class)',
+              feature: 'Pact of the Tome',
+              changeable: true,
+            )
+          : null;
+    case 'Book of Shadows Rituals':
+      return _has(c, 'Pact of the Tome')
+          ? set(
+              OptionKind.spells,
+              'Pact of the Tome: 2 level 1 Ritual spells (any class)',
+              feature: 'Pact of the Tome',
+              changeable: true,
+            )
+          : null;
     case 'Giant Ancestry':
       return c.speciesKey == 'srd-2024_goliath-species'
           ? set(OptionKind.modifier, 'Giant Ancestry: choose your boon')
@@ -368,6 +388,8 @@ int optionCount(Character c, FeatureOptionSet set) {
     'Mystic Arcanum' =>
       level >= 17 ? 4 : (level >= 15 ? 3 : (level >= 13 ? 2 : 1)),
     'Spell Mastery' || 'Signature Spells' || 'Magical Discoveries' => 2,
+    'Book of Shadows Cantrips' => 3,
+    'Book of Shadows Rituals' => 2,
     'Skilled' =>
       3 * c.feats.where((f) => baseFeatName(f.name) == 'Skilled').length,
     _ => 1,
@@ -600,6 +622,10 @@ List<FeatureOption> optionsFor(Character c, FeatureOptionSet set) {
                 s.classes.contains('Druid') ||
                 s.classes.contains('Wizard')),
       );
+    case 'Book of Shadows Cantrips':
+      return spellsWhere((s) => s.level == 0);
+    case 'Book of Shadows Rituals':
+      return spellsWhere((s) => s.level == 1 && s.ritual);
     case 'Giant Ancestry':
       return _traitBoldSections('srd-2024_goliath-species', 'Giant Ancestry');
     case 'Gnomish Lineage':
@@ -768,6 +794,29 @@ void chooseOptions(
     c.featureChoices = {...c.featureChoices, set.name: all};
   }
 
+  if (set.name == 'Eldritch Invocations') {
+    // Pact of the Tome: its Book of Shadows spells are chosen next.
+    if (picks.contains('Pact of the Tome')) {
+      c.pendingChoices = [
+        ...c.pendingChoices,
+        ..._pendingFor(c, 'option:', [
+          'Book of Shadows Cantrips',
+          'Book of Shadows Rituals',
+        ]),
+      ];
+    }
+    // Lessons of the First Ones: an Origin feat.
+    if (picks.contains('Lessons of the First Ones')) {
+      c.pendingChoices = [
+        ...c.pendingChoices,
+        PendingChoice(
+          id: 'option:Lessons of the First Ones:${c.feats.length}',
+          label: 'Lessons of the First Ones: choose an Origin feat',
+          featCategory: 'Origin Feat',
+        ),
+      ];
+    }
+  }
   // Picks that grant training.
   if (set.name == 'Divine Order' && all.contains('Protector')) {
     _addTraining(c, armor: 'Heavy', weapons: 'Martial weapons');
@@ -892,6 +941,19 @@ List<PendingChoice> featureOptionPendingChoices(
 /// Origin feat - asked at creation and when the species changes.
 List<PendingChoice> speciesPendingChoices(Character c) => [
   ..._pendingFor(c, 'species:', _speciesOptionSets),
+  // A homebrew species that grants a feat (like Human's Versatile).
+  if (homebrewRepo.entries
+          .where((e) => e.kind == 'species' && e.id == c.speciesKey)
+          .firstOrNull
+      case final species?)
+    if (species.data['featChoice'] case final String category
+        when category.isNotEmpty &&
+            !c.pendingChoices.any((p) => p.id == 'species:featChoice'))
+      PendingChoice(
+        id: 'species:featChoice',
+        label: '${species.name}: choose a feat',
+        featCategory: category == 'any' ? null : category,
+      ),
   if (c.speciesKey == 'srd-2024_human-species' &&
       !c.pendingChoices.any((p) => p.id == 'species:Versatile'))
     PendingChoice(
@@ -917,6 +979,17 @@ List<PendingChoice> featPendingChoices(Character c, GrantedFeature feat) {
               '${feat.name} Ability',
             ],
     );
+  }
+  final homebrew = _homebrewFeat(feat.name);
+  final grantsFeat = homebrew?.data['featChoice'] as String?;
+  if (grantsFeat != null && grantsFeat.isNotEmpty) {
+    return [
+      PendingChoice(
+        id: 'feat:${feat.name}:choice:${c.feats.length}',
+        label: '${feat.name}: choose a feat',
+        featCategory: grantsFeat == 'any' ? null : grantsFeat,
+      ),
+    ];
   }
   if (base == 'Skilled') {
     final set = featureOptionSet(c, 'Skilled')!;
@@ -1007,7 +1080,9 @@ List<(String, Effect)> featureEffects(Character c) {
   }
   final order = optionPick(c, 'Divine Order') ?? optionPick(c, 'Primal Order');
   if (order == 'Thaumaturge' || order == 'Magician') {
-    final wis = abilityModifier(c.abilityScores.wis);
+    final wis = abilityModifier(
+      c.abilityScores.wis,
+    ); // not effective: avoids a cycle
     final bonus = '${wis < 1 ? 1 : wis}';
     for (final skill in [
       'Arcana',

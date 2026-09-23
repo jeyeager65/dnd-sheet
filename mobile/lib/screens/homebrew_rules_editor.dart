@@ -28,6 +28,7 @@ class HomebrewRulesEditor extends StatefulWidget {
   final ValueChanged<Map<String, dynamic>> onChanged;
 
   static const supportedKinds = {
+    'feat',
     'spell',
     'weapon',
     'armor',
@@ -328,7 +329,208 @@ class _HomebrewRulesEditorState extends State<HomebrewRulesEditor> {
     );
   }
 
+  /// Spells this entry grants (feats, species, classes): each with the
+  /// level it arrives at, free casts per rest (none / 1 / at will, or
+  /// Proficiency Bonus times), how those recharge, and the casting ability.
+  Widget _grantedSpells({required String levelLabel}) {
+    final rows = _maps('grantedSpells');
+    void update(int i, String field, Object? value) {
+      final next = [...rows];
+      next[i] = {...next[i], field: value};
+      _set('grantedSpells', next);
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Expanded(child: SectionLabel('Granted spells')),
+            TextButton(
+              onPressed: () => _set('grantedSpells', [
+                ...rows,
+                {
+                  '_id': DateTime.now().microsecondsSinceEpoch,
+                  'level': 1,
+                  'name': '',
+                  'freeCasts': 0,
+                  'recovery': 'long',
+                },
+              ]),
+              child: const Text('+ Add'),
+            ),
+          ],
+        ),
+        if (rows.isEmpty)
+          const Text(
+            'Always prepared once granted; free casts need no slot.',
+            style: TextStyle(fontSize: 12, color: LedgerColors.inkDim),
+          ),
+        for (final (i, row) in rows.indexed)
+          Container(
+            key: ValueKey(row['_id'] ?? '$i-${row['name']}'),
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              border: Border.all(color: LedgerColors.rule),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Autocomplete<String>(
+                        initialValue: TextEditingValue(
+                          text: row['name'] as String? ?? '',
+                        ),
+                        optionsBuilder: (value) => value.text.isEmpty
+                            ? const []
+                            : [
+                                for (final s in srdCatalog.spells)
+                                  if (s.name.toLowerCase().contains(
+                                    value.text.toLowerCase(),
+                                  ))
+                                    s.name,
+                                for (final e in homebrewRepo.byKind('spell'))
+                                  if (e.name.toLowerCase().contains(
+                                    value.text.toLowerCase(),
+                                  ))
+                                    e.name,
+                              ],
+                        onSelected: (name) => update(i, 'name', name),
+                        fieldViewBuilder:
+                            (context, controller, focus, submit) => TextField(
+                              controller: controller,
+                              focusNode: focus,
+                              decoration: const InputDecoration(
+                                labelText: 'Spell',
+                                isDense: true,
+                              ),
+                            ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () =>
+                          _set('grantedSpells', [...rows]..removeAt(i)),
+                      icon: const Icon(Icons.delete_outline, size: 18),
+                      color: LedgerColors.inkDim,
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<int>(
+                        initialValue: row['level'] as int? ?? 1,
+                        decoration: InputDecoration(
+                          labelText: levelLabel,
+                          isDense: true,
+                        ),
+                        items: [
+                          for (var l = 1; l <= 20; l++)
+                            DropdownMenuItem(value: l, child: Text('$l')),
+                        ],
+                        onChanged: (v) => update(i, 'level', v),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: DropdownButtonFormField<int>(
+                        initialValue: row['freeCasts'] as int? ?? 0,
+                        decoration: const InputDecoration(
+                          labelText: 'Free casts',
+                          isDense: true,
+                        ),
+                        items: const [
+                          DropdownMenuItem(value: 0, child: Text('None')),
+                          DropdownMenuItem(value: 1, child: Text('1')),
+                          DropdownMenuItem(value: 2, child: Text('2')),
+                          DropdownMenuItem(value: 3, child: Text('3')),
+                          DropdownMenuItem(value: -1, child: Text('At will')),
+                        ],
+                        onChanged: (v) => update(i, 'freeCasts', v),
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        initialValue: row['recovery'] as String? ?? 'long',
+                        decoration: const InputDecoration(
+                          labelText: 'Recharge',
+                          isDense: true,
+                        ),
+                        items: const [
+                          DropdownMenuItem(
+                            value: 'long',
+                            child: Text('Long Rest'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'short',
+                            child: Text('Short or Long Rest'),
+                          ),
+                        ],
+                        onChanged: (v) => update(i, 'recovery', v),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: DropdownButtonFormField<String?>(
+                        initialValue: row['ability'] as String?,
+                        decoration: const InputDecoration(
+                          labelText: 'Ability',
+                          isDense: true,
+                        ),
+                        items: [
+                          const DropdownMenuItem(
+                            value: null,
+                            child: Text('Class ability'),
+                          ),
+                          for (final k in const ['int', 'wis', 'cha'])
+                            DropdownMenuItem(
+                              value: k,
+                              child: Text(_abilityNames[k]!),
+                            ),
+                        ],
+                        onChanged: (v) => update(i, 'ability', v),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _featChoice() => _dropdown<String>(
+    'Grants a feat',
+    _d['featChoice'] as String? ?? '',
+    const [
+      '',
+      'any',
+      'Origin Feat',
+      'General Feat',
+      'Fighting Style Feat',
+      'Epic Boon Feat',
+    ],
+    (v) => _set('featChoice', v),
+    display: (c) => switch (c) {
+      '' => 'No',
+      'any' => 'Yes - any feat',
+      _ => 'Yes - an $c',
+    },
+  );
+
   // ---- per kind ----------------------------------------------------------
+
+  List<Widget> _feat() => [
+    _featChoice(),
+    _grantedSpells(levelLabel: 'Character level'),
+  ];
 
   List<Widget> _spell() {
     final components = (_d['components'] as String? ?? '').split(
@@ -520,7 +722,9 @@ class _HomebrewRulesEditorState extends State<HomebrewRulesEditor> {
     _chips('resistances', 'Damage resistances', [
       for (final dt in srdCatalog.damageTypes) dt.name,
     ]),
+    _featChoice(),
     _featureList('traits', 'Traits', withLevel: false),
+    _grantedSpells(levelLabel: 'Character level'),
   ];
 
   List<Widget> _background() {
@@ -654,6 +858,7 @@ class _HomebrewRulesEditorState extends State<HomebrewRulesEditor> {
         hint: 'Choose A or B: (A) Item, 2 Items, and 10 GP; or (B) 50 GP',
       ),
       _featureList('features', 'Features', withLevel: true),
+      _grantedSpells(levelLabel: 'Class level'),
     ];
   }
 
@@ -756,6 +961,7 @@ class _HomebrewRulesEditorState extends State<HomebrewRulesEditor> {
   @override
   Widget build(BuildContext context) {
     final fields = switch (widget.kind) {
+      'feat' => _feat(),
       'spell' => _spell(),
       'weapon' => _weapon(),
       'armor' => _armor(),
