@@ -69,8 +69,11 @@ void main() {
         character.features.any((f) => f.name == 'Fighting Style'),
         isFalse,
       );
-      expect(character.pendingChoices.length, 1);
+      // Fighting Style (a feat pick) and Weapon Mastery (3 weapon kinds).
+      expect(character.pendingChoices.length, 2);
       expect(character.pendingChoices.first.label, 'Level 1: Fighting Style');
+      expect(character.pendingChoices.last.optionSet, 'Weapon Mastery');
+      expect(character.pendingChoices.last.count, 3);
       expect(
         character.pendingChoices.first.featCategory,
         'Fighting Style Feat',
@@ -158,7 +161,7 @@ void main() {
         cha: 8,
       ),
       chosenClassSkills: const ['Acrobatics', 'Perception'],
-      fighterEquipmentOption: 'A',
+      classEquipmentOption: 'A',
     );
 
     expect(character.equippedArmor?.name, 'Chain Mail');
@@ -201,7 +204,7 @@ void main() {
         cha: 8,
       ),
       chosenClassSkills: const ['Acrobatics', 'Perception'],
-      fighterEquipmentOption: 'B',
+      classEquipmentOption: 'B',
     );
 
     expect(character.equippedArmor?.name, 'Studded Leather Armor');
@@ -244,7 +247,7 @@ void main() {
         cha: 8,
       ),
       chosenClassSkills: const ['Acrobatics', 'Perception'],
-      fighterEquipmentOption: 'C',
+      classEquipmentOption: 'C',
     );
 
     expect(character.equippedArmor, isNull);

@@ -3,32 +3,10 @@ import 'package:uuid/uuid.dart';
 import '../domain/rules.dart' as rules;
 import '../models/character.dart';
 import 'srd_catalog.dart';
+import 'starting_equipment.dart';
 
 const _uuid = Uuid();
 const fighterClassKey = 'srd-2024_fighter-class';
-
-/// One of Fighter's three "Choose A, B, or C" starting equipment
-/// packages - hardcoded verbatim from classes.json's Starting Equipment
-/// trait text rather than parsed at runtime, since the free SRD only
-/// phrases this consistently enough to parse automatically for a single
-/// class, and Fighter is the only one in scope so far.
-class FighterEquipmentOption {
-  const FighterEquipmentOption({required this.id, required this.summary});
-  final String id; // 'A' | 'B' | 'C'
-  final String summary; // shown to the player, verbatim from the SRD
-}
-
-const fighterStartingEquipmentOptions = [
-  FighterEquipmentOption(
-    id: 'A',
-    summary: "Chain Mail, Greatsword, Flail, 8 Javelins, Dungeoneer's Pack, and 4 GP",
-  ),
-  FighterEquipmentOption(
-    id: 'B',
-    summary: "Studded Leather Armor, Scimitar, Shortsword, Longbow, 20 Arrows, Quiver, Dungeoneer's Pack, and 11 GP",
-  ),
-  FighterEquipmentOption(id: 'C', summary: '155 GP'),
-];
 
 /// The 2024 PHB's "Standard Array by Class" table (Character Creation,
 /// Step 3) - a suggested Str/Dex/Con/Int/Wis/Cha assignment of the
@@ -117,10 +95,13 @@ const standardArrayByClass = {
 /// SRD data actually ported: Hit Point Die, Saving Throw Proficiencies,
 /// skill proficiencies from the background plus the player's class skill
 /// picks, level-1 resources (class + species) and class features, Pending
-/// Choices for any level-1 choice-driven feature (Fighting Style, ...),
-/// and - if [fighterEquipmentOption] is given on a Fighter - real starting
-/// gear. Everything else is left for the player to fill in on the sheet
-/// afterward, the same as this app already lets you do for Jarson.
+/// Choices for any level-1 choice-driven feature (Fighting Style, ...) and
+/// feature option (Expertise, Weapon Mastery, a species' Giant Ancestry,
+/// ...), the background's ability score increases
+/// ([backgroundAbilityIncreases]), and the chosen class and background
+/// starting-equipment packages ([classEquipmentOption] /
+/// [backgroundEquipmentOption]: 'A', 'B', ...). Spells granted by features,
+/// species, and feats are filled in too.
 Character buildNewCharacter({
   required String name,
   required SrdRefItem species,
@@ -128,7 +109,9 @@ Character buildNewCharacter({
   required SrdRefItem srdClass,
   required AbilityScores abilityScores,
   required List<String> chosenClassSkills,
-  String? fighterEquipmentOption,
+  Map<String, int> backgroundAbilityIncreases = const {},
+  String? classEquipmentOption,
+  String? backgroundEquipmentOption,
 }) {
   final classInfo = srdCatalog.byKey(srdClass.key);
   final hitDie = rules.parseHitDie(classInfo?.traits['Hit Point Die']) ?? 'd8';
@@ -195,12 +178,24 @@ Character buildNewCharacter({
   // Mastery, Tactical Mind, ...), read from the real classes.json/
   // species.json data - works for any ported class/species, not just
   // Fighter/Dragonborn.
+  rules.applyBackgroundAbilityIncreases(character, backgroundAbilityIncreases);
   rules.recalculateClassResources(character);
   character.features = rules.classFeaturesForLevelUp(character, 0, 1);
+  // Max HP from the final scores (a background +1 Con counts) and species
+  // bonuses (Dwarven Toughness).
+  rules.recalculateHp(character);
+  character.currentHp = character.maxHp;
   // Pending Choices for any level-1 choice-driven feature (Fighting
   // Style, ...), resolved the same way as an Ability Score Improvement
   // (through the feat picker, restricted to the category).
   character.pendingChoices = rules.featChoicePendingChoices(character, 0, 1);
+  character.pendingChoices = [
+    ...character.pendingChoices,
+    ...rules.featureOptionPendingChoices(character, 0, 1),
+    ...rules.speciesPendingChoices(character),
+    for (final feat in character.feats)
+      ...rules.featPendingChoices(character, feat),
+  ];
 
   // Turns on spellcasting automatically for one of the 8 SRD casting
   // classes, with level-1 cantrips/slots computed from the real class
@@ -209,9 +204,14 @@ Character buildNewCharacter({
     rules.enableSpellcasting(character);
   }
 
-  if (srdClass.key == fighterClassKey && fighterEquipmentOption != null) {
-    _grantFighterStartingEquipment(character, fighterEquipmentOption);
+  for (final (options, id) in [
+    (classEquipmentOptions(srdClass.key), classEquipmentOption),
+    (backgroundEquipmentOptions(background.key), backgroundEquipmentOption),
+  ]) {
+    final option = options.where((o) => o.id == id).firstOrNull;
+    if (option != null) applyEquipmentOption(character, option);
   }
+  rules.syncGrantedSpells(character);
 
   final armorSource = character.equippedArmor?.name ?? 'Unarmored';
   final startingFeatureNames = [
@@ -222,72 +222,16 @@ Character buildNewCharacter({
     character,
     'Character created',
     detail:
-        'STR ${abilityScores.str}, DEX ${abilityScores.dex}, '
-        'CON ${abilityScores.con}, INT ${abilityScores.intel}, '
-        'WIS ${abilityScores.wis}, CHA ${abilityScores.cha}. '
+        'STR ${character.abilityScores.str}, '
+        'DEX ${character.abilityScores.dex}, '
+        'CON ${character.abilityScores.con}, '
+        'INT ${character.abilityScores.intel}, '
+        'WIS ${character.abilityScores.wis}, '
+        'CHA ${character.abilityScores.cha}. '
         'AC ${rules.armorClassFor(character)} ($armorSource'
         '${character.shieldEquipped ? ' + Shield' : ''}).'
         '${startingFeatureNames.isEmpty ? '' : ' Starting features/feats: ${startingFeatureNames.join(', ')}.'}',
   );
 
   return character;
-}
-
-/// Applies one of [fighterStartingEquipmentOptions] to a freshly built
-/// Fighter: equips armor, adds weapons (built the same way the sheet's own
-/// "+ Add Weapon" picker does), stacks any non-weapon gear as inventory,
-/// and sets starting coin. Pack contents (a Dungeoneer's Pack's dozen-odd
-/// items) aren't exploded out - there's no general item catalog ported yet,
-/// so it's tracked as a single named entry, same as this app already does
-/// for anything outside weapons/armor/feats/spells.
-void _grantFighterStartingEquipment(Character c, String optionId) {
-  Weapon weaponNamed(String name) => rules.weaponFromSrd(
-    c,
-    srdCatalog.weaponsByKey.values.firstWhere((w) => w.name == name),
-  );
-
-  EquippedArmor armorNamed(String name) {
-    final ref = srdCatalog.armorByKey.values.firstWhere((a) => a.name == name);
-    return EquippedArmor(
-      name: ref.name,
-      armorClassFormula: ref.armorClass,
-      strengthRequirement: ref.strength,
-      stealth: ref.stealth,
-      category: ref.simpleCategory,
-    );
-  }
-
-  switch (optionId) {
-    case 'A':
-      c.equippedArmor = armorNamed('Chain Mail');
-      c.weapons = [
-        ...c.weapons,
-        weaponNamed('Greatsword'),
-        weaponNamed('Flail'),
-        weaponNamed('Javelin'),
-      ];
-      c.inventory = [
-        ...c.inventory,
-        InventoryEntry(name: 'Javelin', quantity: 8),
-        InventoryEntry(name: "Dungeoneer's Pack", quantity: 1),
-      ];
-      c.currency = const Currency(gp: 4);
-    case 'B':
-      c.equippedArmor = armorNamed('Studded Leather Armor');
-      c.weapons = [
-        ...c.weapons,
-        weaponNamed('Scimitar'),
-        weaponNamed('Shortsword'),
-        weaponNamed('Longbow'),
-      ];
-      c.inventory = [
-        ...c.inventory,
-        InventoryEntry(name: 'Arrow', quantity: 20),
-        InventoryEntry(name: 'Quiver', quantity: 1),
-        InventoryEntry(name: "Dungeoneer's Pack", quantity: 1),
-      ];
-      c.currency = const Currency(gp: 11);
-    case 'C':
-      c.currency = const Currency(gp: 155);
-  }
 }

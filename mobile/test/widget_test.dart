@@ -1261,7 +1261,11 @@ void main() {
       await tester.tap(find.text('Athletics'));
       await tester.tap(find.text('Perception'));
       await tester.pumpAndSettle();
-      await tester.tap(find.textContaining('(A)'));
+      // Class and background starting equipment, and the background's
+      // ability score increases.
+      await tester.tap(find.textContaining('(A)').at(0));
+      await tester.tap(find.textContaining('(A)').at(1));
+      await tester.tap(find.text('+1 / +1 / +1'));
       await tester.pumpAndSettle();
 
       // Every other required field is filled in, but Draconic Ancestors

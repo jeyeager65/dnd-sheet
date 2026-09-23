@@ -66,6 +66,10 @@ class CharacterRepository extends ChangeNotifier {
       // into a Pending Choice on level-up instead of silently granted as
       // an inert feature - see rules.dart's repairMissingFeatChoices doc.
       rules.repairMissingFeatChoices(character);
+      // Spells granted by features, species, and feats (Divine Smite, a
+      // lineage's spells, ...) - fills them in for characters saved before
+      // they were tracked, and keeps them current.
+      rules.syncGrantedSpells(character);
       characters.add(character);
     }
     notifyListeners();
@@ -287,6 +291,7 @@ class CharacterRepository extends ChangeNotifier {
       json['familyId'] = idMap[oldFamilyId] ?? idMap[oldId]!;
       final character = Character.fromJson(json);
       rules.recalculateClassResources(character);
+      rules.syncGrantedSpells(character);
       imported.add(character);
     }
     for (final character in imported) {

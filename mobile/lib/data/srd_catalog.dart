@@ -449,7 +449,7 @@ bool _sameStrings(List<String> a, List<String> b) {
 /// (not a choice), unlike a class's skill proficiencies below. [equipment]
 /// is the verbatim "Choose A or B" starting-gear text (same shape as
 /// Fighter's Starting Equipment, just not parsed into structured options
-/// the way character_factory.dart's fighterStartingEquipmentOptions is -
+/// the way starting_equipment.dart's packages are -
 /// backgrounds aren't in that scope yet).
 class SrdBackgroundInfo {
   SrdBackgroundInfo({

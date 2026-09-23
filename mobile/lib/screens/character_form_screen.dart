@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../data/character_factory.dart';
+import '../data/starting_equipment.dart';
+import '../widgets/background_ability_picker.dart';
 import '../data/character_repository.dart';
 import '../data/srd_catalog.dart';
 import '../domain/rules.dart' as rules;
@@ -51,7 +53,23 @@ class _CharacterFormScreenState extends State<CharacterFormScreen> {
   SrdRefItem? _selectedBackground;
   SrdRefItem? _selectedClass;
   final Set<String> _chosenSkills = {};
-  String? _selectedFighterEquipment;
+  String? _classEquipment; // 'A', 'B', ... from the class's packages
+  String? _backgroundEquipment; // ... and the background's
+  Map<String, int> _bgIncreases = const {};
+
+  // Edit mode: a new species/class/background picked here is applied on
+  // Save (rules.changeSpecies/changeClass/changeBackground), not the
+  // moment it's picked, so Cancel still backs out of it.
+  SrdRefItem? _newSpecies;
+  SrdRefItem? _newClass;
+  SrdRefItem? _newBackground;
+  Map<String, int> _newBgIncreases = const {};
+  late final TextEditingController _speedController;
+  late final TextEditingController _acOverrideController;
+  late final TextEditingController _initiativeController;
+  late final TextEditingController _xpController;
+  String? _hitDie;
+  String? _sizeChoice;
   // The picked option from the species' own embedded choice table (e.g.
   // Dragonborn's Draconic Ancestry: "Red", "Fire") - null if the species
   // has no such table, or one hasn't been picked yet.
@@ -99,6 +117,16 @@ class _CharacterFormScreenState extends State<CharacterFormScreen> {
       for (final key in _abilityKeys) key: TextEditingController(text: '10'),
     };
     _customToolProficiencyController = TextEditingController();
+    _speedController = TextEditingController(text: '${c?.speed ?? 30}');
+    _acOverrideController = TextEditingController(
+      text: c?.armorClassOverride != null ? '${c!.armorClassOverride}' : '',
+    );
+    _initiativeController = TextEditingController(
+      text: '${c?.initiativeBonus ?? 0}',
+    );
+    _xpController = TextEditingController(text: '${c?.experiencePoints ?? 0}');
+    _hitDie = c?.hitDiceDie;
+    _sizeChoice = c?.sizeChoice;
     if (c != null) {
       final requirements = rules.toolChoiceRequirementsForKeys(
         c.backgroundKey,
@@ -194,7 +222,67 @@ class _CharacterFormScreenState extends State<CharacterFormScreen> {
         ),
       ),
     );
-    if (result != null) setState(() => _selectedBackground = result);
+    if (result != null) {
+      setState(() {
+        _selectedBackground = result;
+        _bgIncreases = const {};
+        _backgroundEquipment = null;
+      });
+    }
+  }
+
+  Future<SrdRefItem?> _pick(
+    String title,
+    List<SrdRefItem> options,
+    String homebrewKind,
+  ) => Navigator.of(context).push<SrdRefItem>(
+    MaterialPageRoute(
+      builder: (_) => CatalogPickerScreen(
+        title: title,
+        options: options,
+        homebrewKind: homebrewKind,
+      ),
+    ),
+  );
+
+  Future<void> _pickNewSpecies() async {
+    final result = await _pick('Species', srdCatalog.species, 'species');
+    if (result != null) {
+      setState(() {
+        _newSpecies = result;
+        _sizeChoice = null;
+        _speedController.text =
+            '${rules.speciesBaseSpeed(result.key) ?? widget.character!.speed}';
+      });
+    }
+  }
+
+  Future<void> _pickNewClass() async {
+    final result = await _pick('Class', srdCatalog.classOptions, 'class');
+    if (result != null) {
+      setState(() {
+        _newClass = result;
+        _hitDie =
+            rules.parseHitDie(
+              srdCatalog.byKey(result.key)?.traits['Hit Point Die'],
+            ) ??
+            _hitDie;
+      });
+    }
+  }
+
+  Future<void> _pickNewBackground() async {
+    final result = await _pick(
+      'Background',
+      srdCatalog.backgroundOptions,
+      'background',
+    );
+    if (result != null) {
+      setState(() {
+        _newBackground = result;
+        _newBgIncreases = const {};
+      });
+    }
   }
 
   Future<void> _pickClass() async {
@@ -211,7 +299,7 @@ class _CharacterFormScreenState extends State<CharacterFormScreen> {
       setState(() {
         _selectedClass = result;
         _chosenSkills.clear(); // eligible list depends on the class
-        _selectedFighterEquipment = null;
+        _classEquipment = null;
         // Defaults the ability score fields to the 2024 PHB's Standard
         // Array by Class suggestion for this class (still freely
         // editable afterward) - a no-op for a homebrew/uncataloged class
@@ -273,6 +361,10 @@ class _CharacterFormScreenState extends State<CharacterFormScreen> {
       controller.dispose();
     }
     _customToolProficiencyController.dispose();
+    _speedController.dispose();
+    _acOverrideController.dispose();
+    _initiativeController.dispose();
+    _xpController.dispose();
     super.dispose();
   }
 
@@ -368,9 +460,43 @@ class _CharacterFormScreenState extends State<CharacterFormScreen> {
             '${allNewChoices.isEmpty ? '' : ' New choices to make: ${allNewChoices.map((p) => p.label).join(', ')}.'}',
       );
     }
+    // Species / class / background changes, in that order (a class change
+    // rebuilds features for the level just set above).
+    if (_newClass != null && _newClass!.key != c.classKey) {
+      rules.changeClass(c, _newClass!.key, _newClass!.name);
+    }
+    if (_newSpecies != null && _newSpecies!.key != c.speciesKey) {
+      rules.changeSpecies(c, _newSpecies!.key, _newSpecies!.name);
+    }
+    if (_newBackground != null && _newBackground!.key != c.backgroundKey) {
+      rules.changeBackground(
+        c,
+        _newBackground!.key,
+        _newBackground!.name,
+        _newBgIncreases,
+      );
+    }
+    c.speed = int.tryParse(_speedController.text.trim()) ?? c.speed;
+    c.armorClassOverride = int.tryParse(_acOverrideController.text.trim());
+    c.initiativeBonus =
+        int.tryParse(_initiativeController.text.trim()) ?? c.initiativeBonus;
+    c.experiencePoints =
+        int.tryParse(_xpController.text.trim()) ?? c.experiencePoints;
+    c.sizeChoice = _sizeChoice;
+    if (_hitDie != null && _hitDie != c.hitDiceDie) {
+      c.hitDiceDie = _hitDie!;
+    }
     charactersRepo.save(c);
     Navigator.of(context).pop();
   }
+
+  /// A background change needs its ability increases picked before Save.
+  bool get _editBackgroundReady =>
+      _newBackground == null ||
+      validBackgroundIncreases(
+        _newBgIncreases,
+        rules.backgroundAbilityOptions(_newBackground!.key),
+      );
 
   void _createCharacter() {
     final name = _newNameController.text.trim();
@@ -400,11 +526,25 @@ class _CharacterFormScreenState extends State<CharacterFormScreen> {
       return;
     }
 
-    if (_selectedClass!.key == fighterClassKey &&
-        _selectedFighterEquipment == null) {
+    if ((classEquipmentOptions(_selectedClass!.key).isNotEmpty &&
+            _classEquipment == null) ||
+        (backgroundEquipmentOptions(_selectedBackground!.key).isNotEmpty &&
+            _backgroundEquipment == null)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Choose your starting equipment (A, B, or C).'),
+          content: Text('Choose your class and background starting equipment.'),
+        ),
+      );
+      return;
+    }
+
+    if (!validBackgroundIncreases(
+      _bgIncreases,
+      rules.backgroundAbilityOptions(_selectedBackground!.key),
+    )) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Choose your background's ability score increases."),
         ),
       );
       return;
@@ -434,7 +574,9 @@ class _CharacterFormScreenState extends State<CharacterFormScreen> {
       srdClass: _selectedClass!,
       abilityScores: scores,
       chosenClassSkills: _chosenSkills.toList(),
-      fighterEquipmentOption: _selectedFighterEquipment,
+      backgroundAbilityIncreases: _bgIncreases,
+      classEquipmentOption: _classEquipment,
+      backgroundEquipmentOption: _backgroundEquipment,
     );
     character.playerName = _playerNameController.text.trim();
     character.alignment = _selectedAlignment;
@@ -609,22 +751,26 @@ class _CharacterFormScreenState extends State<CharacterFormScreen> {
     );
   }
 
-  Widget _buildFighterEquipmentChoice() {
-    if (_selectedClass?.key != fighterClassKey) return const SizedBox.shrink();
+  Widget _buildEquipmentChoice(
+    String label,
+    List<EquipmentOption> options,
+    String? selected,
+    ValueChanged<String?> onChanged,
+  ) {
+    if (options.isEmpty) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('STARTING EQUIPMENT', style: _fieldLabelStyle),
+          Text(label, style: _fieldLabelStyle),
           const SizedBox(height: 6),
           RadioGroup<String>(
-            groupValue: _selectedFighterEquipment,
-            onChanged: (value) =>
-                setState(() => _selectedFighterEquipment = value),
+            groupValue: selected,
+            onChanged: onChanged,
             child: Column(
               children: [
-                for (final option in fighterStartingEquipmentOptions)
+                for (final option in options)
                   RadioListTile<String>(
                     value: option.id,
                     dense: true,
@@ -639,6 +785,100 @@ class _CharacterFormScreenState extends State<CharacterFormScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _numberField(
+    String label,
+    TextEditingController controller, {
+    String? helper,
+  }) => Padding(
+    padding: const EdgeInsets.only(bottom: 14),
+    child: TextField(
+      controller: controller,
+      keyboardType: TextInputType.number,
+      decoration: InputDecoration(labelText: label, helperText: helper),
+    ),
+  );
+
+  /// Edit mode's stats not derived from anything else: base Speed (the
+  /// species' speed - class bonuses are added on top), an AC override,
+  /// the Initiative misc bonus, Hit Die, XP, and size where the species
+  /// offers a choice.
+  Widget _buildEditStats(Character c) {
+    final speciesKey = _newSpecies?.key ?? c.speciesKey;
+    final sizes = rules.speciesSizeOptions(speciesKey);
+    final nextXp = rules.xpForNextLevel(c);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('STATS', style: _fieldLabelStyle),
+        const SizedBox(height: 4),
+        Row(
+          children: [
+            Expanded(
+              child: _numberField(
+                'Base Speed (ft)',
+                _speedController,
+                helper: 'Class bonuses add on top',
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _numberField(
+                'AC override',
+                _acOverrideController,
+                helper: 'Blank = ${rules.computeArmorClass(c)} (computed)',
+              ),
+            ),
+          ],
+        ),
+        Row(
+          children: [
+            Expanded(
+              child: _numberField(
+                'Initiative misc bonus',
+                _initiativeController,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 14),
+                child: DropdownButtonFormField<String>(
+                  initialValue: _hitDie,
+                  decoration: const InputDecoration(labelText: 'Hit Die'),
+                  items: [
+                    for (final die in const ['d6', 'd8', 'd10', 'd12'])
+                      DropdownMenuItem(value: die, child: Text(die)),
+                  ],
+                  onChanged: (v) => setState(() => _hitDie = v),
+                ),
+              ),
+            ),
+          ],
+        ),
+        _numberField(
+          'Experience Points',
+          _xpController,
+          helper: nextXp == null
+              ? 'Level 20 - the most there is.'
+              : 'Level ${c.level + 1} at $nextXp XP',
+        ),
+        if (sizes.length > 1)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 14),
+            child: DropdownButtonFormField<String>(
+              initialValue: sizes.contains(_sizeChoice) ? _sizeChoice : null,
+              decoration: const InputDecoration(labelText: 'Size'),
+              items: [
+                for (final s in sizes)
+                  DropdownMenuItem(value: s, child: Text(s)),
+              ],
+              onChanged: (v) => setState(() => _sizeChoice = v),
+            ),
+          ),
+      ],
     );
   }
 
@@ -677,22 +917,48 @@ class _CharacterFormScreenState extends State<CharacterFormScreen> {
                       ),
                     ),
                   ),
-                  _ReadOnlyField(
-                    label: 'Species / Ancestry',
-                    value: c.speciesLabel,
+                  _PickerField(
+                    label: 'Species',
+                    value: _newSpecies?.name ?? c.speciesLabel,
+                    placeholder: 'Choose a species…',
+                    onTap: _pickNewSpecies,
                   ),
-                  _ReadOnlyField(label: 'Class', value: c.classLabel),
-                  const Padding(
-                    padding: EdgeInsets.only(top: 4, bottom: 4),
-                    child: Text(
-                      "Species and class aren't editable here yet - that needs the SRD catalog, which isn't ported.",
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: LedgerColors.inkDim,
-                        fontStyle: FontStyle.italic,
+                  _PickerField(
+                    label: 'Class',
+                    value: _newClass?.name ?? c.classLabel,
+                    placeholder: 'Choose a class…',
+                    onTap: _pickNewClass,
+                  ),
+                  if (_newClass != null && _newClass!.key != c.classKey)
+                    const _Note(
+                      'Changing class rebuilds features, saving throws, Hit '
+                      'Die, resources, spell slots, and Max HP for this '
+                      'level, and asks for the new class\'s choices again. '
+                      'Feats, skills, and gear stay.',
+                    ),
+                  _PickerField(
+                    label: 'Background',
+                    value: _newBackground?.name ?? c.backgroundLabel,
+                    placeholder: 'Choose a background…',
+                    onTap: _pickNewBackground,
+                  ),
+                  if (_newBackground != null &&
+                      _newBackground!.key != c.backgroundKey) ...[
+                    const _Note(
+                      "The old background's skills, feat, and ability "
+                      'increases come off; the new one\'s go on.',
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 14),
+                      child: BackgroundAbilityPicker(
+                        options: rules.backgroundAbilityOptions(
+                          _newBackground!.key,
+                        ),
+                        onChanged: (m) => setState(() => _newBgIncreases = m),
                       ),
                     ),
-                  ),
+                  ],
+                  _buildEditStats(c),
                   _buildToolChoiceSection(),
                   const SizedBox(height: 10),
                   OutlinedButton(
@@ -739,6 +1005,30 @@ class _CharacterFormScreenState extends State<CharacterFormScreen> {
                     placeholder: 'Choose a background…',
                     onTap: _pickBackground,
                   ),
+                  if (_selectedBackground != null &&
+                      rules
+                          .backgroundAbilityOptions(_selectedBackground!.key)
+                          .isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'BACKGROUND ABILITY SCORES',
+                            style: _fieldLabelStyle,
+                          ),
+                          const SizedBox(height: 4),
+                          BackgroundAbilityPicker(
+                            key: ValueKey(_selectedBackground!.key),
+                            options: rules.backgroundAbilityOptions(
+                              _selectedBackground!.key,
+                            ),
+                            onChanged: (m) => setState(() => _bgIncreases = m),
+                          ),
+                        ],
+                      ),
+                    ),
                   _PickerField(
                     label: 'Class',
                     value: _selectedClass?.name,
@@ -748,7 +1038,7 @@ class _CharacterFormScreenState extends State<CharacterFormScreen> {
                   const Padding(
                     padding: EdgeInsets.only(top: 4, bottom: 10),
                     child: Text(
-                      'Background grants its skills and feat outright. Class/species resources (Second Wind, Rages, Breath Weapon, ...) and class features are computed for any class. Only Fighter gets a real starting-equipment choice so far - species traits beyond a resource still need to be added by hand afterward.',
+                      'Background grants its skills, feat, and ability increases (added to the scores below when the character is created). Class and species features, resources, and spells are filled in; choices they offer (Expertise, a lineage\'s ability, ...) show up as Pending Choices on the Features tab.',
                       style: TextStyle(
                         fontSize: 12,
                         color: LedgerColors.inkDim,
@@ -758,7 +1048,18 @@ class _CharacterFormScreenState extends State<CharacterFormScreen> {
                   ),
                   _buildSpeciesChoiceSection(),
                   if (_selectedClass != null) _buildSkillChoice(),
-                  _buildFighterEquipmentChoice(),
+                  _buildEquipmentChoice(
+                    'CLASS STARTING EQUIPMENT',
+                    classEquipmentOptions(_selectedClass?.key),
+                    _classEquipment,
+                    (v) => setState(() => _classEquipment = v),
+                  ),
+                  _buildEquipmentChoice(
+                    'BACKGROUND STARTING EQUIPMENT',
+                    backgroundEquipmentOptions(_selectedBackground?.key),
+                    _backgroundEquipment,
+                    (v) => setState(() => _backgroundEquipment = v),
+                  ),
                   _buildToolChoiceSection(),
                   Text('ABILITY SCORES', style: _fieldLabelStyle),
                   const SizedBox(height: 8),
@@ -884,7 +1185,9 @@ class _CharacterFormScreenState extends State<CharacterFormScreen> {
                       child: const Text('Cancel'),
                     ),
                     ElevatedButton(
-                      onPressed: isEdit ? _save : _createCharacter,
+                      onPressed: isEdit
+                          ? (_editBackgroundReady ? _save : null)
+                          : _createCharacter,
                       child: Text(isEdit ? 'Save Changes' : 'Create Character'),
                     ),
                   ],
@@ -958,42 +1261,26 @@ class _EditableField extends StatelessWidget {
   }
 }
 
-/// Displays a value the form can't yet write back to (Species, Class) -
-/// visually distinct (dimmer, no cursor) so it doesn't look editable.
-class _ReadOnlyField extends StatelessWidget {
-  const _ReadOnlyField({required this.label, required this.value});
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label.toUpperCase(), style: _fieldLabelStyle),
-          const SizedBox(height: 4),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-            decoration: const BoxDecoration(
-              color: LedgerColors.paper2,
-              border: _fieldBorder,
-            ),
-            child: Text(
-              value,
-              style: const TextStyle(color: LedgerColors.inkDim),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 /// A field that opens a [CatalogPickerScreen] on tap - Species/Background/
 /// Class in New Character, each backed by real SRD data now.
+class _Note extends StatelessWidget {
+  const _Note(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(top: 0, bottom: 12),
+    child: Text(
+      text,
+      style: const TextStyle(
+        fontSize: 12,
+        color: LedgerColors.inkDim,
+        fontStyle: FontStyle.italic,
+      ),
+    ),
+  );
+}
+
 class _PickerField extends StatelessWidget {
   const _PickerField({
     required this.label,

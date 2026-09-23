@@ -7,6 +7,10 @@ import '../models/character.dart';
 import '../models/effect.dart';
 import '../models/homebrew.dart';
 
+part 'rules_character.dart';
+part 'rules_granted_spells.dart';
+part 'rules_options.dart';
+
 /// Pure rules functions, ported from the Quasar app's domain/rules.ts.
 /// Kept as plain top-level functions rather than methods on Character, so
 /// they stay trivially testable and the model stays a plain data holder.
@@ -86,6 +90,8 @@ void grantFeat(
   }
   final hpGain = applyMaxHpBonusChange(c, hpBonusBefore);
   if (hpGain != 0) details.add('Max HP ${formatModifier(hpGain)}');
+  c.pendingChoices = [...c.pendingChoices, ...featPendingChoices(c, feat)];
+  syncGrantedSpells(c);
   logHistory(
     c,
     'Feat: ${feat.name} (Level ${c.level})',
@@ -453,6 +459,9 @@ List<(String, int)> matchingEffects(
   for (final item in c.inventory) {
     collect(item.name, liveItemEffects(item));
   }
+  for (final (label, effect) in featureEffects(c)) {
+    collect(label, [effect]);
+  }
   return result;
 }
 
@@ -510,6 +519,9 @@ List<(String, Effect)> _damageTakenEffects(Character c) {
     collect(item.name, liveItemEffects(item));
   }
   collect('Draconic Resistance', liveSpeciesResistances(c));
+  for (final (label, effect) in featureEffects(c)) {
+    collect(label, [effect]);
+  }
   return result;
 }
 
@@ -927,6 +939,7 @@ void applyShortRest(Character c) {
       slot.used = 0;
     }
   }
+  _recoverFreeCasts(c, longRest: false);
 }
 
 void applyLongRest(Character c) {
@@ -939,6 +952,7 @@ void applyLongRest(Character c) {
   for (final slot in c.spellcasting?.slots.values ?? const <SpellSlot>[]) {
     slot.used = 0;
   }
+  _recoverFreeCasts(c, longRest: true);
   endConcentration(c);
   c.currentHp = c.maxHp;
   c.tempHp = 0;
@@ -1437,26 +1451,27 @@ const _abilityShortLabels = {
   'cha': 'Cha',
 };
 
-/// The spellcasting ability's modifier - 0 for a non-caster.
-int spellcastingModifier(Character c) {
-  final sc = c.spellcasting;
-  if (sc == null) return 0;
-  return abilityModifier(c.abilityScores.of(sc.ability));
+/// The spellcasting ability's modifier - 0 for a non-caster. [ability]
+/// overrides the class's (a lineage or Magic Initiate spell's own ability).
+int spellcastingModifier(Character c, {String? ability}) {
+  final key = ability ?? c.spellcasting?.ability;
+  if (key == null) return 0;
+  return abilityModifier(c.abilityScores.of(key));
 }
 
 /// Spell save DC = 8 + spellcasting modifier + Proficiency Bonus, plus
 /// any 'spellSaveDc' Effect (a homebrew/official item like a Rod of the
 /// Pact Keeper, transcribed via My Homebrew).
-int spellSaveDc(Character c) =>
+int spellSaveDc(Character c, {String? ability}) =>
     8 +
-    spellcastingModifier(c) +
+    spellcastingModifier(c, ability: ability) +
     proficiencyBonusForLevel(c.level) +
     sumEffects(c, 'spellSaveDc');
 
 /// Spell attack bonus = spellcasting modifier + Proficiency Bonus, plus
 /// any 'spellAttack' Effect - same sources as [spellSaveDc].
-int spellAttackBonus(Character c) =>
-    spellcastingModifier(c) +
+int spellAttackBonus(Character c, {String? ability}) =>
+    spellcastingModifier(c, ability: ability) +
     proficiencyBonusForLevel(c.level) +
     sumEffects(c, 'spellAttack');
 
@@ -1468,7 +1483,13 @@ SrdClass? _classData(Character c) =>
 /// (Paladin/Ranger have no cantrips) or no SRD class to read it from (a
 /// homebrew class that turned spellcasting on by hand), in which case the
 /// Spells tab shows a plain count with no limit.
-int? cantripLimit(Character c) => _classData(c)?.cantripsAtLevel(c.level);
+int? cantripLimit(Character c) {
+  final base = _classData(c)?.cantripsAtLevel(c.level);
+  if (base == null) return null;
+  final order = optionPick(c, 'Divine Order') ?? optionPick(c, 'Primal Order');
+  return order == 'Thaumaturge' || order == 'Magician' ? base + 1 : base;
+}
+
 int? preparedSpellLimit(Character c) =>
     _classData(c)?.preparedSpellsAtLevel(c.level);
 
@@ -1537,9 +1558,20 @@ List<int> castableSlotLevels(Character c, int spellLevel) {
 /// held before, since only one Concentration spell can be up at a time.
 /// Returns the spell key whose Concentration this cast ended, if any, so
 /// the UI can say so.
-String? castSpell(Character c, SrdSpellRef spell, {int? slotLevel}) {
+String? castSpell(
+  Character c,
+  SrdSpellRef spell, {
+  int? slotLevel,
+  KnownSpell? freeCastFrom,
+}) {
   final sc = c.spellcasting;
   if (sc == null) return null;
+  if (freeCastFrom != null && freeCastFrom.freeCasts != atWill) {
+    if (freeCastFrom.freeCastsUsed >= freeCastFrom.freeCasts) {
+      throw StateError('No free casts left');
+    }
+    freeCastFrom.freeCastsUsed++;
+  }
   if (slotLevel != null) {
     final slot = sc.slots[slotLevel];
     if (slot == null || slot.used >= slot.max) {
@@ -1643,10 +1675,17 @@ SpellDamageInfo spellDamageInfo(SrdSpellRef spell, int characterLevel) {
 
 /// The "to hit or DC" half of a spell's summary - "+5" / "DC 13 Dex" -
 /// or '' for a spell with neither.
-String spellAttackOrDcText(Character c, SpellDamageInfo info) {
-  if (info.isAttack) return formatModifier(spellAttackBonus(c));
+String spellAttackOrDcText(
+  Character c,
+  SpellDamageInfo info, {
+  String? ability,
+}) {
+  if (info.isAttack) {
+    return formatModifier(spellAttackBonus(c, ability: ability));
+  }
   if (info.saveAbility != null) {
-    return 'DC ${spellSaveDc(c)} ${_abilityShortLabels[info.saveAbility]}';
+    return 'DC ${spellSaveDc(c, ability: ability)} '
+        '${_abilityShortLabels[info.saveAbility]}';
   }
   return '';
 }
@@ -1661,9 +1700,9 @@ String spellDamageText(SpellDamageInfo info) {
 
 /// One line combining both - "+5 to hit · 2d10 Fire", "DC 13 Dex · 8d6
 /// Fire" - or '' when the spell's text yields nothing.
-String spellSummary(Character c, SrdSpellRef spell) {
+String spellSummary(Character c, SrdSpellRef spell, {String? ability}) {
   final info = spellDamageInfo(spell, c.level);
-  final hit = spellAttackOrDcText(c, info);
+  final hit = spellAttackOrDcText(c, info, ability: ability);
   return [
     if (hit.isNotEmpty) info.isAttack ? '$hit to hit' : hit,
     if (spellDamageText(info).isNotEmpty) spellDamageText(info),
@@ -1930,6 +1969,11 @@ String sheetTextScope(Character c, GrantedFeature feature) {
     return subclass!.key;
   }
   if (_homebrewFeat(feature.name) != null) return 'homebrew';
+  // A pick added as its own feature (an Eldritch Invocation, a Metamagic
+  // option) - its source is the option set.
+  if (featureOptionSet(c, feature.source)?.kind == OptionKind.feature) {
+    return 'option:${feature.source}';
+  }
   final featName = baseFeatName(feature.name);
   if (srdCatalog.featsByKey.values.any((f) => f.name == featName)) {
     return 'feats';
@@ -1954,7 +1998,15 @@ String sheetTextKey(Character c, GrantedFeature feature) =>
 /// SRD feature (assets/srd/sheet-text.json). Null when there's neither -
 /// a hand-added feature, a homebrew feat with no sheet text yet.
 String? defaultSheetText(Character c, GrantedFeature feature) {
+  // A feature specialized by a single pick (Divine Order: Protector) shows
+  // the pick's own line.
+  final picked = optionSheetText(c, feature);
+  if (picked != null) return picked;
   final scope = sheetTextScope(c, feature);
+  if (scope.startsWith('option:')) {
+    return srdCatalog
+        .sheetText['options']?['${scope.substring(7)}|${feature.name}'];
+  }
   if (scope == 'homebrew') {
     final text = _homebrewFeat(feature.name)!.shortDesc;
     return text.isEmpty ? null : text;
@@ -2089,6 +2141,11 @@ void resolveSubclassChoice(Character c, String choiceId, String subclassKey) {
     existingChoiceIds,
   );
   c.pendingChoices = [...c.pendingChoices, ...newChoiceFeatures];
+  c.pendingChoices = [
+    ...c.pendingChoices,
+    ...featureOptionPendingChoices(c, 0, c.level),
+  ];
+  syncGrantedSpells(c);
   applyMaxHpBonusChange(c, hpBonusBefore);
   final afterWeapons = weaponsSnapshot(c);
   final details = <String>[];
@@ -2274,6 +2331,9 @@ LevelUpSummary levelUpOneLevel(Character c) {
       .toList();
 
   recalculateSpellSlots(c);
+  final newOptionChoices = featureOptionPendingChoices(c, oldLevel, newLevel);
+  c.pendingChoices = [...c.pendingChoices, ...newOptionChoices];
+  syncGrantedSpells(c);
   final spellNotes = spellcastingLevelUpNotes(c, oldLevel, oldSlotLevels);
 
   final newFeatureNames = [
@@ -2284,6 +2344,7 @@ LevelUpSummary levelUpOneLevel(Character c) {
     ...newChoices,
     ...newSubclassChoices,
     ...newFeatChoices,
+    ...newOptionChoices,
   ];
   final newProficiencyBonus = proficiencyBonusForLevel(newLevel);
   final afterWeapons = weaponsSnapshot(c);
