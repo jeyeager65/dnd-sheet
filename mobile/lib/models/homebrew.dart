@@ -36,6 +36,7 @@ class HomebrewEntry {
     this.category,
     this.prerequisite,
     this.shortDesc = '',
+    this.data = const {},
   });
   final String id;
   final String kind;
@@ -81,6 +82,37 @@ class HomebrewEntry {
   /// homebrew kind that becomes a sheet entry; see rules.sheetText.
   final String shortDesc;
 
+  /// Kind-specific rules data entered in the My Homebrew editor - a
+  /// spell's level/school/casting time, a weapon's damage/properties, a
+  /// species' speed/size/traits, a class's hit die and features by level,
+  /// a subclass's parent class... Plain JSON (keys documented where each
+  /// kind is read - see data/homebrew_catalog.dart), so a new field never
+  /// needs a schema change here.
+  final Map<String, dynamic> data;
+
+  /// A copy with some fields replaced - every screen that edits one part of
+  /// an entry keeps the rest.
+  HomebrewEntry copyWith({
+    String? desc,
+    String? source,
+    List<Effect>? effects,
+    String? category,
+    String? prerequisite,
+    String? shortDesc,
+    Map<String, dynamic>? data,
+  }) => HomebrewEntry(
+    id: id,
+    kind: kind,
+    name: name,
+    desc: desc ?? this.desc,
+    source: source ?? this.source,
+    effects: effects ?? this.effects,
+    category: category ?? this.category,
+    prerequisite: prerequisite ?? this.prerequisite,
+    shortDesc: shortDesc ?? this.shortDesc,
+    data: data ?? this.data,
+  );
+
   Map<String, dynamic> toJson() => {
     'id': id,
     'kind': kind,
@@ -91,6 +123,7 @@ class HomebrewEntry {
     'category': category,
     'prerequisite': prerequisite,
     'shortDesc': shortDesc,
+    'data': data,
   };
 
   factory HomebrewEntry.fromJson(Map<String, dynamic> j) => HomebrewEntry(
@@ -105,5 +138,6 @@ class HomebrewEntry {
     category: j['category'] as String?,
     prerequisite: j['prerequisite'] as String?,
     shortDesc: j['shortDesc'] as String? ?? '',
+    data: (j['data'] as Map<String, dynamic>?) ?? const {},
   );
 }

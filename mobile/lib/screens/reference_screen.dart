@@ -52,6 +52,31 @@ class ReferenceScreen extends StatelessWidget {
         'Character Options',
         [
           _RefCategory(
+            'Classes',
+            '${srdCatalog.classesByKey.length} classes, with level tables '
+                'and subclasses',
+            _RefKind.chapters,
+            _classEntries,
+          ),
+          _RefCategory(
+            'Species',
+            '${srdCatalog.speciesByKey.length} species',
+            _RefKind.items,
+            _speciesEntries,
+          ),
+          _RefCategory(
+            'Backgrounds',
+            '${srdCatalog.backgroundsByKey.length} backgrounds',
+            _RefKind.items,
+            _backgroundEntries,
+          ),
+          _RefCategory(
+            'Feats',
+            '${srdCatalog.featsByKey.length} feats',
+            _RefKind.items,
+            _featEntries,
+          ),
+          _RefCategory(
             'Spells',
             '${srdCatalog.spells.length} spells',
             _RefKind.items,
@@ -75,6 +100,18 @@ class ReferenceScreen extends StatelessWidget {
       (
         'Equipment',
         [
+          _RefCategory(
+            'Weapons',
+            '${srdCatalog.weaponsByKey.length} weapons',
+            _RefKind.items,
+            _weaponEntries,
+          ),
+          _RefCategory(
+            'Armor',
+            '${srdCatalog.armorByKey.length} armor',
+            _RefKind.items,
+            _armorEntries,
+          ),
           _RefCategory(
             'Gear',
             '${srdCatalog.gearByKey.length} items',
@@ -169,7 +206,33 @@ class ReferenceScreen extends StatelessWidget {
     ];
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Reference')),
+      appBar: AppBar(
+        title: const Text('Reference'),
+        actions: [
+          IconButton(
+            tooltip: 'Search everything',
+            icon: const Icon(Icons.search),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => ReferenceListScreen(
+                  title: 'Search Everything',
+                  entries: [
+                    for (final (_, categories) in groups)
+                      for (final category in categories)
+                        if (category.kind == _RefKind.items)
+                          for (final e in category.entries())
+                            RefEntry(
+                              name: e.name,
+                              tag: [category.title, ?e.tag].join(' · '),
+                              desc: e.desc,
+                            ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
@@ -264,6 +327,133 @@ List<RefEntry> _spellEntries() {
       ),
   ];
 }
+
+/// One section per class: its traits, its level table (every column,
+/// spell slots included), its features by level, and its SRD subclass.
+List<RefEntry> _classEntries() => [
+  for (final cls in srdCatalog.classesByKey.values)
+    RefEntry(name: cls.name, desc: _classText(cls)),
+];
+
+String _classText(SrdClass cls) {
+  final buffer = StringBuffer();
+  for (final e in cls.traits.entries) {
+    buffer.writeln('**${e.key}:** ${e.value}\n');
+  }
+  // Level table as HTML (MarkdownText renders <table>) - every string
+  // column, then spell slots by level where the class has them.
+  final columns = <String>[
+    for (final key in cls.levels.first.keys)
+      if (key != 'spellSlots') key,
+  ];
+  final slotLevels = <int>{
+    for (final slots in cls.spellSlotsByLevel.values) ...slots.keys,
+  }.toList()..sort();
+  buffer.writeln('### ${cls.name} Features\n');
+  buffer.writeln('<table><thead><tr>');
+  for (final c in columns) {
+    buffer.write('<th>$c</th>');
+  }
+  for (final s in slotLevels) {
+    buffer.write('<th>Slot $s</th>');
+  }
+  buffer.writeln('</tr></thead><tbody>');
+  for (final row in cls.levels) {
+    buffer.write('<tr>');
+    for (final c in columns) {
+      buffer.write('<td>${row[c] ?? '-'}</td>');
+    }
+    final level = int.tryParse(row['Level'] ?? '') ?? 0;
+    for (final s in slotLevels) {
+      buffer.write('<td>${cls.spellSlotsByLevel[level]?[s] ?? '-'}</td>');
+    }
+    buffer.writeln('</tr>');
+  }
+  buffer.writeln('</tbody></table>\n');
+  for (final f in cls.features) {
+    buffer.writeln('### Level ${f.level}: ${f.name}\n\n${f.desc}\n');
+  }
+  final sub = cls.subclass;
+  if (sub != null) {
+    buffer.writeln('## Subclass: ${sub.name}\n');
+    for (final f in sub.features) {
+      buffer.writeln('### Level ${f.level}: ${f.name}\n\n${f.desc}\n');
+    }
+  }
+  return buffer.toString();
+}
+
+List<RefEntry> _speciesEntries() => [
+  for (final s in srdCatalog.speciesByKey.values)
+    RefEntry(
+      name: s.name,
+      tag: '${RegExp(r'^\w+').stringMatch(s.size) ?? ''} · ${s.speed}',
+      desc: [
+        '**Size:** ${s.size}',
+        '**Speed:** ${s.speed}',
+        for (final t in s.traits) '**${t.name}.** ${t.desc}',
+        for (final table in s.tables)
+          '**${table.caption}:** ${[for (final row in table.rows) row.join(' - ')].join('; ')}',
+      ].join('\n\n'),
+    ),
+];
+
+List<RefEntry> _backgroundEntries() => [
+  for (final b in srdCatalog.backgroundsByKey.values)
+    RefEntry(
+      name: b.name,
+      tag: b.feat,
+      desc: [
+        '**Ability Scores:** ${b.abilityScores.join(', ')}',
+        '**Feat:** ${b.feat ?? '-'}',
+        '**Skill Proficiencies:** ${b.skillProficiencies.join(', ')}',
+        if (b.toolProficiency != null)
+          '**Tool Proficiency:** ${b.toolProficiency}',
+        if (b.equipment != null) '**Equipment:** ${b.equipment}',
+      ].join('\n\n'),
+    ),
+];
+
+List<RefEntry> _featEntries() => [
+  for (final f in srdCatalog.featsByKey.values)
+    RefEntry(
+      name: f.name,
+      tag: [f.category, ?f.prerequisite].join(' · '),
+      desc: [
+        if (f.desc.isNotEmpty) f.desc,
+        for (final b in f.benefits) '**${b.name}.** ${b.desc}',
+      ].join('\n\n'),
+    ),
+];
+
+List<RefEntry> _weaponEntries() => [
+  for (final w in srdCatalog.weaponsByKey.values)
+    RefEntry(
+      name: w.name,
+      tag: w.category,
+      desc: [
+        '**Damage:** ${w.damage}',
+        if (w.properties.isNotEmpty)
+          '**Properties:** ${w.properties.join(', ')}',
+        if (w.mastery != null)
+          '**Mastery - ${w.mastery}:** '
+              '${srdCatalog.weaponPropertiesByName[w.mastery]?.desc ?? ''}',
+      ].join('\n\n'),
+    ),
+];
+
+List<RefEntry> _armorEntries() => [
+  for (final a in srdCatalog.armorByKey.values)
+    RefEntry(
+      name: a.name,
+      tag: a.category,
+      desc: [
+        '**Armor Class:** ${a.armorClass}',
+        if (a.strength != null) '**Strength:** ${a.strength}',
+        if (a.stealth) '**Stealth:** Disadvantage',
+      ].join('\n\n'),
+    ),
+];
 
 List<RefEntry> _skillEntries() => [
   for (final skill

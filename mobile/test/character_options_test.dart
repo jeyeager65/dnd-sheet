@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:dnd_sheet/data/character_factory.dart';
+import 'package:dnd_sheet/data/homebrew_catalog.dart';
 import 'package:dnd_sheet/data/homebrew_repository.dart';
 import 'package:dnd_sheet/data/srd_catalog.dart';
 import 'package:dnd_sheet/data/starting_equipment.dart';
@@ -471,5 +472,84 @@ void main() {
     c.sizeChoice = 'Small';
     expect(rules.sizeFor(c), 'Small');
     expect(rules.speciesSizeOptions('srd-2024_gnome-species'), ['Small']);
+  });
+
+  group('items, unarmed strike, homebrew stats', () {
+    test(
+      'itemInfo finds gear, tools, magic items (with attunement), and weapons',
+      () {
+        expect(rules.itemInfo("Explorer's Pack")?.kind, 'Gear');
+        expect(rules.itemInfo("Thieves' Tools")?.kind, 'Tool');
+        final amulet = rules.itemInfo('Amulet of the Planes')!;
+        expect(amulet.requiresAttunement, isTrue);
+        expect(amulet.rarity, 'Very Rare');
+        expect(rules.itemInfo('Longsword')?.desc, contains('Slashing'));
+        expect(rules.itemInfo('Druidic Focus (Quarterstaff)'), isNotNull);
+        expect(rules.itemInfo('A Very Specific Rock'), isNull);
+      },
+    );
+
+    test('attunement limit is 3, or 4 with Use Magic Device', () {
+      final c = _make();
+      expect(rules.attunementLimit(c), 3);
+      c.features = [
+        ...c.features,
+        GrantedFeature(name: 'Use Magic Device', source: 'Thief'),
+      ];
+      expect(rules.attunementLimit(c), 4);
+    });
+
+    test(
+      'Unarmed Strike: 1 + Str normally; Martial Arts die and Dex for a Monk',
+      () {
+        final fighter = _make(increases: const {'str': 2, 'con': 1}); // Str 16
+        final u = rules.unarmedStrike(fighter);
+        expect(u.attack, 3 + 2);
+        expect(u.damage, '4 Bludgeoning');
+        expect(u.grappleDc, 8 + 3 + 2);
+        final monk = _make(cls: 'Monk', increases: const {'dex': 2, 'wis': 1});
+        final m = rules.unarmedStrike(monk);
+        expect(m.ability, 'Dex');
+        expect(m.damage, '1d6+3 Bludgeoning');
+      },
+    );
+
+    test(
+      'homebrew weapon and armor stats round-trip through the entry data',
+      () {
+        final stats = WeaponStats(
+          damageDice: '1d10',
+          damageType: 'Force',
+          category: 'Martial Ranged Weapons',
+          properties: ['Ammunition', 'Heavy'],
+          mastery: 'Slow',
+        );
+        final back = WeaponStats.fromData(stats.toData())!;
+        final w = back.toWeapon('Arc Caster', proficient: true);
+        expect(rules.isRangedWeapon(w), isTrue);
+        expect(w.masteryDesc, isNotNull);
+
+        final armor = ArmorStats(
+          category: 'Medium',
+          baseAc: 14,
+          dexMode: 'max2',
+        );
+        expect(armor.formula, '14 + Dex modifier (max 2)');
+        final parsed = ArmorStats.fromFormula('15 + Dex modifier (max 2)');
+        expect(parsed.baseAc, 15);
+        expect(parsed.dexMode, 'max2');
+      },
+    );
+
+    test(
+      'pdfAttackRowCount counts weapons, innate attacks, and damage cantrips',
+      () {
+        final c = _make(cls: 'Wizard', increases: const {'int': 2, 'con': 1});
+        String key(String n) =>
+            srdCatalog.spells.firstWhere((s) => s.name == n).key;
+        c.spellcasting!.cantripsKnown = [key('Fire Bolt'), key('Light')];
+        expect(rules.pdfAttackRowCount(c), c.weapons.length + 1);
+      },
+    );
   });
 }

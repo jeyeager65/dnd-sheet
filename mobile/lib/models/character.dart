@@ -155,9 +155,9 @@ class Weapon {
   final String name;
   String damageDice; // e.g. "2d6"
   String damageType;
-  final List<String> properties; // e.g. ["Heavy", "Two-Handed"]
-  final String? mastery;
-  final String? masteryDesc;
+  List<String> properties; // e.g. ["Heavy", "Two-Handed"]
+  String? mastery;
+  String? masteryDesc;
   bool proficient;
   int magicBonus;
   bool finesse;

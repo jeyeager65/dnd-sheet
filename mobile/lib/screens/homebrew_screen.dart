@@ -698,6 +698,7 @@ class _HomebrewEditScreenState extends State<HomebrewEditScreen> {
             ? _prerequisiteController.text.trim()
             : null,
         shortDesc: _isFeat ? _shortDescController.text.trim() : '',
+        data: widget.entry.data,
       ),
     );
     Navigator.of(context).pop();

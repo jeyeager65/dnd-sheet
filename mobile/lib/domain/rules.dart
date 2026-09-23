@@ -690,6 +690,41 @@ DamageResult damageFor(Character c, Weapon w) {
   );
 }
 
+/// Rows the PDF's WEAPONS & DAMAGE CANTRIPS table would need: weapons,
+/// damaging innate attacks, and damage cantrips (see character_sheet_pdf).
+int pdfAttackRowCount(Character c) =>
+    c.weapons.length +
+    c.innateAttacks.where((a) => innateAttackInfo(c, a).diceCount > 0).length +
+    (c.spellcasting?.cantripsKnown ?? const <String>[])
+        .map((k) => spellRefFor(k, homebrewLevel: 0))
+        .where((s) => s != null && spellDamageInfo(s, c.level).dice != null)
+        .length;
+
+/// An Unarmed Strike's numbers: attack (Strength + Proficiency Bonus -
+/// everyone is proficient), damage (1 + Strength, or with Martial Arts the
+/// Martial Arts die + the better of Str/Dex), and the Grapple/Shove save DC
+/// (8 + Strength + PB; Martial Arts allows Dex).
+({int attack, String damage, int grappleDc, String ability}) unarmedStrike(
+  Character c,
+) {
+  final str = abilityModifier(c.abilityScores.str);
+  final dex = abilityModifier(c.abilityScores.dex);
+  final prof = proficiencyBonusForLevel(c.level);
+  final monk = martialArtsActive(c);
+  final useDex = monk && dex > str;
+  final mod = useDex ? dex : str;
+  final die = monk ? martialArtsDie(c) : null;
+  final bonus = mod != 0 ? formatModifier(mod) : '';
+  return (
+    attack: mod + prof + sumEffects(c, 'attackRoll'),
+    damage: die != null
+        ? '$die$bonus Bludgeoning'
+        : '${(1 + mod).clamp(0, 99)} Bludgeoning',
+    grappleDc: 8 + mod + prof,
+    ability: useDex ? 'Dex' : 'Str',
+  );
+}
+
 /// The SRD weapon [w] is (or is a magic/renamed version of) - an exact
 /// name match first, then the longest SRD weapon name contained in its
 /// name ("Longsword +1", "Flame Tongue Longsword" -> Longsword). Null for a

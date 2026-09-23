@@ -14,6 +14,7 @@ import '../widgets/expandable_row.dart';
 import '../widgets/ledger_bits.dart';
 import '../widgets/markdown_text.dart';
 import '../widgets/stat_grid.dart';
+import '../data/homebrew_catalog.dart';
 import 'catalog_picker_screen.dart';
 import 'character_form_screen.dart';
 import 'option_picker.dart';
@@ -753,10 +754,26 @@ class _CombatTab extends StatelessWidget {
       // Homebrew (or otherwise unresolved) pick - no SRD mechanics to
       // pull from, so ask for them by hand instead of silently dropping
       // the add.
-      if (!context.mounted) return;
-      final weapon = await _showHomebrewWeaponDialog(context, picked.name);
-      if (weapon == null) return;
-      character.weapons = [...character.weapons, weapon];
+      final entry = picked.isHomebrew ? homebrewById(picked.key) : null;
+      var stats = entry != null ? WeaponStats.fromData(entry.data) : null;
+      if (stats == null) {
+        if (!context.mounted) return;
+        stats = await _showHomebrewWeaponDialog(context, picked.name);
+        if (stats == null) return;
+        if (entry != null) saveHomebrewData(entry.id, stats.toData());
+      }
+      character.weapons = [
+        ...character.weapons,
+        stats.toWeapon(
+          picked.name,
+          proficient: rules.isProficientWithWeapon(
+            character,
+            picked.name,
+            stats.category,
+            stats.properties,
+          ),
+        ),
+      ];
       onChanged();
       return;
     }
@@ -1027,6 +1044,29 @@ class _CombatTab extends StatelessWidget {
             ),
           ],
         ),
+        Builder(
+          builder: (context) {
+            final unarmed = rules.unarmedStrike(character);
+            return ExpandableRow(
+              title: 'Unarmed Strike',
+              subtitle: Text(
+                '${rules.formatModifier(unarmed.attack)} / ${unarmed.damage}',
+                style: LedgerTheme.dataStyle(
+                  fontSize: 13,
+                  color: LedgerColors.inkDim,
+                ),
+              ),
+              body: MarkdownText(
+                'Punch, kick, headbutt: ${unarmed.ability} + Proficiency '
+                'Bonus to hit, ${unarmed.damage} damage. Or instead: '
+                '**Grapple** (target makes a Str or Dex save, DC '
+                '${unarmed.grappleDc}, or is Grappled) or **Shove** (same '
+                'DC, or pushed 5 ft or knocked Prone). Needs a free hand to '
+                'grapple.',
+              ),
+            );
+          },
+        ),
         for (final attack in character.innateAttacks)
           _InnateAttackRow(
             character: character,
@@ -1039,6 +1079,17 @@ class _CombatTab extends StatelessWidget {
             weapon: weapon,
             onRemove: () => _removeWeapon(weapon.name),
             onChanged: onChanged,
+          ),
+        if (rules.pdfAttackRowCount(character) > 6)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text(
+              'The PDF sheet has room for 6 attacks; '
+              '${rules.pdfAttackRowCount(character) - 6} past that '
+              "(weapons first, then Breath Weapon, then damage cantrips) "
+              "won't be printed.",
+              style: const TextStyle(fontSize: 12, color: LedgerColors.inkDim),
+            ),
           ),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1056,6 +1107,8 @@ class _CombatTab extends StatelessWidget {
             onChanged: onChanged,
             onRemove: () => _removeMount(mount),
           ),
+        const SectionLabel('Actions'),
+        const _ActionsReference(),
         const SectionLabel('Conditions'),
         _ConditionsSection(character: character, onChanged: onChanged),
         const SizedBox(height: 16),
@@ -1133,6 +1186,7 @@ Future<void> _pickAndGrantFeat(
                   category: category,
                   prerequisite: entry.prerequisite,
                   shortDesc: entry.shortDesc,
+                  data: entry.data,
                 ),
               ),
       ),
@@ -1747,6 +1801,47 @@ class _ExhaustionRow extends StatelessWidget {
   }
 }
 
+/// The 12 standard actions (and Bonus Action / Reaction / Opportunity
+/// Attacks) with their SRD Rules Glossary text - what you can do on a turn,
+/// without reaching for the book.
+class _ActionsReference extends StatelessWidget {
+  const _ActionsReference();
+
+  static const _names = [
+    'Attack',
+    'Dash',
+    'Disengage',
+    'Dodge',
+    'Help',
+    'Hide',
+    'Influence',
+    'Magic',
+    'Ready',
+    'Search',
+    'Study',
+    'Utilize',
+    'Bonus Action',
+    'Reaction',
+    'Opportunity Attacks',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final byName = {for (final t in srdCatalog.rulesGlossary) t.name: t};
+    return Column(
+      children: [
+        for (final name in _names)
+          if (byName[name] case final term?)
+            ExpandableRow(
+              title: name,
+              tag: term.tag == 'Action' ? 'Action' : null,
+              body: MarkdownText(term.desc),
+            ),
+      ],
+    );
+  }
+}
+
 class _ConditionsSection extends StatelessWidget {
   const _ConditionsSection({required this.character, required this.onChanged});
   final Character character;
@@ -2160,13 +2255,17 @@ Future<String?> _showTextDialog(
 /// correcting too, not just for a homebrew pick. Returns true if the
 /// player saved a change, so the caller knows whether to persist.
 Future<bool> _showEditWeaponDialog(BuildContext context, Weapon weapon) async {
-  final diceController = TextEditingController(text: weapon.damageDice);
-  final typeController = TextEditingController(text: weapon.damageType);
+  final stats = WeaponStats(
+    damageDice: weapon.damageDice,
+    damageType: weapon.damageType,
+    category: rules.weaponCategory(weapon) ?? 'Simple Melee Weapons',
+    properties: [...weapon.properties],
+    mastery: weapon.mastery,
+  );
   final magicBonusController = TextEditingController(
     text: '${weapon.magicBonus}',
   );
   var proficient = weapon.proficient;
-  var finesse = weapon.finesse;
 
   final saved = await showDialog<bool>(
     context: context,
@@ -2178,21 +2277,7 @@ Future<bool> _showEditWeaponDialog(BuildContext context, Weapon weapon) async {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TextField(
-                controller: diceController,
-                decoration: const InputDecoration(
-                  labelText: 'Damage dice',
-                  hintText: 'e.g. 2d6',
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: typeController,
-                decoration: const InputDecoration(
-                  labelText: 'Damage type',
-                  hintText: 'e.g. Slashing',
-                ),
-              ),
+              ..._weaponStatsFields(stats, setState),
               const SizedBox(height: 8),
               TextField(
                 controller: magicBonusController,
@@ -2210,16 +2295,6 @@ Future<bool> _showEditWeaponDialog(BuildContext context, Weapon weapon) async {
                 contentPadding: EdgeInsets.zero,
                 onChanged: (v) => setState(() => proficient = v ?? false),
               ),
-              CheckboxListTile(
-                title: const Text('Finesse'),
-                subtitle: const Text(
-                  'Uses Dex instead of Str if better',
-                  style: TextStyle(fontSize: 11),
-                ),
-                value: finesse,
-                contentPadding: EdgeInsets.zero,
-                onChanged: (v) => setState(() => finesse = v ?? false),
-              ),
             ],
           ),
         ),
@@ -2231,13 +2306,17 @@ Future<bool> _showEditWeaponDialog(BuildContext context, Weapon weapon) async {
           TextButton(
             onPressed: () {
               weapon
-                ..damageDice = diceController.text.trim().isEmpty
-                    ? weapon.damageDice
-                    : diceController.text.trim()
-                ..damageType = typeController.text.trim()
+                ..damageDice = stats.damageDice
+                ..damageType = stats.damageType
+                ..category = stats.category
                 ..magicBonus = int.tryParse(magicBonusController.text) ?? 0
                 ..proficient = proficient
-                ..finesse = finesse;
+                ..finesse = stats.properties.contains('Finesse')
+                ..properties = [...stats.properties]
+                ..mastery = stats.mastery
+                ..masteryDesc = stats.mastery != null
+                    ? srdCatalog.weaponPropertiesByName[stats.mastery]?.desc
+                    : null;
               Navigator.of(context).pop(true);
             },
             child: const Text('Save'),
@@ -2249,69 +2328,110 @@ Future<bool> _showEditWeaponDialog(BuildContext context, Weapon weapon) async {
   return saved ?? false;
 }
 
-/// Collects hand-entered mechanics for a homebrew (or otherwise
-/// unresolved) weapon pick - there's no SRD data to pull damage dice,
-/// type, or properties from, so the player enters them directly, the same
-/// gap the web app's InventoryItem.weaponDamage/finesse/heavy fields cover
-/// for a custom weapon.
-Future<Weapon?> _showHomebrewWeaponDialog(BuildContext context, String name) {
-  final diceController = TextEditingController(text: '1d6');
-  final typeController = TextEditingController();
-  var heavy = false;
-  var finesse = false;
-  var proficient = true;
+/// The shared weapon-stats form - damage dice, damage type, category,
+/// properties, and mastery, each picked from the SRD's own lists rather
+/// than typed - used to enter a homebrew weapon and to edit any weapon.
+List<Widget> _weaponStatsFields(
+  WeaponStats stats,
+  void Function(void Function()) setState,
+) {
+  final dice = {...commonDamageDice, stats.damageDice}.toList();
+  final types = [for (final dt in srdCatalog.damageTypes) dt.name];
+  final type = types.firstWhere(
+    (t) => t.toLowerCase() == stats.damageType.toLowerCase(),
+    orElse: () => stats.damageType,
+  );
+  return [
+    Row(
+      children: [
+        Expanded(
+          child: DropdownButtonFormField<String>(
+            initialValue: stats.damageDice,
+            decoration: const InputDecoration(labelText: 'Damage dice'),
+            items: [
+              for (final d in dice) DropdownMenuItem(value: d, child: Text(d)),
+            ],
+            onChanged: (v) => setState(() => stats.damageDice = v!),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: DropdownButtonFormField<String>(
+            initialValue: types.contains(type) ? type : null,
+            isExpanded: true,
+            decoration: const InputDecoration(labelText: 'Damage type'),
+            items: [
+              for (final t in types) DropdownMenuItem(value: t, child: Text(t)),
+            ],
+            onChanged: (v) => setState(() => stats.damageType = v!),
+          ),
+        ),
+      ],
+    ),
+    DropdownButtonFormField<String>(
+      initialValue: weaponCategories.contains(stats.category)
+          ? stats.category
+          : null,
+      isExpanded: true,
+      decoration: const InputDecoration(labelText: 'Category'),
+      items: [
+        for (final c in weaponCategories)
+          DropdownMenuItem(value: c, child: Text(c)),
+      ],
+      onChanged: (v) => setState(() => stats.category = v!),
+    ),
+    const SizedBox(height: 8),
+    const Text('Properties', style: TextStyle(fontSize: 12)),
+    Wrap(
+      spacing: 4,
+      runSpacing: 4,
+      children: [
+        for (final prop in weaponPropertyNames)
+          FilterChip(
+            label: Text(prop, style: const TextStyle(fontSize: 12)),
+            selected: stats.properties.any((x) => x.startsWith(prop)),
+            onSelected: (v) => setState(() {
+              stats.properties = v
+                  ? [...stats.properties, prop]
+                  : stats.properties.where((x) => !x.startsWith(prop)).toList();
+            }),
+          ),
+      ],
+    ),
+    DropdownButtonFormField<String?>(
+      initialValue: weaponMasteryNames.contains(stats.mastery)
+          ? stats.mastery
+          : null,
+      decoration: const InputDecoration(labelText: 'Mastery'),
+      items: [
+        const DropdownMenuItem(value: null, child: Text('None')),
+        for (final m in weaponMasteryNames)
+          DropdownMenuItem(value: m, child: Text(m)),
+      ],
+      onChanged: (v) => setState(() => stats.mastery = v),
+    ),
+  ];
+}
 
-  return showDialog<Weapon>(
+/// Collects the stats for a homebrew (or otherwise uncataloged) weapon -
+/// there's no SRD record to read them from. The picks are saved on the
+/// homebrew entry, so the next character to add it skips this.
+Future<WeaponStats?> _showHomebrewWeaponDialog(
+  BuildContext context,
+  String name,
+) {
+  final stats = WeaponStats();
+  return showDialog<WeaponStats>(
     context: context,
     builder: (context) => StatefulBuilder(
       builder: (context, setState) => AlertDialog(
         title: Text(name),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextField(
-              controller: diceController,
-              decoration: const InputDecoration(
-                labelText: 'Damage dice',
-                hintText: 'e.g. 2d6',
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: typeController,
-              decoration: const InputDecoration(
-                labelText: 'Damage type',
-                hintText: 'e.g. Slashing',
-              ),
-            ),
-            CheckboxListTile(
-              title: const Text('Heavy'),
-              subtitle: const Text(
-                'Applies Heavy Weapon Mastery for the Great Weapon Master feat',
-                style: TextStyle(fontSize: 11),
-              ),
-              value: heavy,
-              contentPadding: EdgeInsets.zero,
-              onChanged: (v) => setState(() => heavy = v ?? false),
-            ),
-            CheckboxListTile(
-              title: const Text('Finesse'),
-              subtitle: const Text(
-                'Uses Dex instead of Str if better',
-                style: TextStyle(fontSize: 11),
-              ),
-              value: finesse,
-              contentPadding: EdgeInsets.zero,
-              onChanged: (v) => setState(() => finesse = v ?? false),
-            ),
-            CheckboxListTile(
-              title: const Text('Proficient'),
-              value: proficient,
-              contentPadding: EdgeInsets.zero,
-              onChanged: (v) => setState(() => proficient = v ?? false),
-            ),
-          ],
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: _weaponStatsFields(stats, setState),
+          ),
         ),
         actions: [
           TextButton(
@@ -2319,18 +2439,7 @@ Future<Weapon?> _showHomebrewWeaponDialog(BuildContext context, String name) {
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () => Navigator.of(context).pop(
-              Weapon(
-                name: name,
-                damageDice: diceController.text.trim().isEmpty
-                    ? '1d6'
-                    : diceController.text.trim(),
-                damageType: typeController.text.trim(),
-                properties: [if (heavy) 'Heavy', if (finesse) 'Finesse'],
-                proficient: proficient,
-                finesse: finesse,
-              ),
-            ),
+            onPressed: () => Navigator.of(context).pop(stats),
             child: const Text('Add'),
           ),
         ],
@@ -2340,95 +2449,118 @@ Future<Weapon?> _showHomebrewWeaponDialog(BuildContext context, String name) {
 }
 
 class _HomebrewArmorResult {
-  const _HomebrewArmorResult({required this.isShield, this.armor});
+  const _HomebrewArmorResult({
+    required this.isShield,
+    required this.stats,
+    this.armor,
+  });
   final bool isShield;
+  final ArmorStats stats;
   final EquippedArmor? armor;
 }
 
-/// Collects hand-entered mechanics for a homebrew (or otherwise
-/// unresolved) armor pick - same idea as [_showHomebrewWeaponDialog], for
-/// AC formula/Strength requirement/Stealth instead of damage. Also reused
-/// to edit already-equipped armor in place - pass [initial] to pre-fill.
+/// Collects the stats for homebrew (or uncataloged) armor - category, base
+/// AC and how Dex applies, Strength requirement, Stealth - from dropdowns.
+/// Also edits already-equipped armor ([initial]). A homebrew entry's picks
+/// are saved on it, so it isn't asked again.
 Future<_HomebrewArmorResult?> _showHomebrewArmorDialog(
   BuildContext context,
   String name, {
   EquippedArmor? initial,
 }) {
-  final formulaController = TextEditingController(
-    text: initial?.armorClassFormula ?? '10 + Dex modifier',
-  );
-  final strengthController = TextEditingController(
-    text: initial?.strengthRequirement ?? '',
-  );
-  var stealth = initial?.stealth ?? false;
-  var category = initial?.category;
-  var isShield = false;
+  final stats = initial == null
+      ? ArmorStats()
+      : ArmorStats.fromFormula(
+          initial.armorClassFormula,
+          category: initial.category,
+          strength: initial.strengthRequirement,
+          stealth: initial.stealth,
+        );
+  final acController = TextEditingController(text: '${stats.baseAc}');
 
   return showDialog<_HomebrewArmorResult>(
     context: context,
     builder: (context) => StatefulBuilder(
       builder: (context, setState) => AlertDialog(
         title: Text(name),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            CheckboxListTile(
-              title: const Text('Shield'),
-              subtitle: const Text(
-                'Flat +2 to AC instead of replacing worn armor',
-                style: TextStyle(fontSize: 11),
-              ),
-              value: isShield,
-              contentPadding: EdgeInsets.zero,
-              onChanged: (v) => setState(() => isShield = v ?? false),
-            ),
-            if (!isShield) ...[
-              TextField(
-                controller: formulaController,
-                decoration: const InputDecoration(
-                  labelText: 'AC formula',
-                  hintText: 'e.g. 15 + Dex modifier (max 2), or a flat 18',
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: strengthController,
-                decoration: const InputDecoration(
-                  labelText: 'Strength requirement (optional)',
-                  hintText: 'e.g. Str 13',
-                ),
-              ),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<String?>(
-                initialValue: category,
-                decoration: const InputDecoration(
-                  labelText: 'Category (optional)',
-                ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              DropdownButtonFormField<String>(
+                initialValue: stats.category,
+                decoration: const InputDecoration(labelText: 'Category'),
                 items: const [
-                  DropdownMenuItem(value: null, child: Text('Not set')),
                   DropdownMenuItem(value: 'Light', child: Text('Light')),
                   DropdownMenuItem(value: 'Medium', child: Text('Medium')),
                   DropdownMenuItem(value: 'Heavy', child: Text('Heavy')),
+                  DropdownMenuItem(
+                    value: 'Shield',
+                    child: Text('Shield (+2 AC)'),
+                  ),
                 ],
-                onChanged: (v) => setState(() => category = v),
+                onChanged: (v) => setState(() {
+                  stats.category = v!;
+                  stats.dexMode = switch (v) {
+                    'Medium' => 'max2',
+                    'Heavy' => 'none',
+                    _ => 'full',
+                  };
+                }),
               ),
-              const Padding(
-                padding: EdgeInsets.only(top: 4),
-                child: Text(
-                  'Needed for feats like Heavy Armor Master, which only '
-                  'apply while wearing Heavy armor.',
-                  style: TextStyle(fontSize: 11, color: LedgerColors.inkDim),
+              if (!stats.isShield) ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: acController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(labelText: 'Base AC'),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        initialValue: stats.dexMode,
+                        decoration: const InputDecoration(labelText: 'Dex'),
+                        items: const [
+                          DropdownMenuItem(value: 'full', child: Text('+ Dex')),
+                          DropdownMenuItem(
+                            value: 'max2',
+                            child: Text('+ Dex (max 2)'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'none',
+                            child: Text('No Dex'),
+                          ),
+                        ],
+                        onChanged: (v) => setState(() => stats.dexMode = v!),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              CheckboxListTile(
-                title: const Text('Stealth Disadvantage'),
-                value: stealth,
-                contentPadding: EdgeInsets.zero,
-                onChanged: (v) => setState(() => stealth = v ?? false),
-              ),
+                DropdownButtonFormField<String?>(
+                  initialValue: stats.strength,
+                  decoration: const InputDecoration(
+                    labelText: 'Strength requirement',
+                  ),
+                  items: [
+                    const DropdownMenuItem(value: null, child: Text('None')),
+                    for (final s in {'Str 13', 'Str 15', ?stats.strength})
+                      DropdownMenuItem(value: s, child: Text(s)),
+                  ],
+                  onChanged: (v) => setState(() => stats.strength = v),
+                ),
+                CheckboxListTile(
+                  title: const Text('Stealth Disadvantage'),
+                  value: stats.stealth,
+                  contentPadding: EdgeInsets.zero,
+                  onChanged: (v) => setState(() => stats.stealth = v ?? false),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
         actions: [
           TextButton(
@@ -2436,26 +2568,18 @@ Future<_HomebrewArmorResult?> _showHomebrewArmorDialog(
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () => Navigator.of(context).pop(
-              _HomebrewArmorResult(
-                isShield: isShield,
-                armor: isShield
-                    ? null
-                    : EquippedArmor(
-                        name: name,
-                        armorClassFormula: formulaController.text.trim().isEmpty
-                            ? '10 + Dex modifier'
-                            : formulaController.text.trim(),
-                        strengthRequirement:
-                            strengthController.text.trim().isEmpty
-                            ? null
-                            : strengthController.text.trim(),
-                        stealth: stealth,
-                        category: category,
-                      ),
-              ),
-            ),
-            child: const Text('Add'),
+            onPressed: () {
+              stats.baseAc =
+                  int.tryParse(acController.text.trim()) ?? stats.baseAc;
+              Navigator.of(context).pop(
+                _HomebrewArmorResult(
+                  isShield: stats.isShield,
+                  stats: stats,
+                  armor: stats.isShield ? null : stats.toArmor(name),
+                ),
+              );
+            },
+            child: Text(initial == null ? 'Add' : 'Save'),
           ),
         ],
       ),
@@ -2551,9 +2675,20 @@ Future<Mount?> _showMountDialog(BuildContext context, {Mount? initial}) {
             TextField(
               controller: nameController,
               autofocus: true,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Name',
                 hintText: 'e.g. Warhorse',
+                // The SRD's mounts (names only - their stat blocks aren't
+                // in the bundled SRD data, so AC/HP/Speed stay typed).
+                suffixIcon: PopupMenuButton<String>(
+                  tooltip: 'SRD mounts',
+                  icon: const Icon(Icons.arrow_drop_down),
+                  onSelected: (name) => nameController.text = name,
+                  itemBuilder: (_) => [
+                    for (final m in srdCatalog.mountsAndVehicles)
+                      PopupMenuItem(value: m.name, child: Text(m.name)),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 8),
@@ -3329,9 +3464,21 @@ class _ItemsTab extends StatelessWidget {
       // Homebrew (or otherwise unresolved) pick - no SRD mechanics to
       // pull from, so ask for them by hand instead of silently dropping
       // the add.
-      if (!context.mounted) return;
-      final result = await _showHomebrewArmorDialog(context, picked.name);
-      if (result == null) return;
+      final entry = picked.isHomebrew ? homebrewById(picked.key) : null;
+      final saved = entry != null ? ArmorStats.fromData(entry.data) : null;
+      _HomebrewArmorResult? result;
+      if (saved != null) {
+        result = _HomebrewArmorResult(
+          isShield: saved.isShield,
+          stats: saved,
+          armor: saved.isShield ? null : saved.toArmor(picked.name),
+        );
+      } else {
+        if (!context.mounted) return;
+        result = await _showHomebrewArmorDialog(context, picked.name);
+        if (result == null) return;
+        if (entry != null) saveHomebrewData(entry.id, result.stats.toData());
+      }
       if (result.isShield) {
         character.shieldEquipped = true;
         _logAcChange('Equipped a Shield', beforeAc);
@@ -3454,9 +3601,22 @@ class _ItemsTab extends StatelessWidget {
                 ),
                 CheckboxListTile(
                   title: const Text('Attuned'),
+                  subtitle: Text(
+                    '${rules.attunedCount(character)}/'
+                    '${rules.attunementLimit(character)} attuned'
+                    '${rules.itemInfo(item.name)?.requiresAttunement == true ? ' · this item requires attunement' : ''}',
+                    style: const TextStyle(fontSize: 11),
+                  ),
                   value: item.attuned,
                   contentPadding: EdgeInsets.zero,
-                  onChanged: (v) => setState(() => item.attuned = v ?? false),
+                  // At the limit, another item can't be attuned until one
+                  // is un-attuned.
+                  onChanged:
+                      item.attuned ||
+                          rules.attunedCount(character) <
+                              rules.attunementLimit(character)
+                      ? (v) => setState(() => item.attuned = v ?? false)
+                      : null,
                 ),
               ],
             ),
@@ -3543,15 +3703,62 @@ class _ItemsTab extends StatelessWidget {
             ),
           ),
         for (final item in character.inventory)
-          GestureDetector(
-            onTap: () => _editInventoryItem(context, item),
-            child: FactRow(
-              label: item.name,
-              value: item.quantity > 1 ? '×${item.quantity}' : '',
-              caption: _inventoryCaption(item),
-              tally: item.equipped,
-              onDelete: () => _removeItem(item.name),
-            ),
+          Builder(
+            builder: (context) {
+              final info = rules.itemInfo(item.name);
+              final facts = [
+                ?info?.kind,
+                ?info?.rarity,
+                if (info?.requiresAttunement ?? false) 'Requires attunement',
+                if (info?.weight != null) info!.weight!,
+                if (info?.cost != null) info!.cost!,
+              ];
+              return ExpandableRow(
+                title: item.name,
+                tag: item.quantity > 1 ? '×${item.quantity}' : null,
+                leading: Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Tally(on: item.equipped),
+                ),
+                subtitle: _inventoryCaption(item) == null
+                    ? null
+                    : Text(
+                        _inventoryCaption(item)!,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: LedgerColors.inkDim,
+                        ),
+                      ),
+                body: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (facts.isNotEmpty) Text(facts.join(' · ')),
+                    if (info != null && info.desc.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      MarkdownText(info.desc),
+                    ],
+                    if (info == null)
+                      const Text('No catalog entry for this item.'),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => _editInventoryItem(context, item),
+                          child: const Text('Edit'),
+                        ),
+                        TextButton(
+                          onPressed: () => _removeItem(item.name),
+                          style: TextButton.styleFrom(
+                            foregroundColor: LedgerColors.danger,
+                          ),
+                          child: const Text('Remove'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,

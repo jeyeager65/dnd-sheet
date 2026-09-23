@@ -279,3 +279,115 @@ void changeClass(Character c, String classKey, String label) {
   syncGrantedSpells(c);
   logHistory(c, 'Class changed: $oldLabel → $label');
 }
+
+/// What the app knows about a carried item, from the SRD or homebrew:
+/// kind ("Gear", "Tool", "Wondrous Item", "Weapon", ...), rules text,
+/// weight, cost, rarity, and whether it needs attunement.
+class ItemInfo {
+  const ItemInfo({
+    required this.kind,
+    required this.desc,
+    this.weight,
+    this.cost,
+    this.rarity,
+    this.requiresAttunement = false,
+  });
+  final String kind;
+  final String desc;
+  final String? weight;
+  final String? cost;
+  final String? rarity;
+  final bool requiresAttunement;
+}
+
+/// Looks [name] up in the gear, tool, magic item, weapon, and armor
+/// catalogs, then homebrew - exact name first, then without a trailing
+/// parenthetical ("Druidic Focus (Quarterstaff)" -> "Druidic Focus").
+/// Null for an item nothing describes.
+ItemInfo? itemInfo(String name) {
+  ItemInfo? find(String n) {
+    final lower = n.toLowerCase();
+    bool same(String other) => other.toLowerCase() == lower;
+    for (final g in srdCatalog.gearByKey.values) {
+      if (same(g.name)) {
+        return ItemInfo(
+          kind: 'Gear',
+          desc: g.desc,
+          weight: g.weight,
+          cost: g.cost,
+        );
+      }
+    }
+    for (final t in srdCatalog.toolsByKey.values) {
+      if (same(t.name)) {
+        return ItemInfo(
+          kind: 'Tool',
+          desc: [
+            if (t.ability != null) 'Ability: ${t.ability}.',
+            if (t.utilize.isNotEmpty) 'Utilize: ${t.utilize}',
+            if (t.craft.isNotEmpty) 'Craft: ${t.craft}',
+          ].join('\n\n'),
+          cost: t.cost,
+        );
+      }
+    }
+    for (final m in srdCatalog.magicItemsByKey.values) {
+      if (same(m.name)) {
+        return ItemInfo(
+          kind: m.category,
+          desc: m.desc,
+          rarity: m.rarity.replaceAll(RegExp(r'\s*\(.*\)'), ''),
+          requiresAttunement: m.rarity.contains('Attunement'),
+        );
+      }
+    }
+    for (final w in srdCatalog.weaponsByKey.values) {
+      if (same(w.name)) {
+        return ItemInfo(
+          kind: w.category,
+          desc:
+              '${w.damage}. ${w.properties.join(', ')}'
+              '${w.mastery != null ? '. Mastery: ${w.mastery}' : ''}.',
+        );
+      }
+    }
+    for (final a in srdCatalog.armorByKey.values) {
+      if (same(a.name)) {
+        return ItemInfo(
+          kind: '${a.category} Armor',
+          desc:
+              'AC ${a.armorClass}'
+              '${a.strength != null ? '. Strength ${a.strength}' : ''}'
+              '${a.stealth ? '. Disadvantage on Stealth' : ''}.',
+        );
+      }
+    }
+    for (final e in homebrewRepo.entries) {
+      if (same(e.name) &&
+          const [
+            'gear',
+            'tool',
+            'magicItem',
+            'weapon',
+            'armor',
+          ].contains(e.kind)) {
+        return ItemInfo(
+          kind: e.source == 'official' ? 'Official content' : 'Homebrew',
+          desc: e.desc,
+          rarity: e.data['rarity'] as String?,
+          requiresAttunement: e.data['requiresAttunement'] as bool? ?? false,
+        );
+      }
+    }
+    return null;
+  }
+
+  return find(name) ?? find(name.replaceFirst(RegExp(r'\s*\([^)]*\)$'), ''));
+}
+
+/// How many magic items [c] can be attuned to at once - 3, or 4 with the
+/// Thief's Use Magic Device.
+int attunementLimit(Character c) =>
+    c.features.any((f) => f.name == 'Use Magic Device') ? 4 : 3;
+
+int attunedCount(Character c) => c.inventory.where((i) => i.attuned).length;
