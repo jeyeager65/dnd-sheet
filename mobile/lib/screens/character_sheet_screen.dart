@@ -16,6 +16,7 @@ import '../widgets/markdown_text.dart';
 import '../widgets/stat_grid.dart';
 import 'catalog_picker_screen.dart';
 import 'character_form_screen.dart';
+import 'option_picker.dart';
 import 'reference_screen.dart';
 import 'share_json.dart';
 
@@ -341,6 +342,8 @@ class _OverviewTab extends StatelessWidget {
     character.speciesLabel = picked.detail.isEmpty
         ? picked.name
         : '${picked.name} · ${picked.detail}';
+    // A lineage/legacy pick changes which spells the species grants.
+    rules.syncGrantedSpells(character);
     onChanged();
   }
 
@@ -422,7 +425,10 @@ class _OverviewTab extends StatelessWidget {
             label: table != null ? table.caption : 'Species',
             value: character.speciesChoice ?? character.speciesLabel,
             caption: table != null
-                ? 'Sets Breath Weapon damage type and your damage resistance — tap to change'
+                ? switch (character.speciesKey) {
+                    'srd-2024_dragonborn-species' => 'Sets Breath Weapon damage type and your damage resistance — tap to change',
+                    _ => 'Sets the lineage benefits and spells you get — tap to change',
+                  }
                 : null,
           ),
         ),
@@ -438,6 +444,11 @@ class _OverviewTab extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   MarkdownText(trait.desc),
+                  FeatureOptionsBlock(
+                    character: character,
+                    featureName: trait.name,
+                    onChanged: onChanged,
+                  ),
                   _SheetTextBlock(
                     character: character,
                     feature: GrantedFeature(
@@ -573,6 +584,10 @@ class _OverviewTab extends StatelessWidget {
             style: TextStyle(fontSize: 11, color: LedgerColors.inkDim),
           ),
         ),
+        const SectionLabel('Experience'),
+        _ExperienceSection(character: character, onChanged: onChanged),
+        const SectionLabel('Proficiencies'),
+        _ProficienciesSection(character: character, onChanged: onChanged),
         if (character.history.isNotEmpty) ...[
           const SectionLabel('History'),
           for (final entry in character.history.reversed)
@@ -2779,6 +2794,9 @@ class _FeaturesTab extends StatelessWidget {
     if (choice.kind == 'subclass') {
       return _resolveSubclassChoice(context, choice);
     }
+    if (choice.kind == 'option') {
+      return _resolveOptionChoice(context, choice);
+    }
     // Falls back to the label for a choice saved before 'asi' existed as
     // a kind - pendingChoicesForLevelUp always phrases it exactly this
     // way ("Level N: Ability Score Improvement"), and a character's
@@ -2855,6 +2873,33 @@ class _FeaturesTab extends StatelessWidget {
   /// one in the free SRD - Champion for Fighter, Evoker for Wizard, ...) -
   /// shown even with a single option, since the point is that the player
   /// explicitly picks it rather than it being auto-assigned.
+  /// A feature's picks (Expertise, Weapon Mastery, Invocations, ...) -
+  /// through the option picker; the Pending Choice goes away once the set
+  /// has all its picks (rules.chooseOptions).
+  Future<void> _resolveOptionChoice(
+    BuildContext context,
+    PendingChoice choice,
+  ) async {
+    final set = rules.featureOptionSet(character, choice.optionSet ?? '');
+    if (set == null) {
+      // Whatever granted it is gone (a class change) - nothing to pick.
+      _removePendingChoice(choice.id);
+      return;
+    }
+    final picks = await showOptionPicker(
+      context,
+      character,
+      set,
+      count: choice.count,
+    );
+    if (picks == null) return;
+    character.pendingChoices = character.pendingChoices
+        .where((p) => p.id != choice.id)
+        .toList();
+    rules.chooseOptions(character, set, picks);
+    onChanged();
+  }
+
   Future<void> _resolveSubclassChoice(
     BuildContext context,
     PendingChoice choice,
@@ -2947,6 +2992,11 @@ class _FeaturesTab extends StatelessWidget {
                   rules.liveFeatureText(character, f) ??
                       'No description recorded.',
                 ),
+                FeatureOptionsBlock(
+                  character: character,
+                  featureName: f.name,
+                  onChanged: onChanged,
+                ),
                 _SheetTextBlock(character: character, feature: f),
               ],
             ),
@@ -2970,6 +3020,11 @@ class _FeaturesTab extends StatelessWidget {
                 MarkdownText(
                   rules.liveFeatureText(character, f) ??
                       'No description recorded.',
+                ),
+                FeatureOptionsBlock(
+                  character: character,
+                  featureName: f.name,
+                  onChanged: onChanged,
                 ),
                 if (f.name != 'Ability Score Improvement')
                   _SheetTextBlock(character: character, feature: f),
@@ -3719,8 +3774,13 @@ class _SpellsTab extends StatelessWidget {
     final overPrepared = preparedLimit != null && preparedCount > preparedLimit;
 
     final spellsByLevel = <int, List<(KnownSpell, SrdSpellRef?)>>{};
+    final grantedCantrips = <(KnownSpell, SrdSpellRef?)>[];
     for (final known in sc.spells) {
       final ref = rules.knownSpellRef(known);
+      if (known.source != null && ref?.level == 0) {
+        grantedCantrips.add((known, ref));
+        continue;
+      }
       spellsByLevel.putIfAbsent(ref?.level ?? 1, () => []).add((known, ref));
     }
     for (final group in spellsByLevel.values) {
@@ -3793,7 +3853,7 @@ class _SpellsTab extends StatelessWidget {
             ),
           ],
         ),
-        if (sc.cantripsKnown.isEmpty)
+        if (sc.cantripsKnown.isEmpty && grantedCantrips.isEmpty)
           const Padding(
             padding: EdgeInsets.only(bottom: 8),
             child: Text(
@@ -3807,6 +3867,15 @@ class _SpellsTab extends StatelessWidget {
             spellKey: key,
             spell: rules.spellRefFor(key, homebrewLevel: 0),
             onRemove: () => _removeCantrip(key),
+            onChanged: onChanged,
+          ),
+        for (final (known, ref) in grantedCantrips)
+          _SpellRow(
+            character: character,
+            spellKey: known.spellKey,
+            spell: ref,
+            known: known,
+            onRemove: () {},
             onChanged: onChanged,
           ),
         Row(
@@ -4025,15 +4094,25 @@ class _SpellRow extends StatelessWidget {
     final s = spell;
     if (s == null) return false;
     final k = known;
-    if (k == null) return s.concentration;
+    if (k == null || s.level == 0) return s.concentration;
     if (!k.prepared && !k.alwaysPrepared) return false;
-    return s.ritual || rules.castableSlotLevels(character, s.level).isNotEmpty;
+    final free = rules.freeCastsLeft(k);
+    return s.ritual ||
+        (free != null && free != 0) ||
+        rules.castableSlotLevels(character, s.level).isNotEmpty;
   }
 
   @override
   Widget build(BuildContext context) {
     final s = spell;
     final k = known;
+    final freeLeft = k != null ? rules.freeCastsLeft(k) : null;
+    final freeText = freeLeft == null
+        ? ''
+        : freeLeft == rules.atWill
+        ? 'at will'
+        : '$freeLeft/${k!.freeCasts} free '
+              '${k.freeCastRecovery == 'short' ? 'per Short Rest' : 'per Long Rest'}';
     final summary = s == null
         ? ''
         : [
@@ -4042,7 +4121,8 @@ class _SpellRow extends StatelessWidget {
             if (s.castingTime.isNotEmpty)
               s.castingTime.split(RegExp(r',| or Ritual')).first,
             if (s.range.isNotEmpty) s.range,
-            rules.spellSummary(character, s),
+            rules.spellSummary(character, s, ability: k?.abilityOverride),
+            freeText,
           ].where((part) => part.isNotEmpty).join(' · ');
     final tag = s == null
         ? null
@@ -4050,6 +4130,7 @@ class _SpellRow extends StatelessWidget {
             s.school,
             if (s.concentration) 'Conc.',
             if (s.ritual) 'Ritual',
+            if (k?.source != null) k!.source!,
           ].join(' · ');
 
     return ExpandableRow(
@@ -4081,7 +4162,7 @@ class _SpellRow extends StatelessWidget {
       trailing: _canCast
           ? TextButton(
               onPressed: () =>
-                  _showCastDialog(context, character, s!, onChanged),
+                  _showCastDialog(context, character, s!, onChanged, known: k),
               style: TextButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 minimumSize: const Size(0, 30),
@@ -4099,28 +4180,35 @@ class _SpellRow extends StatelessWidget {
                       'have been deleted.',
           ),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              if (k != null)
-                FilterChip(
-                  label: const Text('Always prepared'),
-                  selected: k.alwaysPrepared,
-                  onSelected: (v) {
-                    k.alwaysPrepared = v;
-                    if (v) k.prepared = true;
-                    onChanged();
-                  },
+          if (k?.source != null)
+            Text(
+              'From ${k!.source} - always prepared; it goes away if that '
+              'does.',
+              style: const TextStyle(fontSize: 12),
+            )
+          else
+            Row(
+              children: [
+                if (k != null)
+                  FilterChip(
+                    label: const Text('Always prepared'),
+                    selected: k.alwaysPrepared,
+                    onSelected: (v) {
+                      k.alwaysPrepared = v;
+                      if (v) k.prepared = true;
+                      onChanged();
+                    },
+                  ),
+                const Spacer(),
+                TextButton(
+                  onPressed: onRemove,
+                  style: TextButton.styleFrom(
+                    foregroundColor: LedgerColors.danger,
+                  ),
+                  child: const Text('Remove'),
                 ),
-              const Spacer(),
-              TextButton(
-                onPressed: onRemove,
-                style: TextButton.styleFrom(
-                  foregroundColor: LedgerColors.danger,
-                ),
-                child: const Text('Remove'),
-              ),
-            ],
-          ),
+              ],
+            ),
         ],
       ),
     );
@@ -4136,15 +4224,22 @@ Future<void> _showCastDialog(
   BuildContext context,
   Character character,
   SrdSpellRef spell,
-  VoidCallback onChanged,
-) async {
+  VoidCallback onChanged, {
+  KnownSpell? known,
+}) async {
   const ritual = -1;
+  const free = -2;
+  final freeLeft = known != null ? rules.freeCastsLeft(known) : null;
   final messenger = ScaffoldMessenger.of(context);
   int? choice;
 
   if (spell.level > 0) {
     final levels = rules.castableSlotLevels(character, spell.level);
-    choice = levels.isNotEmpty ? levels.first : (spell.ritual ? ritual : null);
+    choice = freeLeft != null && freeLeft != 0
+        ? free
+        : levels.isNotEmpty
+        ? levels.first
+        : (spell.ritual ? ritual : null);
     final current = character.spellcasting?.concentratingOn;
     final currentName = current == null
         ? null
@@ -4160,7 +4255,7 @@ Future<void> _showCastDialog(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (levels.isEmpty)
+                if (levels.isEmpty && (freeLeft == null || freeLeft == 0))
                   Text(
                     'No level ${spell.level}+ slots left.',
                     style: const TextStyle(color: LedgerColors.inkDim),
@@ -4169,6 +4264,16 @@ Future<void> _showCastDialog(
                   spacing: 8,
                   runSpacing: 8,
                   children: [
+                    if (freeLeft != null && freeLeft != 0)
+                      ChoiceChip(
+                        label: Text(
+                          freeLeft == rules.atWill
+                              ? 'At will (no slot)'
+                              : 'Free cast ($freeLeft left)',
+                        ),
+                        selected: choice == free,
+                        onSelected: (_) => setState(() => choice = free),
+                      ),
                     for (final level in levels)
                       ChoiceChip(
                         label: Text(
@@ -4242,13 +4347,20 @@ Future<void> _showCastDialog(
     if (confirmed != true) return;
   }
 
-  final slotLevel = choice == null || choice == ritual ? null : choice;
-  final ended = rules.castSpell(character, spell, slotLevel: slotLevel);
+  final slotLevel = choice == null || choice! < 0 ? null : choice;
+  final ended = rules.castSpell(
+    character,
+    spell,
+    slotLevel: slotLevel,
+    freeCastFrom: choice == free ? known : null,
+  );
   onChanged();
   final how = slotLevel != null
       ? ' with a level $slotLevel slot'
       : choice == ritual
       ? ' as a Ritual'
+      : choice == free
+      ? ' without a slot'
       : '';
   final endedText = ended == null
       ? ''
@@ -4256,6 +4368,246 @@ Future<void> _showCastDialog(
   messenger.showSnackBar(
     SnackBar(content: Text('Cast ${spell.name}$how$endedText.')),
   );
+}
+
+/// XP toward the next level, with "+ Add XP" for awards in play and a
+/// nudge when there's enough to level up (the AppBar's Level Up does it).
+class _ExperienceSection extends StatelessWidget {
+  const _ExperienceSection({required this.character, required this.onChanged});
+  final Character character;
+  final VoidCallback onChanged;
+
+  Future<void> _addXp(BuildContext context) async {
+    final controller = TextEditingController();
+    final amount = await showDialog<int>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Add Experience Points'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(labelText: 'XP gained'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () =>
+                Navigator.of(context).pop(int.tryParse(controller.text.trim())),
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+    if (amount == null || amount == 0) return;
+    final before = character.experiencePoints;
+    character.experiencePoints = (before + amount).clamp(0, 999999999);
+    rules.logHistory(
+      character,
+      'XP ${amount > 0 ? '+' : ''}$amount',
+      detail: '$before → ${character.experiencePoints}',
+    );
+    onChanged();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final next = rules.xpForNextLevel(character);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                next == null
+                    ? '${character.experiencePoints} XP'
+                    : '${character.experiencePoints} / $next XP '
+                          'to level ${character.level + 1}',
+                style: LedgerTheme.dataStyle(fontSize: 14),
+              ),
+            ),
+            TextButton(
+              onPressed: () => _addXp(context),
+              child: const Text('+ Add XP'),
+            ),
+          ],
+        ),
+        if (rules.readyToLevelUp(character) && character.isCurrent)
+          const Text(
+            'Enough XP to level up - use Level Up at the top.',
+            style: TextStyle(fontSize: 12, color: LedgerColors.accent),
+          ),
+      ],
+    );
+  }
+}
+
+/// Armor training, weapon, and tool proficiencies: what the class and
+/// background grant (locked), plus extras added here or by a feature
+/// choice (Protector, Warden). Changing weapons re-checks every weapon's
+/// proficiency.
+class _ProficienciesSection extends StatelessWidget {
+  const _ProficienciesSection({
+    required this.character,
+    required this.onChanged,
+  });
+  final Character character;
+  final VoidCallback onChanged;
+
+  void _changed() {
+    rules.refreshWeaponProficiency(character);
+    onChanged();
+  }
+
+  Future<void> _addWeapon(BuildContext context) async {
+    final picked = await Navigator.of(context).push<SrdRefItem>(
+      MaterialPageRoute(
+        builder: (_) => CatalogPickerScreen(
+          title: 'Weapon Proficiency',
+          options: [
+            const SrdRefItem(key: 'simple', name: 'Simple weapons'),
+            const SrdRefItem(key: 'martial', name: 'Martial weapons'),
+            ...srdCatalog.weaponOptions,
+          ],
+          homebrewKind: 'weapon',
+        ),
+      ),
+    );
+    if (picked == null ||
+        character.extraWeaponProficiencies.contains(picked.name)) {
+      return;
+    }
+    character.extraWeaponProficiencies = [
+      ...character.extraWeaponProficiencies,
+      picked.name,
+    ];
+    _changed();
+  }
+
+  Future<void> _addTool(BuildContext context) async {
+    final picked = await Navigator.of(context).push<SrdRefItem>(
+      MaterialPageRoute(
+        builder: (_) => CatalogPickerScreen(
+          title: 'Tool Proficiency',
+          options: srdCatalog.tools,
+          homebrewKind: 'tool',
+        ),
+      ),
+    );
+    if (picked == null ||
+        character.extraToolProficiencies.contains(picked.name)) {
+      return;
+    }
+    character.extraToolProficiencies = [
+      ...character.extraToolProficiencies,
+      picked.name,
+    ];
+    onChanged();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final fromClass = rules.classArmorTraining(character);
+    final training = rules.armorTraining(character);
+    final classWeapons = srdCatalog
+        .byKey(character.classKey ?? '')
+        ?.traits['Weapon Proficiencies'];
+    final baseTools = rules
+        .toolProficiencies(character)
+        .where((t) => !character.extraToolProficiencies.contains(t))
+        .toList();
+    const label = TextStyle(fontSize: 12, color: LedgerColors.inkDim);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Armor Training', style: label),
+        Wrap(
+          spacing: 6,
+          children: [
+            for (final category in const [
+              'Light',
+              'Medium',
+              'Heavy',
+              'Shields',
+            ])
+              FilterChip(
+                label: Text(category),
+                selected: training.contains(category),
+                // Class-granted training can't be switched off here.
+                onSelected: fromClass.contains(category)
+                    ? null
+                    : (v) {
+                        character.extraArmorTraining = v
+                            ? [...character.extraArmorTraining, category]
+                            : character.extraArmorTraining
+                                  .where((a) => a != category)
+                                  .toList();
+                        onChanged();
+                      },
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            const Expanded(child: Text('Weapons', style: label)),
+            TextButton(
+              onPressed: () => _addWeapon(context),
+              child: const Text('+ Add'),
+            ),
+          ],
+        ),
+        if (classWeapons != null && classWeapons.isNotEmpty)
+          Text(classWeapons, style: const TextStyle(fontSize: 13)),
+        Wrap(
+          spacing: 6,
+          children: [
+            for (final w in character.extraWeaponProficiencies)
+              InputChip(
+                label: Text(w),
+                onDeleted: () {
+                  character.extraWeaponProficiencies = character
+                      .extraWeaponProficiencies
+                      .where((x) => x != w)
+                      .toList();
+                  _changed();
+                },
+              ),
+          ],
+        ),
+        Row(
+          children: [
+            const Expanded(child: Text('Tools', style: label)),
+            TextButton(
+              onPressed: () => _addTool(context),
+              child: const Text('+ Add'),
+            ),
+          ],
+        ),
+        if (baseTools.isNotEmpty) MarkdownText(baseTools.join(', ')),
+        Wrap(
+          spacing: 6,
+          children: [
+            for (final t in character.extraToolProficiencies)
+              InputChip(
+                label: Text(t),
+                onDeleted: () {
+                  character.extraToolProficiencies = character
+                      .extraToolProficiencies
+                      .where((x) => x != t)
+                      .toList();
+                  onChanged();
+                },
+              ),
+          ],
+        ),
+      ],
+    );
+  }
 }
 
 class _Chip extends StatelessWidget {

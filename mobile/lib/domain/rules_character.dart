@@ -179,9 +179,11 @@ void changeBackground(
     ];
   }
   if (next?.feat != null) {
-    c.feats = [
-      ...c.feats,
-      GrantedFeature(name: next!.feat!, source: 'background'),
+    final feat = GrantedFeature(name: next!.feat!, source: 'background');
+    c.feats = [...c.feats, feat];
+    c.pendingChoices = [
+      ...c.pendingChoices.where((p) => !p.id.startsWith('feat:')),
+      ...featPendingChoices(c, feat),
     ];
   }
   applyBackgroundAbilityIncreases(c, abilityIncreases);

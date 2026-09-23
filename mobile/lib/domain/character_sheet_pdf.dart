@@ -62,6 +62,9 @@ const _fields = {
   'species': _Field(26, 70, 10, width: 115),
   'subclass': _Field(150, 70, 10, width: 105),
   'level': _Field(276, 44, 13, align: PdfTextAlignment.center, width: 30),
+  // XP sits under LEVEL on the same kind of rule line (y 68.0, x 258.7-
+  // 294.2), so the same "value above the line" placement.
+  'xp': _Field(276.5, 65, 8, align: PdfTextAlignment.center, width: 36),
 
   'ac': _Field(339, 57, 22, align: PdfTextAlignment.center, width: 40),
 
@@ -582,24 +585,6 @@ String _passivePerception(Character c) {
   return '${10 + rules.skillModifier(c, entry)}';
 }
 
-/// The species' size category ("Medium", "Small") - just the leading word
-/// of the real SRD size text (e.g. "Medium (about 5-7 feet tall)"), since
-/// the sheet's SIZE box is too small for the full parenthetical. Human and
-/// Tiefling actually offer a real Small-or-Medium choice in the 2024
-/// rules, but nothing in this app's data model tracks which one a player
-/// picked (no structured choice table for it, unlike Dragonborn's
-/// Draconic Ancestry) - this shows the first (Medium) option for those
-/// species rather than leaving the field blank, same "best available
-/// default, not a guess dressed up as certain" tradeoff as elsewhere on
-/// this sheet.
-String _speciesSize(Character c) {
-  final raw = c.speciesKey != null
-      ? srdCatalog.speciesByKey[c.speciesKey]?.size
-      : null;
-  if (raw == null || raw.isEmpty) return '';
-  return RegExp(r'^\w+').firstMatch(raw)?.group(0) ?? '';
-}
-
 /// Draws [c]'s top-section data (see [_fields]/[_abilityBlocks]) onto a
 /// copy of the official sheet's page 1 and returns the resulting PDF's
 /// bytes. Pure given [baseBytes] - no network access - so it's directly
@@ -638,7 +623,10 @@ Future<Uint8List> fillCharacterSheetTopSection(
     'initiative': rules.formatModifier(rules.initiativeModifier(c)),
     'speed': '${rules.speedFor(c)} ft',
     'passivePerception': _passivePerception(c),
-    'size': _speciesSize(c),
+    'size': rules.sizeFor(c),
+    // XP is character state, not a play-time tally - printed when there
+    // is any (a milestone game leaves it at 0, and the box blank).
+    'xp': c.experiencePoints > 0 ? '${c.experiencePoints}' : '',
   };
   for (final entry in values.entries) {
     _draw(graphics, _fields[entry.key]!, entry.value);
@@ -845,44 +833,30 @@ Future<Uint8List> fillCharacterSheetTopSection(
   _drawFlowingBoxes(page, speciesTraitEntries, [_speciesTraitsBox]);
   _drawFlowingBoxes(page, featEntries, [_featsBox]);
 
-  // EQUIPMENT TRAINING & PROFICIENCIES - Armor Training read straight off
-  // the class's own real SRD trait text ("Light, Medium, and Heavy armor
-  // and Shields", or "None") rather than a separate tracked field, since
-  // nothing else in this app's data model tracks per-category armor
-  // proficiency; matched by simple substring the same way
-  // rules.parseSavingThrows already reads that class's other free-text
-  // traits. Weapon/Tool Proficiencies are shown as plain text for the
-  // same reason - real class (and, for tools, background) SRD text, not
-  // hand-typed.
-  final classInfo = c.classKey != null ? srdCatalog.byKey(c.classKey!) : null;
-  final armorTrainingText = classInfo?.traits['Armor Training'] ?? '';
-  final armorCategories = ['Light', 'Medium', 'Heavy', 'Shield'];
-  for (final (i, category) in armorCategories.indexed) {
-    if (!armorTrainingText.contains(category)) continue;
+  // EQUIPMENT TRAINING & PROFICIENCIES - the class's own armor/weapon/
+  // tool text plus anything added on top (a Protector's Heavy armor and
+  // Martial weapons, a hand-added proficiency) - see rules.armorTraining /
+  // weaponProficiencyText / toolProficiencies.
+  final training = rules.armorTraining(c);
+  for (final (i, category) in const [
+    'Light',
+    'Medium',
+    'Heavy',
+    'Shields',
+  ].indexed) {
+    if (!training.contains(category)) continue;
     final (dx, dy) = _armorTrainingDiamonds[i];
     _drawDiamond(graphics, dx, dy);
   }
 
-  final weaponProficiencyText = classInfo?.traits['Weapon Proficiencies'];
-  if (weaponProficiencyText != null && weaponProficiencyText.isNotEmpty) {
-    _drawWrapped(
-      page,
-      _plainText(weaponProficiencyText),
-      _weaponProficiencyArea,
-    );
+  final weaponText = rules.weaponProficiencyText(c);
+  if (weaponText.isNotEmpty) {
+    _drawWrapped(page, _plainText(weaponText), _weaponProficiencyArea);
   }
 
-  final backgroundInfo = c.backgroundKey != null
-      ? srdCatalog.backgroundsByKey[c.backgroundKey]
-      : null;
-  final toolProficiencyText = c.toolProficiencyChoices.isNotEmpty
-      ? c.toolProficiencyChoices.join(', ')
-      : [
-          classInfo?.traits['Tool Proficiencies'],
-          backgroundInfo?.toolProficiency,
-        ].nonNulls.where((s) => s.isNotEmpty).join('; ');
-  if (toolProficiencyText.isNotEmpty) {
-    _drawWrapped(page, _plainText(toolProficiencyText), _toolProficiencyArea);
+  final toolText = rules.toolProficiencies(c).join('; ');
+  if (toolText.isNotEmpty) {
+    _drawWrapped(page, _plainText(toolText), _toolProficiencyArea);
   }
 
   _fillPageTwo(document.pages[1], c);
