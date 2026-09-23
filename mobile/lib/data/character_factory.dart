@@ -187,6 +187,7 @@ Character buildNewCharacter({
     feats: feats,
     inventory: const [],
     currency: const Currency(),
+    speed: rules.speciesBaseSpeed(species.key) ?? 30,
   );
 
   // Level-1 resources (class - Second Wind, Rages, ... - and species -
@@ -240,24 +241,10 @@ Character buildNewCharacter({
 /// so it's tracked as a single named entry, same as this app already does
 /// for anything outside weapons/armor/feats/spells.
 void _grantFighterStartingEquipment(Character c, String optionId) {
-  Weapon weaponNamed(String name) {
-    final ref = srdCatalog.weaponsByKey.values.firstWhere(
-      (w) => w.name == name,
-    );
-    final (dice, type) = ref.splitDamage;
-    return Weapon(
-      name: ref.name,
-      damageDice: dice,
-      damageType: type,
-      properties: ref.properties,
-      mastery: ref.mastery,
-      masteryDesc: ref.mastery != null
-          ? srdCatalog.weaponPropertiesByName[ref.mastery]?.desc
-          : null,
-      proficient: true,
-      finesse: ref.isFinesse,
-    );
-  }
+  Weapon weaponNamed(String name) => rules.weaponFromSrd(
+    c,
+    srdCatalog.weaponsByKey.values.firstWhere((w) => w.name == name),
+  );
 
   EquippedArmor armorNamed(String name) {
     final ref = srdCatalog.armorByKey.values.firstWhere((a) => a.name == name);

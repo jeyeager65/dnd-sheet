@@ -149,6 +149,7 @@ class Weapon {
     this.finesse = false,
     this.specialFeatures = const [],
     this.hitStreak = 0,
+    this.category,
   });
 
   final String name;
@@ -170,6 +171,12 @@ class Weapon {
 
   bool get isHeavy => properties.contains('Heavy');
 
+  /// The SRD weapon category - "Simple Melee Weapons", "Martial Ranged
+  /// Weapons", ... - null for a weapon saved before this was tracked (see
+  /// rules.weaponCategory, which resolves those by name) or a homebrew one
+  /// entered without it.
+  String? category;
+
   Map<String, dynamic> toJson() => {
     'name': name,
     'damageDice': damageDice,
@@ -182,6 +189,7 @@ class Weapon {
     'finesse': finesse,
     'specialFeatures': specialFeatures,
     'hitStreak': hitStreak,
+    'category': category,
   };
 
   factory Weapon.fromJson(Map<String, dynamic> j) => Weapon(
@@ -197,6 +205,7 @@ class Weapon {
     specialFeatures:
         (j['specialFeatures'] as List?)?.cast<String>() ?? const [],
     hitStreak: j['hitStreak'] as int? ?? 0,
+    category: j['category'] as String?,
   );
 }
 
@@ -355,6 +364,8 @@ class PendingChoice {
     required this.label,
     this.featCategory,
     this.kind,
+    this.optionSet,
+    this.count = 1,
   });
   final String id;
   final String label; // e.g. "Level 4: Ability Score Improvement"
@@ -371,11 +382,19 @@ class PendingChoice {
   /// General Feat catalog entry but just one option among many to find.
   final String? kind;
 
+  /// For kind 'option': which set of options this picks from (see
+  /// rules.dart's featureOptionSet - e.g. "Expertise", "Eldritch
+  /// Invocations", "Divine Order") and how many to pick.
+  final String? optionSet;
+  final int count;
+
   Map<String, dynamic> toJson() => {
     'id': id,
     'label': label,
     'featCategory': featCategory,
     'kind': kind,
+    'optionSet': optionSet,
+    'count': count,
   };
 
   factory PendingChoice.fromJson(Map<String, dynamic> j) => PendingChoice(
@@ -383,6 +402,8 @@ class PendingChoice {
     label: j['label'] as String,
     featCategory: j['featCategory'] as String?,
     kind: j['kind'] as String?,
+    optionSet: j['optionSet'] as String?,
+    count: j['count'] as int? ?? 1,
   );
 }
 
@@ -592,8 +613,31 @@ class KnownSpell {
     this.prepared = true,
     this.alwaysPrepared = false,
     this.level,
+    this.source,
+    this.freeCasts = 0,
+    this.freeCastsUsed = 0,
+    this.freeCastRecovery = 'long',
+    this.abilityOverride,
   });
   final String spellKey;
+
+  /// What granted this spell when it wasn't picked from the class list - a
+  /// species lineage ("Elven Lineage"), a feat ("Magic Initiate"), a class
+  /// or subclass feature ("Paladin's Smite", "Life Domain Spells"). Null
+  /// for a spell the player chose. Granted spells are kept in sync by
+  /// rules.syncGrantedSpells and aren't removed by hand.
+  final String? source;
+
+  /// Times it can be cast without a slot per rest ([freeCastRecovery]:
+  /// 'long' or 'short') - 0 for none. [freeCastsUsed] counts against it.
+  int freeCasts;
+  int freeCastsUsed;
+  String freeCastRecovery;
+
+  /// The ability a granted spell uses when it isn't the class's
+  /// spellcasting ability (Magic Initiate and species lineages let you
+  /// pick Int, Wis, or Cha) - null means the class's.
+  String? abilityOverride;
 
   /// Only set for a homebrew spell, which has no SRD record to read a
   /// level from - asked for when it's added (see the Spells tab's
@@ -615,6 +659,11 @@ class KnownSpell {
     'prepared': prepared,
     'alwaysPrepared': alwaysPrepared,
     'level': level,
+    'source': source,
+    'freeCasts': freeCasts,
+    'freeCastsUsed': freeCastsUsed,
+    'freeCastRecovery': freeCastRecovery,
+    'abilityOverride': abilityOverride,
   };
 
   factory KnownSpell.fromJson(Map<String, dynamic> j) => KnownSpell(
@@ -622,6 +671,11 @@ class KnownSpell {
     prepared: j['prepared'] as bool? ?? true,
     alwaysPrepared: j['alwaysPrepared'] as bool? ?? false,
     level: j['level'] as int?,
+    source: j['source'] as String?,
+    freeCasts: j['freeCasts'] as int? ?? 0,
+    freeCastsUsed: j['freeCastsUsed'] as int? ?? 0,
+    freeCastRecovery: j['freeCastRecovery'] as String? ?? 'long',
+    abilityOverride: j['abilityOverride'] as String?,
   );
 }
 
@@ -723,7 +777,52 @@ class Character {
     this.spellcasting,
     this.mounts = const [],
     this.history = const [],
+    this.experiencePoints = 0,
+    this.sizeChoice,
+    this.backgroundAbilityIncreases = const {},
+    this.weaponMasteries = const [],
+    this.featureChoices = const {},
+    this.extraArmorTraining = const [],
+    this.extraWeaponProficiencies = const [],
+    this.extraToolProficiencies = const [],
   }) : familyId = familyId ?? id;
+
+  /// Experience Points - the sheet's XP box, and the "ready to level up"
+  /// hint (rules.xpForLevel). A milestone game can leave it at 0.
+  int experiencePoints;
+
+  /// "Small" or "Medium" for a species that offers the choice (Human,
+  /// Tiefling - see rules.speciesSizeOptions); null means the species'
+  /// first listed size.
+  String? sizeChoice;
+
+  /// The background's +2/+1 or +1/+1/+1 (2024 rules), ability key ->
+  /// amount. Already included in [abilityScores]; kept separately so that
+  /// changing the background later can take the old increases back out.
+  Map<String, int> backgroundAbilityIncreases;
+
+  /// The weapon kinds (SRD weapon names, e.g. "Greatsword") whose mastery
+  /// property this character can use, picked through the Weapon Mastery
+  /// feature's Pending Choice (up to rules.weaponMasteryLimit). A weapon's
+  /// mastery only applies, and only prints on the sheet, if its kind is in
+  /// here. ['*'] means "not tracked" (a character saved before this
+  /// existed) - every weapon's mastery shows, as it always did.
+  List<String> weaponMasteries;
+
+  /// Picks made for a feature that offers options - option set name ->
+  /// chosen option names, e.g. {"Divine Order": ["Protector"],
+  /// "Eldritch Invocations": ["Agonizing Blast"], "Expertise": ["Stealth"]}.
+  /// See rules.featureOptionSet.
+  Map<String, List<String>> featureChoices;
+
+  /// Proficiencies beyond what the class/background text grants - from a
+  /// feature choice (Cleric's Protector: Heavy armor, Martial weapons), a
+  /// feat, or added by hand. Armor uses "Light"/"Medium"/"Heavy"/"Shields";
+  /// weapons are "Simple weapons", "Martial weapons", or a weapon name;
+  /// tools are tool names.
+  List<String> extraArmorTraining;
+  List<String> extraWeaponProficiencies;
+  List<String> extraToolProficiencies;
 
   final String id;
 
@@ -894,6 +993,14 @@ class Character {
     'spellcasting': spellcasting?.toJson(),
     'mounts': mounts.map((m) => m.toJson()).toList(),
     'history': history.map((h) => h.toJson()).toList(),
+    'experiencePoints': experiencePoints,
+    'sizeChoice': sizeChoice,
+    'backgroundAbilityIncreases': backgroundAbilityIncreases,
+    'weaponMasteries': weaponMasteries,
+    'featureChoices': featureChoices,
+    'extraArmorTraining': extraArmorTraining,
+    'extraWeaponProficiencies': extraWeaponProficiencies,
+    'extraToolProficiencies': extraToolProficiencies,
   };
 
   factory Character.fromJson(Map<String, dynamic> j) => Character(
@@ -975,5 +1082,22 @@ class Character {
     history: (j['history'] as List? ?? const [])
         .map((e) => HistoryEntry.fromJson(e as Map<String, dynamic>))
         .toList(),
+    experiencePoints: j['experiencePoints'] as int? ?? 0,
+    sizeChoice: j['sizeChoice'] as String?,
+    backgroundAbilityIncreases:
+        (j['backgroundAbilityIncreases'] as Map<String, dynamic>? ?? const {})
+            .map((k, v) => MapEntry(k, v as int)),
+    // A character saved before masteries were tracked keeps showing every
+    // weapon's mastery (['*']), the way the sheet always did for them.
+    weaponMasteries:
+        (j['weaponMasteries'] as List?)?.cast<String>() ?? const ['*'],
+    featureChoices: (j['featureChoices'] as Map<String, dynamic>? ?? const {})
+        .map((k, v) => MapEntry(k, (v as List).cast<String>())),
+    extraArmorTraining:
+        (j['extraArmorTraining'] as List?)?.cast<String>() ?? const [],
+    extraWeaponProficiencies:
+        (j['extraWeaponProficiencies'] as List?)?.cast<String>() ?? const [],
+    extraToolProficiencies:
+        (j['extraToolProficiencies'] as List?)?.cast<String>() ?? const [],
   );
 }

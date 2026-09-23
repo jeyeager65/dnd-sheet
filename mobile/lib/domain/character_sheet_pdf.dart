@@ -65,7 +65,8 @@ const _fields = {
 
   'ac': _Field(339, 57, 22, align: PdfTextAlignment.center, width: 40),
 
-  'hpTemp': _Field(448, 48, 14, align: PdfTextAlignment.center, width: 30),
+  // TEMP HIT POINTS (448, 48) is deliberately never drawn - it changes in
+  // play and gets pencilled in, like Current HP.
   'hpMax': _Field(446, 70, 14, align: PdfTextAlignment.center, width: 30),
   // A reference line under the HIT DICE heading (e.g. "d10 +2") - the die
   // and Constitution modifier used to heal when spending a Hit Die, since
@@ -620,7 +621,6 @@ Future<Uint8List> fillCharacterSheetTopSection(
     'subclass': subclassOnly,
     'level': '${c.level}',
     'ac': '${rules.armorClassFor(c)}',
-    'hpTemp': c.tempHp > 0 ? '${c.tempHp}' : '',
     // Current HP is left blank deliberately - it changes turn to turn in
     // play, so a printed/exported value goes stale immediately; the
     // player pencils it in themselves, same as everything else on this
@@ -636,7 +636,7 @@ Future<Uint8List> fillCharacterSheetTopSection(
       rules.proficiencyBonusForLevel(c.level),
     ),
     'initiative': rules.formatModifier(rules.initiativeModifier(c)),
-    'speed': '${c.speed} ft',
+    'speed': '${rules.speedFor(c)} ft',
     'passivePerception': _passivePerception(c),
     'size': _speciesSize(c),
   };
@@ -732,7 +732,7 @@ Future<Uint8List> fillCharacterSheetTopSection(
         name: weapon.name,
         atkOrDc: rules.formatModifier(rules.attackFor(c, weapon).bonus),
         damage: rules.damageFor(c, weapon).text,
-        notes: weapon.mastery ?? '',
+        notes: rules.masteryApplies(c, weapon) ? weapon.mastery! : '',
       ),
   ];
   final innateRows = [

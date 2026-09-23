@@ -71,6 +71,7 @@ void grantFeat(
   Map<String, int>? abilityScoreDeltas,
 }) {
   final beforeWeapons = weaponsSnapshot(c);
+  final hpBonusBefore = maxHpBonus(c);
   c.feats = [...c.feats, feat];
   final details = <String>[];
   if (abilityScoreDeltas != null && abilityScoreDeltas.isNotEmpty) {
@@ -83,6 +84,8 @@ void grantFeat(
   if (afterWeapons.isNotEmpty && afterWeapons != beforeWeapons) {
     details.add('Weapons: $afterWeapons');
   }
+  final hpGain = applyMaxHpBonusChange(c, hpBonusBefore);
+  if (hpGain != 0) details.add('Max HP ${formatModifier(hpGain)}');
   logHistory(
     c,
     'Feat: ${feat.name} (Level ${c.level})',
@@ -114,10 +117,38 @@ int armorClassFromFormula(String formula, int dexModifier) {
 /// the UI should actually display.
 int computeArmorClass(Character c) {
   final dexMod = abilityModifier(c.abilityScores.dex);
-  final base = c.equippedArmor != null
-      ? armorClassFromFormula(c.equippedArmor!.armorClassFormula, dexMod)
-      : 10 + dexMod;
-  return base + (c.shieldEquipped ? 2 : 0);
+  final int base;
+  if (c.equippedArmor != null) {
+    base = armorClassFromFormula(c.equippedArmor!.armorClassFormula, dexMod);
+  } else {
+    base = [
+      10 + dexMod,
+      for (final formula in unarmoredDefenseOptions(c)) formula.$2,
+    ].reduce((a, b) => a > b ? a : b);
+  }
+  return base + (c.shieldEquipped ? 2 : 0) + sumEffects(c, 'ac');
+}
+
+/// The "no armor" AC formulas [c]'s features offer, as (feature name, AC):
+/// Barbarian Unarmored Defense (10 + Dex + Con, Shield allowed), Monk
+/// Unarmored Defense (10 + Dex + Wis, no Shield), Draconic Sorcery's
+/// Draconic Resilience (10 + Dex + Cha). computeArmorClass uses the best of
+/// these and plain 10 + Dex while no armor is worn.
+List<(String, int)> unarmoredDefenseOptions(Character c) {
+  int mod(String key) => abilityModifier(c.abilityScores.of(key));
+  final dex = mod('dex');
+  final names = c.features.map((f) => f.name).toSet();
+  return [
+    if (names.contains('Unarmored Defense') &&
+        c.classKey == 'srd-2024_barbarian-class')
+      ('Unarmored Defense', 10 + dex + mod('con')),
+    if (names.contains('Unarmored Defense') &&
+        c.classKey == 'srd-2024_monk-class' &&
+        !c.shieldEquipped)
+      ('Unarmored Defense', 10 + dex + mod('wis')),
+    if (names.contains('Draconic Resilience'))
+      ('Draconic Resilience', 10 + dex + mod('cha')),
+  ];
 }
 
 /// The AC the sheet should show: the manual override if one is set,
@@ -255,6 +286,7 @@ int _evaluateTerm(String term, Character c) {
   if (term.toLowerCase() == 'proficiency bonus') {
     return proficiencyBonusForLevel(c.level);
   }
+  if (term.toLowerCase() == 'level') return c.level;
   final m = RegExp(
     r'^(\w+)\s+modifier$',
     caseSensitive: false,
@@ -309,6 +341,13 @@ int skillModifier(Character c, SkillEntry skill) {
 // from the PHB, not something this app ships or redistributes.
 const _builtinFeatEffects = <String, List<Effect>>{
   'Alert': [Effect(target: 'initiative', formula: 'Proficiency Bonus')],
+  // Fighting Style feats with a flat number (SRD text: "+2 bonus to attack
+  // rolls you make with Ranged weapons"; "While you're wearing Light,
+  // Medium, or Heavy armor, you gain a +1 bonus to Armor Class").
+  'Archery': [
+    Effect(target: 'attackRoll', formula: '2', condition: 'rangedWeapon'),
+  ],
+  'Defense': [Effect(target: 'ac', formula: '1', condition: 'wearingArmor')],
 };
 
 /// The feat names [_builtinFeatEffects] hardcodes - exposed so the "My
@@ -335,8 +374,19 @@ List<Effect> liveFeatureEffects(GrantedFeature feature) {
         e.kind == 'feat' && e.name.toLowerCase() == feature.name.toLowerCase(),
   );
   if (homebrew.isNotEmpty) return homebrew.first.effects;
-  return _builtinFeatEffects[feature.name] ?? const [];
+  return _builtinFeatEffects[baseFeatName(feature.name)] ?? const [];
 }
+
+/// A feat's name without the parenthetical choice a background or feature
+/// attaches to it - "Magic Initiate (Cleric)" -> "Magic Initiate" - which
+/// is the name the SRD feat itself is catalogued under.
+String baseFeatName(String name) =>
+    name.replaceFirst(RegExp(r'\s*\([^)]*\)$'), '');
+
+/// The parenthetical choice in a feat's name - "Magic Initiate (Cleric)"
+/// -> "Cleric" - or null if there isn't one.
+String? featNameChoice(String name) =>
+    RegExp(r'\(([^)]*)\)$').firstMatch(name)?.group(1);
 
 /// Effects from attuned magic items - homebrew only (no built-in SRD
 /// magic item needs this yet), matched the same way liveFeatureEffects
@@ -369,6 +419,10 @@ bool _effectConditionMet(String? condition, Character c, Weapon? weapon) =>
       // Points or fewer remaining."
       'bloodied' => c.currentHp * 2 <= c.maxHp,
       'heavyArmor' => c.equippedArmor?.category == 'Heavy',
+      'wearingArmor' => c.equippedArmor != null,
+      'noArmor' => c.equippedArmor == null,
+      'rangedWeapon' => weapon != null && isRangedWeapon(weapon),
+      'meleeWeapon' => weapon != null && !isRangedWeapon(weapon),
       _ => false,
     };
 
@@ -585,11 +639,7 @@ String weaponsSnapshot(Character c) => c.weapons
     .join(', ');
 
 AttackResult attackFor(Character c, Weapon w) {
-  final str = abilityModifier(c.abilityScores.str);
-  final dex = abilityModifier(c.abilityScores.dex);
-  final useDex = w.finesse && dex > str;
-  final abilityMod = useDex ? dex : str;
-  final abilityLabel = useDex ? 'Dex' : 'Str';
+  final (abilityLabel, abilityMod) = weaponAbility(c, w);
 
   final parts = <String>['$abilityLabel ${formatModifier(abilityMod)}'];
   var bonus = abilityMod;
@@ -610,11 +660,7 @@ AttackResult attackFor(Character c, Weapon w) {
 }
 
 DamageResult damageFor(Character c, Weapon w) {
-  final str = abilityModifier(c.abilityScores.str);
-  final dex = abilityModifier(c.abilityScores.dex);
-  final useDex = w.finesse && dex > str;
-  final abilityMod = useDex ? dex : str;
-  final abilityLabel = useDex ? 'Dex' : 'Str';
+  final (abilityLabel, abilityMod) = weaponAbility(c, w);
 
   var total = abilityMod + w.magicBonus;
   final parts = <String>['$abilityLabel ${formatModifier(abilityMod)}'];
@@ -624,10 +670,238 @@ DamageResult damageFor(Character c, Weapon w) {
     total += amount;
   }
   final bonusText = total != 0 ? formatModifier(total) : '';
+  final dice = weaponDamageDice(c, w);
+  if (dice != w.damageDice) parts.add('Martial Arts $dice');
   return DamageResult(
-    '${w.damageDice}$bonusText ${w.damageType}'.trim(),
+    '$dice$bonusText ${w.damageType}'.trim(),
     parts.join(', '),
   );
+}
+
+/// The SRD weapon [w] is (or is a magic/renamed version of) - an exact
+/// name match first, then the longest SRD weapon name contained in its
+/// name ("Longsword +1", "Flame Tongue Longsword" -> Longsword). Null for a
+/// weapon that matches nothing (homebrew).
+SrdWeaponRef? srdWeaponFor(Weapon w) => srdWeaponNamed(w.name);
+
+SrdWeaponRef? srdWeaponNamed(String name) {
+  final lower = name.toLowerCase();
+  SrdWeaponRef? best;
+  for (final ref in srdCatalog.weaponsByKey.values) {
+    final refName = ref.name.toLowerCase();
+    if (refName == lower) return ref;
+    if (lower.contains(refName) &&
+        (best == null || ref.name.length > best.name.length)) {
+      best = ref;
+    }
+  }
+  return best;
+}
+
+/// [w]'s SRD category ("Martial Ranged Weapons", ...) - stored on the
+/// weapon, else resolved by name for a weapon saved before it was stored.
+String? weaponCategory(Weapon w) => w.category ?? srdWeaponFor(w)?.category;
+
+bool isRangedWeapon(Weapon w) {
+  final category = weaponCategory(w);
+  if (category != null) return category.contains('Ranged');
+  return w.properties.any((p) => p.startsWith('Ammunition'));
+}
+
+bool isFinesseWeapon(Weapon w) => w.finesse || w.properties.contains('Finesse');
+
+/// A Monk weapon: any Simple Melee weapon, or a Martial Melee weapon with
+/// the Light property (Martial Arts' own definition).
+bool isMonkWeapon(Weapon w) {
+  final category = weaponCategory(w) ?? '';
+  return category.startsWith('Simple Melee') ||
+      (category.startsWith('Martial Melee') && w.properties.contains('Light'));
+}
+
+/// Martial Arts applies: the character has the feature and wears no armor
+/// or Shield.
+bool martialArtsActive(Character c) =>
+    c.features.any((f) => f.name == 'Martial Arts') &&
+    c.equippedArmor == null &&
+    !c.shieldEquipped;
+
+/// The ability a weapon attack uses, as (label, modifier): Dexterity for a
+/// ranged weapon; the better of Strength and Dexterity for a Finesse
+/// weapon or a Monk weapon under Martial Arts; Strength otherwise. A
+/// thrown melee weapon (Javelin, Handaxe) keeps its melee ability, as the
+/// Thrown property says.
+(String, int) weaponAbility(Character c, Weapon w) {
+  final str = abilityModifier(c.abilityScores.str);
+  final dex = abilityModifier(c.abilityScores.dex);
+  if (isRangedWeapon(w)) return ('Dex', dex);
+  final canUseDex =
+      isFinesseWeapon(w) || (martialArtsActive(c) && isMonkWeapon(w));
+  return canUseDex && dex > str ? ('Dex', dex) : ('Str', str);
+}
+
+/// The Martial Arts die at [c]'s level ("1d6", "1d8", ...) - null for a
+/// character without the feature.
+String? martialArtsDie(Character c) {
+  if (!c.features.any((f) => f.name == 'Martial Arts')) return null;
+  final classData = c.classKey != null ? srdCatalog.byKey(c.classKey!) : null;
+  return classData?.levelValue(c.level, 'Martial Arts');
+}
+
+/// [w]'s damage dice, with the Martial Arts die swapped in for a Monk
+/// weapon when it's bigger (Martial Arts: "You can roll [the die] in place
+/// of the normal damage").
+String weaponDamageDice(Character c, Weapon w) {
+  final die = martialArtsDie(c);
+  if (die == null || !martialArtsActive(c) || !isMonkWeapon(w)) {
+    return w.damageDice;
+  }
+  int average(String dice) {
+    final m = RegExp(r'^(\d+)d(\d+)$').firstMatch(dice);
+    if (m == null) return 0;
+    return int.parse(m.group(1)!) * (int.parse(m.group(2)!) + 1);
+  }
+
+  return average(die) > average(w.damageDice) ? die : w.damageDice;
+}
+
+/// Whether [c] is proficient with a weapon of [category] and
+/// [properties], read from the class's own Weapon Proficiencies text
+/// ("Simple and Martial weapons", "Simple weapons and Martial weapons that
+/// have the Finesse or Light property", ...) plus
+/// Character.extraWeaponProficiencies ("Martial weapons", or a weapon's
+/// name).
+bool isProficientWithWeapon(
+  Character c,
+  String name,
+  String? category,
+  List<String> properties,
+) {
+  final classData = c.classKey != null ? srdCatalog.byKey(c.classKey!) : null;
+  final classText = (classData?.traits['Weapon Proficiencies'] ?? '')
+      .toLowerCase();
+  final extras = c.extraWeaponProficiencies.map((e) => e.toLowerCase());
+  if (extras.contains(name.toLowerCase())) return true;
+  final cat = (category ?? '').toLowerCase();
+  if (cat.startsWith('simple')) {
+    return classText.contains('simple') || extras.contains('simple weapons');
+  }
+  if (cat.startsWith('martial')) {
+    if (extras.contains('martial weapons')) return true;
+    final conditional = RegExp(r'martial weapons that have the (.+?) property')
+        .firstMatch(classText);
+    if (conditional != null) {
+      final allowed = conditional.group(1)!.split(' or ');
+      return properties.any((p) => allowed.contains(p.toLowerCase()));
+    }
+    return classText.contains('martial');
+  }
+  return false;
+}
+
+/// A new Weapon for [c] from an SRD weapon - the one place a catalog weapon
+/// becomes a character's weapon (the sheet's "+ Add Weapon", starting
+/// equipment), so category, Finesse, proficiency, and mastery are always
+/// filled in the same way.
+Weapon weaponFromSrd(Character c, SrdWeaponRef ref) {
+  final (dice, type) = ref.splitDamage;
+  return Weapon(
+    name: ref.name,
+    damageDice: dice,
+    damageType: type,
+    properties: ref.properties,
+    mastery: ref.mastery,
+    masteryDesc: ref.mastery != null
+        ? srdCatalog.weaponPropertiesByName[ref.mastery]?.desc
+        : null,
+    proficient: isProficientWithWeapon(
+      c,
+      ref.name,
+      ref.category,
+      ref.properties,
+    ),
+    finesse: ref.isFinesse,
+    category: ref.category,
+  );
+}
+
+/// How many weapon kinds [c]'s Weapon Mastery feature covers at their
+/// level - the class table's "Weapon Mastery" column (Barbarian, Fighter),
+/// or 2 for a class whose feature text fixes it at two (Paladin, Ranger,
+/// Rogue). Null for a character without the feature.
+int? weaponMasteryLimit(Character c) {
+  if (!c.features.any((f) => f.name == 'Weapon Mastery')) return null;
+  final classData = c.classKey != null ? srdCatalog.byKey(c.classKey!) : null;
+  return int.tryParse(classData?.levelValue(c.level, 'Weapon Mastery') ?? '') ??
+      2;
+}
+
+/// Whether [w]'s mastery property applies to [c]: the weapon has one, and
+/// its kind is among the character's Weapon Mastery picks (matched the same
+/// way srdWeaponFor matches names, so "Longsword +1" counts as Longsword).
+/// ['*'] - a character saved before picks were tracked - applies them all.
+bool masteryApplies(Character c, Weapon w) {
+  if (w.mastery == null) return false;
+  if (c.weaponMasteries.contains('*')) return true;
+  final kind = srdWeaponFor(w)?.name ?? w.name;
+  return c.weaponMasteries.any((m) => m.toLowerCase() == kind.toLowerCase());
+}
+
+/// Species' base walking speed ("35 feet" -> 35), or null if the species
+/// isn't cataloged.
+int? speciesBaseSpeed(String? speciesKey) {
+  final raw = speciesKey != null
+      ? srdCatalog.speciesByKey[speciesKey]?.speed
+      : null;
+  return raw == null
+      ? null
+      : int.tryParse(RegExp(r'\d+').stringMatch(raw) ?? '');
+}
+
+/// [c]'s Speed: their base speed (Character.speed - the species' speed,
+/// editable) plus class features that raise it (Barbarian Fast Movement and
+/// Ranger Roving: +10 ft without Heavy armor; Monk Unarmored Movement: the
+/// table's bonus without armor or a Shield) and any 'speed' Effect.
+int speedFor(Character c) {
+  final names = c.features.map((f) => f.name).toSet();
+  final heavy = c.equippedArmor?.category == 'Heavy';
+  var speed = c.speed + sumEffects(c, 'speed');
+  if (names.contains('Fast Movement') && !heavy) speed += 10;
+  if (names.contains('Roving') && !heavy) speed += 10;
+  if (names.contains('Unarmored Movement') &&
+      c.equippedArmor == null &&
+      !c.shieldEquipped) {
+    final classData = c.classKey != null ? srdCatalog.byKey(c.classKey!) : null;
+    final bonus = classData?.levelValue(c.level, 'Unarmored Movement');
+    speed += int.tryParse(RegExp(r'\d+').stringMatch(bonus ?? '') ?? '') ?? 0;
+  }
+  return speed;
+}
+
+/// Hit points added on top of the class's Hit Dice: Dwarven Toughness (+1
+/// per level), Draconic Sorcery's Draconic Resilience (+3 at level 3, +1
+/// per Sorcerer level after - i.e. the Sorcerer level), and any 'maxHp'
+/// Effect - e.g. a transcribed Tough feat, "Level + Level" (formulas only
+/// add and subtract terms).
+/// Adds the change in [maxHpBonus] since [before] to Max HP (and Current
+/// HP, the way gaining max HP mid-adventure works) - used when a feat or
+/// subclass is gained, so a hand-set Max HP isn't recomputed from scratch.
+/// Returns the change.
+int applyMaxHpBonusChange(Character c, int before) {
+  final delta = maxHpBonus(c) - before;
+  if (delta != 0) {
+    c.maxHp += delta;
+    c.currentHp = (c.currentHp + delta).clamp(0, c.maxHp);
+  }
+  return delta;
+}
+
+int maxHpBonus(Character c) {
+  var bonus = sumEffects(c, 'maxHp');
+  if (c.speciesKey == 'srd-2024_dwarf-species') bonus += c.level;
+  if (c.features.any((f) => f.name == 'Draconic Resilience')) {
+    bonus += c.level;
+  }
+  return bonus;
 }
 
 /// A Short Rest recovers per-resource ("full", "partial" = +1 use, or
@@ -755,11 +1029,13 @@ int maxHpForLevel({
 /// ported yet (no SRD catalog behind this app so far). Deliberately
 /// avoids guessing those numbers rather than risking a wrong table.
 void recalculateHp(Character c) {
-  c.maxHp = maxHpForLevel(
-    die: c.hitDiceDie,
-    conModifier: abilityModifier(c.abilityScores.con),
-    level: c.level,
-  );
+  c.maxHp =
+      maxHpForLevel(
+        die: c.hitDiceDie,
+        conModifier: abilityModifier(c.abilityScores.con),
+        level: c.level,
+      ) +
+      maxHpBonus(c);
   c.hitDiceTotal = c.level;
   c.currentHp = c.currentHp.clamp(0, c.maxHp);
   c.hitDiceSpent = c.hitDiceSpent.clamp(0, c.hitDiceTotal);
@@ -1626,8 +1902,9 @@ String? liveFeatureText(Character c, GrantedFeature feature) {
         e.kind == 'feat' && e.name.toLowerCase() == feature.name.toLowerCase(),
   );
   if (homebrewFeat.isNotEmpty) return homebrewFeat.first.desc;
+  final featName = baseFeatName(feature.name);
   for (final feat in srdCatalog.featsByKey.values) {
-    if (feat.name == feature.name) return feat.fullDescription;
+    if (feat.name == featName) return feat.fullDescription;
   }
   return feature.desc;
 }
@@ -1653,7 +1930,8 @@ String sheetTextScope(Character c, GrantedFeature feature) {
     return subclass!.key;
   }
   if (_homebrewFeat(feature.name) != null) return 'homebrew';
-  if (srdCatalog.featsByKey.values.any((f) => f.name == feature.name)) {
+  final featName = baseFeatName(feature.name);
+  if (srdCatalog.featsByKey.values.any((f) => f.name == featName)) {
     return 'feats';
   }
   return 'custom';
@@ -1681,7 +1959,10 @@ String? defaultSheetText(Character c, GrantedFeature feature) {
     final text = _homebrewFeat(feature.name)!.shortDesc;
     return text.isEmpty ? null : text;
   }
-  final text = srdCatalog.sheetText[scope]?[feature.name];
+  final text =
+      srdCatalog.sheetText[scope]?[scope == 'feats'
+          ? baseFeatName(feature.name)
+          : feature.name];
   if (text != null) return text;
   // A fighting style stored as a feature named after the feat it grants
   // ("Fighting Style: Great Weapon Fighting", as the sample character
@@ -1781,6 +2062,7 @@ void resolveSubclassChoice(Character c, String choiceId, String subclassKey) {
   final subclass = srdCatalog.byKey(c.classKey!)?.subclass;
   if (subclass == null || subclass.key != subclassKey) return;
   final beforeWeapons = weaponsSnapshot(c);
+  final hpBonusBefore = maxHpBonus(c);
   c.subclassKey = subclass.key;
   if (!c.classLabel.contains(subclass.name)) {
     c.classLabel = '${c.classLabel} · ${subclass.name}';
@@ -1807,6 +2089,7 @@ void resolveSubclassChoice(Character c, String choiceId, String subclassKey) {
     existingChoiceIds,
   );
   c.pendingChoices = [...c.pendingChoices, ...newChoiceFeatures];
+  applyMaxHpBonusChange(c, hpBonusBefore);
   final afterWeapons = weaponsSnapshot(c);
   final details = <String>[];
   if (newFeatures.isNotEmpty) {

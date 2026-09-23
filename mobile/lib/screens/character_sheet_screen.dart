@@ -745,20 +745,9 @@ class _CombatTab extends StatelessWidget {
       onChanged();
       return;
     }
-    final (dice, type) = srdWeapon.splitDamage;
     character.weapons = [
       ...character.weapons,
-      Weapon(
-        name: srdWeapon.name,
-        damageDice: dice,
-        damageType: type,
-        properties: srdWeapon.properties,
-        mastery: srdWeapon.mastery,
-        masteryDesc: srdWeapon.mastery != null
-            ? srdCatalog.weaponPropertiesByName[srdWeapon.mastery]?.desc
-            : null,
-        proficient: true,
-      ),
+      rules.weaponFromSrd(character, srdWeapon),
     ];
     onChanged();
   }
@@ -818,7 +807,7 @@ class _CombatTab extends StatelessWidget {
               rules.formatModifier(rules.initiativeModifier(character)),
               'Init',
             ),
-            StatCell('${character.speed}', 'Spd'),
+            StatCell('${rules.speedFor(character)}', 'Spd'),
             StatCell(rules.formatModifier(prof), 'Prof'),
           ],
         ),
@@ -1993,12 +1982,28 @@ class _WeaponRow extends StatelessWidget {
             '${weapon.damageType.substring(0, 1).toUpperCase()}${weapon.damageType.substring(1)} · ${weapon.properties.join(', ')}',
           ),
           Text('Attack: ${attack.breakdown} · Damage: ${damage.breakdown}'),
-          if (weapon.mastery != null) ...[
+          if (rules.masteryApplies(character, weapon)) ...[
             const SizedBox(height: 4),
             _Chip('${weapon.mastery!.toUpperCase()} MASTERY'),
             const SizedBox(height: 4),
             MarkdownText(weapon.masteryDesc ?? ''),
-          ],
+          ] else if (weapon.mastery != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                '${weapon.mastery} mastery - not one of your Weapon Mastery '
+                'picks.',
+                style: const TextStyle(fontSize: 12),
+              ),
+            ),
+          if (!weapon.proficient)
+            const Padding(
+              padding: EdgeInsets.only(top: 4),
+              child: Text(
+                'Not proficient - no Proficiency Bonus on the attack.',
+                style: TextStyle(fontSize: 12, color: LedgerColors.danger),
+              ),
+            ),
           for (final (label, amount) in damageEffects) ...[
             const SizedBox(height: 4),
             _Chip('${label.toUpperCase()} (${rules.formatModifier(amount)})'),

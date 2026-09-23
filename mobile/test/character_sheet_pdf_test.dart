@@ -645,4 +645,19 @@ void main() {
       lessThan(text.indexOf('Feature Number 40')),
     );
   });
+
+  test(
+    'Temp HP is left blank - it changes in play and gets pencilled in',
+    () async {
+      final c = buildSampleJarson()..tempHp = 37;
+      final result = await fillCharacterSheetTopSection(
+        await _blankBasePdf(),
+        c,
+      );
+      final document = PdfDocument(inputBytes: result);
+      final text = PdfTextExtractor(document).extractText();
+      document.dispose();
+      expect(text, isNot(contains('37')));
+    },
+  );
 }

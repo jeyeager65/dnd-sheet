@@ -1719,4 +1719,194 @@ void main() {
       expect(names, containsAll(['Breath Weapon', 'Darkvision']));
     });
   });
+
+  group('derived stats', () {
+    Character hero(
+      String classKey, {
+      int level = 5,
+      AbilityScores? scores,
+      String? speciesKey,
+    }) {
+      final c = buildSampleJarson()
+        ..classKey = classKey
+        ..subclassKey = null
+        ..level = level
+        ..equippedArmor = null
+        ..shieldEquipped = false
+        ..feats = []
+        ..weapons = []
+        ..speciesKey = speciesKey ?? 'srd-2024_human-species'
+        ..speed = 30
+        ..abilityScores =
+            scores ??
+            const AbilityScores(
+              str: 10,
+              dex: 16,
+              con: 14,
+              intel: 10,
+              wis: 14,
+              cha: 10,
+            );
+      c.features = rules.classFeaturesForLevelUp(c..features = [], 0, level);
+      return c;
+    }
+
+    SrdWeaponRef weapon(String name) =>
+        srdCatalog.weaponsByKey.values.firstWhere((w) => w.name == name);
+
+    test('ranged weapons attack with Dex, Finesse weapons with the better of Str/Dex', () {
+      final c = hero('srd-2024_fighter-class');
+      final longbow = rules.weaponFromSrd(c, weapon('Longbow'));
+      final rapier = rules.weaponFromSrd(c, weapon('Rapier'));
+      final greataxe = rules.weaponFromSrd(c, weapon('Greataxe'));
+      expect(rapier.finesse, isTrue);
+      expect(longbow.category, 'Martial Ranged Weapons');
+      expect(rules.weaponAbility(c, longbow), ('Dex', 3));
+      expect(rules.weaponAbility(c, rapier), ('Dex', 3));
+      expect(rules.weaponAbility(c, greataxe), ('Str', 0));
+      // A weapon saved before categories were stored still resolves by name.
+      longbow.category = null;
+      expect(rules.isRangedWeapon(longbow), isTrue);
+    });
+
+    test('weapon proficiency follows the class text', () {
+      final wizard = hero('srd-2024_wizard-class');
+      expect(rules.weaponFromSrd(wizard, weapon('Dagger')).proficient, isTrue);
+      expect(
+        rules.weaponFromSrd(wizard, weapon('Longsword')).proficient,
+        isFalse,
+      );
+      final rogue = hero('srd-2024_rogue-class');
+      expect(rules.weaponFromSrd(rogue, weapon('Rapier')).proficient, isTrue);
+      expect(
+        rules.weaponFromSrd(rogue, weapon('Longsword')).proficient,
+        isFalse,
+      );
+      wizard.extraWeaponProficiencies = ['Martial weapons'];
+      expect(
+        rules.weaponFromSrd(wizard, weapon('Longsword')).proficient,
+        isTrue,
+      );
+    });
+
+    test('Martial Arts: Dex and the Martial Arts die for Monk weapons, only while unarmored', () {
+      final monk = hero(
+        'srd-2024_monk-class',
+        scores: const AbilityScores(
+          str: 10,
+          dex: 16,
+          con: 12,
+          intel: 10,
+          wis: 14,
+          cha: 8,
+        ),
+      );
+      final staff = rules.weaponFromSrd(monk, weapon('Quarterstaff'));
+      expect(rules.weaponAbility(monk, staff), ('Dex', 3));
+      expect(rules.weaponDamageDice(monk, staff), '1d8'); // level 5 die
+      expect(rules.damageFor(monk, staff).text, startsWith('1d8+3'));
+      monk.shieldEquipped = true;
+      expect(rules.weaponAbility(monk, staff), ('Str', 0));
+      expect(rules.weaponDamageDice(monk, staff), '1d6');
+    });
+
+    test('a mastery only applies to a picked weapon kind; untracked (legacy) characters keep all', () {
+      final c = hero('srd-2024_fighter-class')..weaponMasteries = ['Longsword'];
+      final longsword = rules.weaponFromSrd(c, weapon('Longsword'));
+      final magic = rules.weaponFromSrd(c, weapon('Longsword'));
+      final axe = rules.weaponFromSrd(c, weapon('Greataxe'));
+      expect(rules.masteryApplies(c, longsword), isTrue);
+      expect(
+        rules.masteryApplies(
+          c,
+          Weapon(
+            name: 'Longsword +1',
+            damageDice: magic.damageDice,
+            damageType: magic.damageType,
+            properties: magic.properties,
+            mastery: magic.mastery,
+            proficient: true,
+          ),
+        ),
+        isTrue,
+      );
+      expect(rules.masteryApplies(c, axe), isFalse);
+      c.weaponMasteries = ['*'];
+      expect(rules.masteryApplies(c, axe), isTrue);
+      expect(rules.weaponMasteryLimit(c), 4);
+    });
+
+    test(
+      'AC: Barbarian/Monk Unarmored Defense and the Defense fighting style',
+      () {
+        final barbarian = hero('srd-2024_barbarian-class'); // Dex +3, Con +2
+        expect(rules.armorClassFor(barbarian), 15);
+        barbarian.shieldEquipped = true;
+        expect(rules.armorClassFor(barbarian), 17);
+
+        final monk = hero('srd-2024_monk-class'); // Dex +3, Wis +2
+        expect(rules.armorClassFor(monk), 15);
+        monk.shieldEquipped = true; // Monk's version doesn't allow a Shield
+        expect(rules.armorClassFor(monk), 15);
+
+        final fighter = hero('srd-2024_fighter-class')
+          ..equippedArmor = EquippedArmor(
+            name: 'Chain Mail',
+            armorClassFormula: '16',
+            category: 'Heavy',
+          );
+        expect(rules.armorClassFor(fighter), 16);
+        fighter.feats = [GrantedFeature(name: 'Defense', source: 'feat')];
+        expect(rules.armorClassFor(fighter), 17);
+      },
+    );
+
+    test('Archery adds +2 to ranged attacks only', () {
+      final c = hero('srd-2024_fighter-class')
+        ..feats = [GrantedFeature(name: 'Archery', source: 'feat')];
+      final bow = rules.weaponFromSrd(c, weapon('Longbow'));
+      final sword = rules.weaponFromSrd(c, weapon('Longsword'));
+      expect(rules.attackFor(c, bow).bonus, 3 + 3 + 2);
+      expect(rules.attackFor(c, sword).bonus, 0 + 3);
+    });
+
+    test('Speed: species base plus Fast Movement / Unarmored Movement', () {
+      expect(rules.speciesBaseSpeed('srd-2024_goliath-species'), 35);
+      final barbarian = hero('srd-2024_barbarian-class');
+      expect(rules.speedFor(barbarian), 40);
+      barbarian.equippedArmor = EquippedArmor(
+        name: 'Plate Armor',
+        armorClassFormula: '18',
+        category: 'Heavy',
+      );
+      expect(rules.speedFor(barbarian), 30);
+      final monk = hero('srd-2024_monk-class', level: 6);
+      expect(rules.speedFor(monk), 45); // +15 ft at level 6
+    });
+
+    test('Max HP includes Dwarven Toughness and Draconic Resilience', () {
+      final dwarf = hero(
+        'srd-2024_fighter-class',
+        speciesKey: 'srd-2024_dwarf-species',
+      );
+      rules.recalculateHp(dwarf);
+      final human = hero('srd-2024_fighter-class');
+      rules.recalculateHp(human);
+      expect(dwarf.maxHp - human.maxHp, 5);
+      expect(rules.maxHpBonus(dwarf), 5);
+    });
+
+    test('a background feat with a parenthetical ("Magic Initiate (Cleric)") resolves to the SRD feat', () {
+      final c = hero('srd-2024_cleric-class');
+      final feat = GrantedFeature(
+        name: 'Magic Initiate (Cleric)',
+        source: 'background',
+      );
+      expect(rules.baseFeatName(feat.name), 'Magic Initiate');
+      expect(rules.featNameChoice(feat.name), 'Cleric');
+      expect(rules.sheetTextScope(c, feat), 'feats');
+      expect(rules.sheetText(c, feat), startsWith('Two cantrips'));
+      expect(rules.liveFeatureText(c, feat), contains('Two Cantrips'));
+    });
+  });
 }

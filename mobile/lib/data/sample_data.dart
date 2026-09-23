@@ -126,6 +126,7 @@ Character buildSampleJarson() {
         mastery: 'Graze',
         masteryDesc: 'If your attack roll misses, you still deal damage to the target equal to your Strength modifier.',
         proficient: true,
+        category: 'Martial Melee Weapons',
       ),
       Weapon(
         name: 'Sword of the Failed Dragon Slayer',
@@ -134,6 +135,7 @@ Character buildSampleJarson() {
         properties: const ['Heavy', 'Two-Handed'],
         proficient: true,
         magicBonus: 2,
+        category: 'Martial Melee Weapons',
         specialFeatures: const [
           'Mounting Fury — 2nd consecutive hit on a target: +1d6 fire. 3rd+: +2d6 fire. Resets on a miss or when you switch targets.',
         ],
@@ -187,5 +189,7 @@ Character buildSampleJarson() {
       InventoryEntry(name: 'Grappling Hook', quantity: 1),
     ],
     currency: const Currency(cp: 12, sp: 4, gp: 86),
+    // A level 9 Fighter's four Weapon Mastery kinds.
+    weaponMasteries: const ['Greatsword', 'Longsword', 'Javelin', 'Longbow'],
   );
 }
