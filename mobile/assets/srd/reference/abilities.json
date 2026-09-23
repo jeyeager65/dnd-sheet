@@ -1,0 +1,591 @@
+[
+  {
+    "key": "cha",
+    "descriptions": [
+      {
+        "desc": "Charisma is used in social situations to determine first impressions, to fit in or stand out, and to influence others.",
+        "document": "a5e-ag",
+        "gamesystem": "a5e"
+      },
+      {
+        "desc": "Charisma measures your ability to interact effectively with others. It includes such factors as confidence and eloquence, and it can represent a charming or commanding personality.\r\n\r\n### Charisma Checks\r\n\r\nA Charisma check might arise when you try to influence or entertain others, when you try to make an impression or tell a convincing lie, or when you are navigating a tricky social situation. The Deception, Intimidation, Performance, and Persuasion skills reflect aptitude in certain kinds of Charisma checks.\r\n\r\n**Deception.** Your Charisma (Deception) check determines whether you can convincingly hide the truth, either verbally or through your actions. This deception can encompass everything from misleading others through ambiguity to telling outright lies. Typical situations include trying to fast-­talk a guard, con a merchant, earn money through gambling, pass yourself off in a disguise, dull someone’s suspicions with false assurances, or maintain a straight face while telling a blatant lie.\r\n\r\n**Intimidation.** When you attempt to influence someone through overt threats, hostile actions, and physical violence, the GM might ask you to make a Charisma (Intimidation) check. Examples include trying to pry information out of a prisoner, convincing street thugs to back down from a confrontation, or using the edge of a broken bottle to convince a sneering vizier to reconsider a decision. \r\n\r\n**Performance.** Your Charisma (Performance) check determines how well you can delight an audience with music, dance, acting, storytelling, or some other form of entertainment. \r\n\r\n**Persuasion.** When you attempt to influence someone or a group of people with tact, social graces, or good nature, the GM might ask you to make a Charisma (Persuasion) check. Typically, you use persuasion when acting in good faith, to foster friendships, make cordial requests, or exhibit proper etiquette. Examples of persuading others include convincing a chamberlain to let your party see the king, negotiating peace between warring tribes, or inspiring a crowd of townsfolk.\r\n\r\n**Other Charisma Checks.** The GM might call for a Charisma check when you try to accomplish tasks like the following: \r\n* Find the best person to talk to for news, rumors, and gossip\r\n* Blend into a crowd to get the sense of key topics of conversation\r\n\r\n### Spellcasting Ability\r\nBards, paladins, sorcerers, and warlocks use Charisma as their spellcasting ability, which helps determine the saving throw DCs of spells they cast.",
+        "document": "srd-2014",
+        "gamesystem": "5e-2014"
+      },
+      {
+        "desc": "Confidence, poise, and charm",
+        "document": "srd-2024",
+        "gamesystem": "5e-2024"
+      }
+    ],
+    "skills": [
+      {
+        "key": "deception",
+        "descriptions": [
+          {
+            "desc": "The Deception skill is used when a character lies, misleads, or hides the truth whether verbally or otherwise. This ability check may be made against a DC set by the Narrator or may be opposed by a target's Insight check. The most commonly used ability score is Charisma. A character might use Intelligence to compose a cipher or Constitution to conceal the effect of a wound or attack.\nSpecialties: boasting, ciphers, concealing emotions, mimicry.",
+            "document": "a5e-ag",
+            "gamesystem": "a5e"
+          },
+          {
+            "desc": "Your Charisma (Deception) check determines whether you can convincingly hide the truth, either verbally or through your actions. This deception can encompass everything from misleading others through ambiguity to telling outright lies. Typical situations include trying to fast-­talk a guard, con a merchant, earn money through gambling, pass yourself off in a disguise, dull someone’s suspicions with false assurances, or maintain a straight face while telling a blatant lie.",
+            "document": "srd-2014",
+            "gamesystem": "5e-2014"
+          },
+          {
+            "desc": "Tell a convincing lie, or wear a disguise convincingly.",
+            "document": "srd-2024",
+            "gamesystem": "5e-2024"
+          }
+        ],
+        "name": "Deception",
+        "document": "core",
+        "ability": "cha"
+      },
+      {
+        "key": "intimidation",
+        "descriptions": [
+          {
+            "desc": "A character makes an Intimidation check to alter someone's behavior by frightening or threatening them. A single Intimidation check can also be used as part of an interrogation, though further checks rarely offer different results. The Narrator sets the DC of the check based on the target's bravery and the circumstances of the check; some creatures can't be intimidated. The most commonly used ability scores for Intimidation checks are Charisma (for verbal threats) and Strength (for physical threats). A character might use Wisdom to discern a creature's weak point, and a spellcaster might use their spellcasting ability score to summon frightening energies.\nSpecialties: authority, ferocity, interrogation, subtle threats, weapon displays.",
+            "document": "a5e-ag",
+            "gamesystem": "a5e"
+          },
+          {
+            "desc": "When you attempt to influence someone through overt threats, hostile actions, and physical violence, the GM might ask you to make a Charisma (Intimidation) check. Examples include trying to pry information out of a prisoner, convincing street thugs to back down from a confrontation, or using the edge of a broken bottle to convince a sneering vizier to reconsider a decision.",
+            "document": "srd-2014",
+            "gamesystem": "5e-2014"
+          },
+          {
+            "desc": "Awe or threaten someone into doing what you want.",
+            "document": "srd-2024",
+            "gamesystem": "5e-2024"
+          }
+        ],
+        "name": "Intimidation",
+        "document": "core",
+        "ability": "cha"
+      },
+      {
+        "key": "performance",
+        "descriptions": [
+          {
+            "desc": "A Performance check allows a character to entertain an audience with singing, acting, or the like. It also allows a character to write or compose music, literature, or other artistic endeavors to entertain future audiences. The most commonly used ability score is Charisma, especially for performances before an audience. Writing, composing, or painting might instead use Intelligence or Wisdom. A display of martial prowess might require Dexterity or Strength. \nSpecialties: acting, composing, dancing, fine art, singing, speaking, writing.",
+            "document": "a5e-ag",
+            "gamesystem": "a5e"
+          },
+          {
+            "desc": "Your Charisma (Performance) check determines how well you can delight an audience with music, dance, acting, storytelling, or some other form of entertainment.",
+            "document": "srd-2014",
+            "gamesystem": "5e-2014"
+          },
+          {
+            "desc": "Act, tell a story, perform music, or dance.",
+            "document": "srd-2024",
+            "gamesystem": "5e-2024"
+          }
+        ],
+        "name": "Performance",
+        "document": "core",
+        "ability": "cha"
+      },
+      {
+        "key": "persuasion",
+        "descriptions": [
+          {
+            "desc": "A character makes a Persuasion check to convince or influence someone through logic, flattery, or negotiation (unlike a Deception check, a Persuasion check is made in some degree of good faith.) The Narrator sets the DC of the Persuasion check based on what the character is asking for and how the target feels about the character; some persuasion attempts may be impossible. The most commonly used ability score is Charisma. Wisdom might be used for gauging what offers would sway a creature, or Intelligence if it is a matter entirely about logic.\nSpecialties: bribery, flattery, leadership, negotiation, peacemaking.",
+            "document": "a5e-ag",
+            "gamesystem": "a5e"
+          },
+          {
+            "desc": "When you attempt to influence someone or a group of people with tact, social graces, or good nature, the GM might ask you to make a Charisma (Persuasion) check. Typically, you use persuasion when acting in good faith, to foster friendships, make cordial requests, or exhibit proper etiquette. Examples of persuading others include convincing a chamberlain to let your party see the king, negotiating peace between warring tribes, or inspiring a crowd of townsfolk.",
+            "document": "srd-2014",
+            "gamesystem": "5e-2014"
+          },
+          {
+            "desc": "Honestly and graciously convince someone of something.",
+            "document": "srd-2024",
+            "gamesystem": "5e-2024"
+          }
+        ],
+        "name": "Persuasion",
+        "document": "core",
+        "ability": "cha"
+      }
+    ],
+    "name": "Charisma",
+    "short_desc": "measuring force of personality",
+    "document": "core"
+  },
+  {
+    "key": "con",
+    "descriptions": [
+      {
+        "desc": "Constitution is used for any attempt to physically push beyond normal limits over a period of time.",
+        "document": "a5e-ag",
+        "gamesystem": "a5e"
+      },
+      {
+        "desc": "Constitution measures health, stamina, and vital force.\r\n\r\n### Constitution Checks\r\nConstitution checks are uncommon, and no skills apply to Constitution checks, because the endurance this ability represents is largely passive rather than involving a specific effort on the part of a character or monster. A Constitution check can model your attempt to push beyond normal limits, however. The GM might call for a Constitution check when you try to accomplish tasks like the following:\r\n* Hold your breath\r\n* March or labor for hours without rest\r\n* Go without sleep\r\n* Survive without food or water\r\n* Quaff an entire stein of ale in one go\r\n\r\n### Hit Points\r\nYour Constitution modifier contributes to your hit points. Typically, you add your Constitution modifier to each Hit Die you roll for your hit points. \r\nIf your Constitution modifier changes, your hit point maximum changes as well, as though you had the new modifier from 1st level. For example, if you raise your Constitution score when you reach 4th level and your Constitution modifier increases from +1 to +2, you adjust your hit point maximum as though the modifier had always been +2. So you add 3 hit points for your first three levels, and then roll your hit points for 4th level using your new modifier. Or if you’re 7th level and some effect lowers your Constitution score so as to reduce your Constitution modifier by 1, your hit point maximum is reduced by 7.",
+        "document": "srd-2014",
+        "gamesystem": "5e-2014"
+      },
+      {
+        "desc": "Health and stamina",
+        "document": "srd-2024",
+        "gamesystem": "5e-2024"
+      }
+    ],
+    "skills": [],
+    "name": "Constitution",
+    "short_desc": "measuring endurance",
+    "document": "core"
+  },
+  {
+    "key": "dex",
+    "descriptions": [
+      {
+        "desc": "Dexterity is used for any attempt to balance, move quietly, or to perform tasks focused on deft-fingered movements rather than force.",
+        "document": "a5e-ag",
+        "gamesystem": "a5e"
+      },
+      {
+        "desc": "Dexterity measures agility, reflexes, and balance.\r\n\r\n### Dexterity Checks\r\n\r\nA Dexterity check can model any attempt to move nimbly, quickly, or quietly, or to keep from falling on tricky footing. The Acrobatics, Sleight of Hand, and Stealth skills reflect aptitude in certain kinds of Dexterity checks.\r\n\r\n**Acrobatics.** Your Dexterity (Acrobatics) check covers your attempt to stay on your feet in a tricky situation, such as when you’re trying to run across a sheet of ice, balance on a tightrope, or stay upright on a rocking ship’s deck. The GM might also call for a Dexterity (Acrobatics) check to see if you can perform acrobatic stunts, including dives, rolls, somersaults, and flips. \r\n**Sleight of Hand.** Whenever you attempt an act of legerdemain or manual trickery, such as planting something on someone else or concealing an object on your person, make a Dexterity (Sleight of Hand) check. The GM might also call for a Dexterity (Sleight of Hand) check to determine whether you can lift a coin purse off another person or slip something out of another person’s pocket.\r\n**Stealth.** Make a Dexterity (Stealth) check when you attempt to conceal yourself from enemies, slink past guards, slip away without being noticed, or sneak up on someone without being seen or heard. \r\n**Other Dexterity Checks.** The GM might call for a Dexterity check when you try to accomplish tasks like the following:\r\n* Control a heavily laden cart on a steep descent\r\n* Steer a chariot around a tight turn\r\n* Pick a lock\r\n* Disable a trap\r\n* Securely tie up a prisoner\r\n* Wriggle free of bonds\r\n* Play a stringed instrument\r\n* Craft a small or detailed object\r\n\r\n### Attack Rolls and Damage\r\nYou add your Dexterity modifier to your attack roll and your damage roll when attacking with a ranged weapon, such as a sling or a longbow. You can also add your Dexterity modifier to your attack roll and your damage roll when attacking with a melee weapon that has the finesse property, such as a dagger or a rapier.\r\n\r\n### Armor Class\r\nDepending on the armor you wear, you might add some or all of your Dexterity modifier to your Armor Class.\r\n\r\n### Initiative\r\nAt the beginning of every combat, you roll initiative by making a Dexterity check. Initiative determines the order of creatures’ turns in combat.",
+        "document": "srd-2014",
+        "gamesystem": "5e-2014"
+      },
+      {
+        "desc": "Agility, reflexes, and balance",
+        "document": "srd-2024",
+        "gamesystem": "5e-2024"
+      }
+    ],
+    "skills": [
+      {
+        "key": "acrobatics",
+        "descriptions": [
+          {
+            "desc": "An Acrobatics check allows a character to perform gymnastic feats such as rolling under a closing gate, swinging across a chasm on a rope, or keeping their balance on a narrow ledge. The most commonly used ability score is Dexterity. A character might use Strength to perform acrobatics while carrying a heavy burden or Constitution to do so against a heavy wind.\nSpecialties: balancing, escape artistry, swinging, tumbling.",
+            "document": "a5e-ag",
+            "gamesystem": "a5e"
+          },
+          {
+            "desc": "Your Dexterity (Acrobatics) check covers your attempt to stay on your feet in a tricky situation, such as when you’re trying to run across a sheet of ice, balance on a tightrope, or stay upright on a rocking ship’s deck. The GM might also call for a Dexterity (Acrobatics) check to see if you can perform acrobatic stunts, including dives, rolls, somersaults, and flips.",
+            "document": "srd-2014",
+            "gamesystem": "5e-2014"
+          },
+          {
+            "desc": "Stay on your feet in a tricky situation, or perform an acrobatic stunt.",
+            "document": "srd-2024",
+            "gamesystem": "5e-2024"
+          }
+        ],
+        "name": "Acrobatics",
+        "document": "core",
+        "ability": "dex"
+      },
+      {
+        "key": "sleight-of-hand",
+        "descriptions": [
+          {
+            "desc": "A character makes a Sleight of Hand check to perform legerdemain, pickpocket, hide an object on another creature, make a concealed hand signal, or otherwise deceive the eyes with feats of agility. Dexterity is nearly always the ability score used with this skill. \nSpecialties: distraction, pickpocketing, legerdemain.",
+            "document": "a5e-ag",
+            "gamesystem": "a5e"
+          },
+          {
+            "desc": "Whenever you attempt an act of legerdemain or manual trickery, such as planting something on someone else or concealing an object on your person, make a Dexterity (Sleight of Hand) check. The GM might also call for a Dexterity (Sleight of Hand) check to determine whether you can lift a coin purse off another person or slip something out of another person’s pocket.",
+            "document": "srd-2014",
+            "gamesystem": "5e-2014"
+          },
+          {
+            "desc": "Pick a pocket, conceal a handheld object, or perform legerdemain.",
+            "document": "srd-2024",
+            "gamesystem": "5e-2024"
+          }
+        ],
+        "name": "Sleight of Hand",
+        "document": "core",
+        "ability": "dex"
+      },
+      {
+        "key": "stealth",
+        "descriptions": [
+          {
+            "desc": "Stealth is used to hide or avoid notice. A creature's Stealth check is usually opposed by a potential observer's Perception check. The most commonly used ability score for Stealth is Dexterity. Constitution might be used for staying still for a very long time, Intelligence for casing out an unfrequented route, and Charisma for blending anonymously into a crowd. \nSpecialties: anonymity, camouflage, casing.",
+            "document": "a5e-ag",
+            "gamesystem": "a5e"
+          },
+          {
+            "desc": "Make a Dexterity (Stealth) check when you attempt to conceal yourself from enemies, slink past guards, slip away without being noticed, or sneak up on someone without being seen or heard.",
+            "document": "srd-2014",
+            "gamesystem": "5e-2014"
+          },
+          {
+            "desc": "Escape notice by moving quietly and hiding behind things.",
+            "document": "srd-2024",
+            "gamesystem": "5e-2024"
+          }
+        ],
+        "name": "Stealth",
+        "document": "core",
+        "ability": "dex"
+      }
+    ],
+    "name": "Dexterity",
+    "short_desc": "measuring agility",
+    "document": "core"
+  },
+  {
+    "key": "int",
+    "descriptions": [
+      {
+        "desc": "Intelligence is frequently used to recall details of the shared adventure world, representing memory and education—knowledge obvious to a character even if unknown or forgotten by their player. It is also used to represent reasoning.",
+        "document": "a5e-ag",
+        "gamesystem": "a5e"
+      },
+      {
+        "desc": "Intelligence measures mental acuity, accuracy of recall, and the ability to reason.\r\n\r\n### Intelligence Checks\r\nAn Intelligence check comes into play when you need to draw on logic, education, memory, or deductive reasoning. The Arcana, History, Investigation, Nature, and Religion skills reflect aptitude in certain kinds of Intelligence checks.\r\n**Arcana.** Your Intelligence (Arcana) check measures your ability to recall lore about spells, magic items, eldritch symbols, magical traditions, the planes of existence, and the inhabitants of those planes.\r\n**History.** Your Intelligence (History) check measures your ability to recall lore about historical events, legendary people, ancient kingdoms, past disputes, recent wars, and lost civilizations.\r\n**Investigation.** When you look around for clues and make deductions based on those clues, you make an Intelligence (Investigation) check. You might deduce the location of a hidden object, discern from the appearance of a wound what kind of weapon dealt it, or determine the weakest point in a tunnel that could cause it to collapse. Poring through ancient scrolls in search of a hidden fragment of knowledge might also call for an Intelligence (Investigation) check.\r\n**Nature.** Your Intelligence (Nature) check measures your ability to recall lore about terrain, plants and animals, the weather, and natural cycles.\r\n**Religion.** Your Intelligence (Religion) check measures your ability to recall lore about deities, rites and prayers, religious hierarchies, holy symbols, and the practices of secret cults. \r\n**Other Intelligence Checks.** The GM might call for an Intelligence check when you try to accomplish tasks like the following:\r\n* Communicate with a creature without using words\r\n* Estimate the value of a precious item\r\n* Pull together a disguise to pass as a city guard\r\n* Forge a document\r\n* Recall lore about a craft or trade\r\n* Win a game of skill\r\n\r\n### Spellcasting Ability\r\nWizards use Intelligence as their spellcasting ability, which helps determine the saving throw DCs of spells they cast.",
+        "document": "srd-2014",
+        "gamesystem": "5e-2014"
+      },
+      {
+        "desc": "Reasoning and memory",
+        "document": "srd-2024",
+        "gamesystem": "5e-2024"
+      }
+    ],
+    "skills": [
+      {
+        "key": "a5e-ag_culture",
+        "descriptions": [
+          {
+            "desc": "A Culture check allows a character to know the customs, laws, trade in regional products, and etiquette of cultures other than their own (a character is presumed to know about their own culture and background without requiring an ability check). Culture can also be used to communicate simple concepts with creatures whose language is unknown to a character. The most commonly used ability score is Intelligence. A character might use Wisdom to avoid social blunders, Dexterity to perform an unfamiliar dance, or Charisma to track down a seller of a hard-to-find item.\nSpecialties: courtly manners, etiquette, laws, linguistics, regional goods, streetwise, trade.",
+            "document": "a5e-ag",
+            "gamesystem": "a5e"
+          }
+        ],
+        "name": "Culture",
+        "document": "a5e-ag",
+        "ability": "int"
+      },
+      {
+        "key": "a5e-ag_engineering",
+        "descriptions": [
+          {
+            "desc": "An Engineering check allows a character to know a fact or advance a project involving building, invention, or mathematics. The most commonly used ability score is Intelligence. A character might use Dexterity to construct a tiny device or Strength to build a wall without assistance.\nSpecialties: architecture, chemistry, explosives, gadgetry, mathematics, mechanical traps, siegecraft.",
+            "document": "a5e-ag",
+            "gamesystem": "a5e"
+          }
+        ],
+        "name": "Engineering",
+        "document": "a5e-ag",
+        "ability": "int"
+      },
+      {
+        "key": "arcana",
+        "descriptions": [
+          {
+            "desc": "Arcana measures a character's knowledge of magic and magical creatures. It can also be used to sense whether an area has magical qualities. The most commonly used ability score is Intelligence. A character might use Dexterity to trace a complicated magical rune, or Wisdom to read very carefully and protect their sanity while interpreting forbidden eldritch secrets.\nSpecialties: aberrations, constructs, detection, dragons, elementals, fey, forbidden knowledge, monstrosities, oozes, the planes.",
+            "document": "a5e-ag",
+            "gamesystem": "a5e"
+          },
+          {
+            "desc": "Your Intelligence (Arcana) check measures your ability to recall lore about spells, magic items, eldritch symbols, magical traditions, the planes of existence, and the inhabitants of those planes.",
+            "document": "srd-2014",
+            "gamesystem": "5e-2014"
+          },
+          {
+            "desc": "Recall lore about spells, magic items, and the planes of existence.",
+            "document": "srd-2024",
+            "gamesystem": "5e-2024"
+          }
+        ],
+        "name": "Arcana",
+        "document": "core",
+        "ability": "int"
+      },
+      {
+        "key": "history",
+        "descriptions": [
+          {
+            "desc": "The History skill measures a character's knowledge of past events. Intelligence is nearly always the ability score used with this skill.\nSpecialties: arts, empires, genealogy, legends, wars.",
+            "document": "a5e-ag",
+            "gamesystem": "a5e"
+          },
+          {
+            "desc": "Your Intelligence (History) check measures your ability to recall lore about historical events, legendary people, ancient kingdoms, past disputes, recent wars, and lost civilizations.",
+            "document": "srd-2014",
+            "gamesystem": "5e-2014"
+          },
+          {
+            "desc": "Recall lore about historical events, people, nations, and cultures.",
+            "document": "srd-2024",
+            "gamesystem": "5e-2024"
+          }
+        ],
+        "name": "History",
+        "document": "core",
+        "ability": "int"
+      },
+      {
+        "key": "investigation",
+        "descriptions": [
+          {
+            "desc": "Investigation is used for actively searching, looking for clues, gathering information, experimentation, and research. The most commonly used ability score is Intelligence. A character might use Charisma to gather rumors or Wisdom to intuit which tomes and books in a library will be the most efficacious.\nSpecialties: appraisal, deciphering, forensics, gathering rumors, research, trapfinding.",
+            "document": "a5e-ag",
+            "gamesystem": "a5e"
+          },
+          {
+            "desc": "When you look around for clues and make deductions based on those clues, you make an Intelligence (Investigation) check. You might deduce the location of a hidden object, discern from the appearance of a wound what kind of weapon dealt it, or determine the weakest point in a tunnel that could cause it to collapse. Poring through ancient scrolls in search of a hidden fragment of knowledge might also call for an Intelligence (Investigation) check.",
+            "document": "srd-2014",
+            "gamesystem": "5e-2014"
+          },
+          {
+            "desc": "Find obscure information in books, or deduce how something works.",
+            "document": "srd-2024",
+            "gamesystem": "5e-2024"
+          }
+        ],
+        "name": "Investigation",
+        "document": "core",
+        "ability": "int"
+      },
+      {
+        "key": "nature",
+        "descriptions": [
+          {
+            "desc": "The Nature skill measures a character's knowledge of natural terrains, beasts, plants, and hazards. It can also be used to sense whether a creature is the product of this world or of another plane of existence. Unlike Survival, the Nature skill doesn't necessarily imply practical experience with a phenomenon. The most commonly used ability score is Intelligence. A character might use Wisdom to recognize a hazard or Charisma to bring calm to an errant elemental presence disrupting an abandoned druid's grove.\nSpecialties: astronomy, beast lore, farming, fey, plant lore, weather.",
+            "document": "a5e-ag",
+            "gamesystem": "a5e"
+          },
+          {
+            "desc": "Your Intelligence (Nature) check measures your ability to recall lore about terrain, plants and animals, the weather, and natural cycles.",
+            "document": "srd-2014",
+            "gamesystem": "5e-2014"
+          },
+          {
+            "desc": "Recall lore about terrain, plants, animals, and weather.",
+            "document": "srd-2024",
+            "gamesystem": "5e-2024"
+          }
+        ],
+        "name": "Nature",
+        "document": "core",
+        "ability": "int"
+      },
+      {
+        "key": "religion",
+        "descriptions": [
+          {
+            "desc": "Religion measures a character's knowledge of gods, religions, rites, and systems of morality. A character can also try to use it to sense if a place, person, or object has the Good or Evil alignment traits or a holy or unholy aura. The most commonly used ability score is Intelligence. Wisdom is used for sensing alignment and determining whether an action is moral according to a particular philosophy. Charisma can be used for preaching.\nSpecialties: alignment, celestials, cults, fiends, holy symbols, gods, morality, prophecy, undead.",
+            "document": "a5e-ag",
+            "gamesystem": "a5e"
+          },
+          {
+            "desc": "Your Intelligence (Religion) check measures your ability to recall lore about deities, rites and prayers, religious hierarchies, holy symbols, and the practices of secret cults.",
+            "document": "srd-2014",
+            "gamesystem": "5e-2014"
+          },
+          {
+            "desc": "Recall lore about gods, religious rituals, and holy symbols.",
+            "document": "srd-2024",
+            "gamesystem": "5e-2024"
+          }
+        ],
+        "name": "Religion",
+        "document": "core",
+        "ability": "int"
+      }
+    ],
+    "name": "Intelligence",
+    "short_desc": "measuring reasoning and memory",
+    "document": "core"
+  },
+  {
+    "key": "str",
+    "descriptions": [
+      {
+        "desc": "Strength is used for any attempt to move or break something, to jump, climb, or swim beyond your usual physical limits, and to otherwise apply brute force to a situation.",
+        "document": "a5e-ag",
+        "gamesystem": "a5e"
+      },
+      {
+        "desc": "Strength measures bodily power, athletic training, and the extent to which you can exert raw physical force.\r\n\r\n### Strength Checks\r\nA Strength check can model any attempt to lift, push, pull, or break something, to force your body through a space, or to otherwise apply brute force to a situation. The Athletics skill reflects aptitude in certain kinds of Strength checks.\r\n\r\n**Athletics.** Your Strength (Athletics) check covers difficult situations you encounter while climbing, jumping, or swimming. Examples include the following activities:\r\n* You attempt to climb a sheer or slippery cliff, avoid hazards while scaling a wall, or cling to a surface while something is trying to knock you off. \r\n* You try to jump an unusually long distance or pull off a stunt midjump. \r\n* You struggle to swim or stay afloat in treacherous currents, storm-­‐‑tossed waves, or areas of thick seaweed. Or another creature tries to push or pull you underwater or otherwise interfere with your swimming.\r\n\r\n**Other Strength Checks.** The GM might also call for a Strength check when you try to accomplish tasks like the following:\r\n* Force open a stuck, locked, or barred door\r\n* Break free of bonds\r\n* Push through a tunnel that is too small\r\n* Hang on to a wagon while being dragged behind it\r\n* Tip over a statue\r\n* Keep a boulder from rolling\r\n\r\n### Attack Rolls and Damage\r\nYou add your Strength modifier to your attack roll and your damage roll when attacking with a melee weapon such as a mace, a battleaxe, or a javelin. You use melee weapons to make melee attacks in hand-to‑hand combat, and some of them can be thrown to make a ranged attack. \r\n\r\n### Lifting and Carrying\r\nYour Strength score determines the amount of weight you can bear. The following terms define what you can lift or carry.\r\n**Carrying Capacity.** Your carrying capacity is your Strength score multiplied by 15. This is the weight (in pounds) that you can carry, which is high enough that most characters don’t usually have to worry about it.\r\n**Push, Drag, or Lift.** You can push, drag, or lift a weight in pounds up to twice your carrying capacity (or 30 times your Strength score). While pushing or dragging weight in excess of your carrying capacity, your speed drops to 5 feet.\r\n**Size and Strength.** Larger creatures can bear more weight, whereas Tiny creatures can carry less. For each size category above Medium, double the creature’s carrying capacity and the amount it can push, drag, or lift. For a Tiny creature, halve these weights.\r\n\r\n### Variant: Encumbrance\r\nThe rules for lifting and carrying are intentionally simple. Here is a variant if you are looking for more detailed rules for determining how a character is hindered by the weight of equipment. When you use this variant, ignore the Strength column of the Armor table. If you carry weight in excess of 5 times your Strength score, you are **encumbered**, which means your speed drops by 10 feet. \r\nIf you carry weight in excess of 10 times your Strength score, up to your maximum carrying capacity, you are instead **heavily encumbered**, which means your speed drops by 20 feet and you have disadvantage on ability checks, attack rolls, and saving throws that use Strength, Dexterity, or Constitution.",
+        "document": "srd-2014",
+        "gamesystem": "5e-2014"
+      },
+      {
+        "desc": "Physical might",
+        "document": "srd-2024",
+        "gamesystem": "5e-2024"
+      }
+    ],
+    "skills": [
+      {
+        "key": "athletics",
+        "descriptions": [
+          {
+            "desc": "A character makes an Athletics check to perform unusually difficult feats of swimming, running, climbing, or jumping. The most commonly used ability score is Strength. A character might use Dexterity to climb a smooth wall for a short distance or to jump onto a moving creature, Constitution to perform an athletic activity for more than a minute, or Intelligence to keep track of opposing players in a complex sport.\nSpecialties: climbing, jumping, lifting, running, swimming, throwing.",
+            "document": "a5e-ag",
+            "gamesystem": "a5e"
+          },
+          {
+            "desc": "Your Strength (Athletics) check covers difficult situations you encounter while climbing, jumping, or swimming. Examples include the following activities:\r\n* You attempt to climb a sheer or slippery cliff, avoid hazards while scaling a wall, or cling to a surface while something is trying to knock you off.\r\n* You try to jump an unusually long distance or pull off a stunt midjump. \r\n* You struggle to swim or stay afloat in treacherous currents, storm-­‐‑tossed waves, or areas of thick seaweed. Or another creature tries to push or pull you underwater or otherwise interfere with your swimming.",
+            "document": "srd-2014",
+            "gamesystem": "5e-2014"
+          },
+          {
+            "desc": "Jump farther than normal, stay afloat in rough water, or break something.",
+            "document": "srd-2024",
+            "gamesystem": "5e-2024"
+          }
+        ],
+        "name": "Athletics",
+        "document": "core",
+        "ability": "str"
+      }
+    ],
+    "name": "Strength",
+    "short_desc": "measuring physical power",
+    "document": "core"
+  },
+  {
+    "key": "wis",
+    "descriptions": [
+      {
+        "desc": "Wisdom is frequently used to notice details of the shared adventure world immediately around you, representing what you perceive in the moment—the present world obvious to your character as described by the Narrator. It is also used to understand feelings and emotions, and discern cryptic omens on an intuitive rather than logical level.",
+        "document": "a5e-ag",
+        "gamesystem": "a5e"
+      },
+      {
+        "desc": "Wisdom reflects how attuned you are to the world around you and represents perceptiveness and intuition.\r\n\r\n### Wisdom Checks\r\n\r\nA Wisdom check might reflect an effort to read body language, understand someone’s feelings, notice things about the environment, or care for an injured person. The Animal Handling, Insight, Medicine, Perception, and  Survival skills reflect aptitude in certain kinds of Wisdom checks. \r\n\r\n**Animal Handling.** When there is any question whether you can calm down a domesticated animal, keep a mount from getting spooked, or intuit an animal’s intentions, the GM might call for a Wisdom (Animal Handling) check. You also make a Wisdom (Animal Handling) check to control your mount when you attempt a risky maneuver.\r\n\r\n**Insight.** Your Wisdom (Insight) check decides whether you can determine the true intentions of a creature, such as when searching out a lie or predicting someone’s next move. Doing so involves gleaning clues from body language, speech habits, and changes in mannerisms. \r\n\r\n**Medicine.** A Wisdom (Medicine) check lets you try to stabilize a dying companion or diagnose an illness.\r\n\r\n**Perception.** Your Wisdom (Perception) check lets you spot, hear, or otherwise detect the presence of something. It measures your general awareness of your surroundings and the keenness of your senses. For example, you might try to hear a conversation through a closed door, eavesdrop under an open window, or hear monsters moving stealthily in the forest. Or you might try to spot things that are obscured or easy to miss, whether they are orcs lying in ambush on a road, thugs hiding in the shadows of an alley, or candlelight under a closed secret door. \r\n\r\n**Survival.** The GM might ask you to make a Wisdom (Survival) check to follow tracks, hunt wild game, guide your group through frozen wastelands, identify signs that owlbears live nearby, predict the weather, or avoid quicksand and other natural hazards.\r\n\r\n**Other Wisdom Checks.** The GM might call for a Wisdom check when you try to accomplish tasks like the following:\r\n* Get a gut feeling about what course of action to follow\r\n* Discern whether a seemingly dead or living creature is undead\r\n\r\n### Spellcasting Ability\r\n\r\nClerics, druids, and rangers use Wisdom as their spellcasting ability, which helps determine the saving throw DCs of spells they cast.",
+        "document": "srd-2014",
+        "gamesystem": "5e-2014"
+      },
+      {
+        "desc": "Perceptiveness and mental fortitude",
+        "document": "srd-2024",
+        "gamesystem": "5e-2024"
+      }
+    ],
+    "skills": [
+      {
+        "key": "animal-handling",
+        "descriptions": [
+          {
+            "desc": "Animal Handling allows a character to train or control a domesticated animal, to handle a steed, or to communicate nonaggression to a wild beast. The most commonly used ability score is Wisdom. A character might use Charisma to command an animal's attention, Strength to stay mounted on a rampaging bull, or Dexterity to stand on the back of a galloping horse.\nSpecialties: calming, driving, farming, riding, training.",
+            "document": "a5e-ag",
+            "gamesystem": "a5e"
+          },
+          {
+            "desc": "When there is any question whether you can calm down a domesticated animal, keep a mount from getting spooked, or intuit an animal’s intentions, the GM might call for a Wisdom (Animal Handling) check. You also make a Wisdom (Animal Handling) check to control your mount when you attempt a risky maneuver.",
+            "document": "srd-2014",
+            "gamesystem": "5e-2014"
+          },
+          {
+            "desc": "Calm or train an animal, or get an animal to behave in a certain way.",
+            "document": "srd-2024",
+            "gamesystem": "5e-2024"
+          }
+        ],
+        "name": "Animal Handling",
+        "document": "core",
+        "ability": "wis"
+      },
+      {
+        "key": "insight",
+        "descriptions": [
+          {
+            "desc": "An Insight check can be used for reading a creature's intentions or motives. The most commonly used ability score is Wisdom. A character might use Dexterity to interrupt an enemy's sudden action.\nSpecialties: detecting lies, reading emotions, sensing motives.",
+            "document": "a5e-ag",
+            "gamesystem": "a5e"
+          },
+          {
+            "desc": "Your Wisdom (Insight) check decides whether you can determine the true intentions of a creature, such as when searching out a lie or predicting someone’s next move. Doing so involves gleaning clues from body language, speech habits, and changes in mannerisms.",
+            "document": "srd-2014",
+            "gamesystem": "5e-2014"
+          },
+          {
+            "desc": "Discern a person's mood and intentions.",
+            "document": "srd-2024",
+            "gamesystem": "5e-2024"
+          }
+        ],
+        "name": "Insight",
+        "document": "core",
+        "ability": "wis"
+      },
+      {
+        "key": "medicine",
+        "descriptions": [
+          {
+            "desc": "A character can perform a Medicine check to stabilize a dying creature, treat or diagnose a disease or poison, or determine a cause of death. The most commonly used ability score is Wisdom. A character might use Intelligence to diagnose a rare poison or Constitution to nurse someone through a lengthy and dangerous illness.\nSpecialties: animals, autopsy, diseases, herbalism, poisons.",
+            "document": "a5e-ag",
+            "gamesystem": "a5e"
+          },
+          {
+            "desc": "A Wisdom (Medicine) check lets you try to stabilize a dying companion or diagnose an illness.",
+            "document": "srd-2014",
+            "gamesystem": "5e-2014"
+          },
+          {
+            "desc": "Diagnose an illness, or determine what killed the recently slain.",
+            "document": "srd-2024",
+            "gamesystem": "5e-2024"
+          }
+        ],
+        "name": "Medicine",
+        "document": "core",
+        "ability": "wis"
+      },
+      {
+        "key": "perception",
+        "descriptions": [
+          {
+            "desc": "A character's Perception measures what they are able to see, hear, or otherwise sense (unlike Investigation, Perception doesn't involve approaching, searching, or handling an object of study.) The most commonly used ability score is Wisdom. A character might use Constitution for a long stretch of sentinel duty, or Intelligence to pick up on changes to the type of stone bricks used deeper than elsewhere in a dungeon. \nSpecialties: farsight, invisible objects, listening, scent.",
+            "document": "a5e-ag",
+            "gamesystem": "a5e"
+          },
+          {
+            "desc": "Your Wisdom (Perception) check lets you spot, hear, or otherwise detect the presence of something. It measures your general awareness of your surroundings and the keenness of your senses. For example, you might try to hear a conversation through a closed door, eavesdrop under an open window, or hear monsters moving stealthily in the forest. Or you might try to spot things that are obscured or easy to miss, whether they are orcs lying in ambush on a road, thugs hiding in the shadows of an alley, or candlelight under a closed secret door.",
+            "document": "srd-2014",
+            "gamesystem": "5e-2014"
+          },
+          {
+            "desc": "Using a combination of senses, notice something that's easy to miss.",
+            "document": "srd-2024",
+            "gamesystem": "5e-2024"
+          }
+        ],
+        "name": "Perception",
+        "document": "core",
+        "ability": "wis"
+      },
+      {
+        "key": "survival",
+        "descriptions": [
+          {
+            "desc": "The Survival skill allows a character to perform the tasks necessary to thrive in the wilderness: hunting, tracking, avoiding natural hazards, and traveling without getting lost (unlike Nature, a Survival check doesn't imply knowledge of the trouble you're avoiding or tracking.) The most commonly used ability score is Wisdom. A character might use Constitution to weather a storm or Intelligence to follow a route marked on an old map.\nSpecialties: dungeoneering, foraging, hunting, tracking, wayfinding.",
+            "document": "a5e-ag",
+            "gamesystem": "a5e"
+          },
+          {
+            "desc": "The GM might ask you to make a Wisdom (Survival) check to follow tracks, hunt wild game, guide your group through frozen wastelands, identify signs that owlbears live nearby, predict the weather, or avoid quicksand and other natural hazards.",
+            "document": "srd-2014",
+            "gamesystem": "5e-2014"
+          },
+          {
+            "desc": "Follow tracks, forage, find a trail, or avoid natural hazards.",
+            "document": "srd-2024",
+            "gamesystem": "5e-2024"
+          }
+        ],
+        "name": "Survival",
+        "document": "core",
+        "ability": "wis"
+      }
+    ],
+    "name": "Wisdom",
+    "short_desc": "measuring perception and insight",
+    "document": "core"
+  }
+]

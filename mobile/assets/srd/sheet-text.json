@@ -1,0 +1,310 @@
+{
+ "srd-2024_barbarian-class": {
+  "Rage": "Bonus Action (no Heavy armor): Resistance to B/P/S, +Rage Damage on Str attacks, Adv. on Str checks/saves; no spells or Concentration. Lasts to end of next turn; extend by attacking, forcing a save, or a Bonus Action (max 10 min).",
+  "Unarmored Defense": "No armor: AC = 10 + Dex mod + Con mod (Shield allowed).",
+  "Weapon Mastery": "Use the mastery properties of your chosen weapon kinds (count per Barbarian table); swap one after a Long Rest.",
+  "Danger Sense": "Advantage on Dex saves unless Incapacitated.",
+  "Reckless Attack": "On your first attack of the turn: Adv. on Str attacks until your next turn, but attacks against you have Adv.",
+  "Primal Knowledge": "Gain one Barbarian skill. While Raging, Acrobatics, Intimidation, Perception, Stealth, and Survival checks can use Str.",
+  "Extra Attack": "Attack twice when you take the Attack action.",
+  "Fast Movement": "+10 ft Speed without Heavy armor.",
+  "Feral Instinct": "Advantage on Initiative rolls.",
+  "Instinctive Pounce": "Move up to half your Speed as part of the Bonus Action to Rage.",
+  "Brutal Strike": "With Reckless Attack, forgo Adv. on one Str attack: on a hit +1d10 damage plus Forceful Blow (push 15 ft, follow half Speed) or Hamstring Blow (-15 ft Speed).",
+  "Relentless Rage": "Drop to 0 HP while Raging: DC 10 Con save (+5 each use, resets on a rest) to go to 2x Barbarian level HP instead.",
+  "Improved Brutal Strike": "Brutal Strike adds Staggering Blow (Disadv. on next save, no Opportunity Attacks) and Sundering Blow (next ally attack +5). Level 17: 2d10 and two effects per strike.",
+  "Persistent Rage": "Once per Long Rest, regain all Rage uses when you roll Initiative. Rage lasts 10 min; ends early only if Unconscious or in Heavy armor.",
+  "Indomitable Might": "A Str check or save total below your Str score uses the score instead.",
+  "Primal Champion": "Str and Con +4 (max 25)."
+ },
+ "srd-2024_path-of-the-berserker-subclass": {
+  "Frenzy": "Raging + Reckless Attack: first Str hit each turn deals extra d6s equal to your Rage Damage bonus.",
+  "Mindless Rage": "Immune to Charmed and Frightened while Raging; entering Rage ends them.",
+  "Retaliation": "Reaction when a creature within 5 ft damages you: make one melee attack against it.",
+  "Intimidating Presence": "Bonus Action: creatures of your choice in 30 ft make a Wis save (DC 8 + Str + PB) or are Frightened 1 min (repeat save each turn). 1/Long Rest, or spend a Rage use."
+ },
+ "srd-2024_bard-class": {
+  "Bardic Inspiration": "Bonus Action: a creature within 60 ft gains your Bardic die (d6; d8 at 5, d10 at 10, d12 at 15) to add to a failed D20 Test within 1 hour. Uses = Cha mod (min 1) per Long Rest.",
+  "Spellcasting": "Cha-based. Cantrips, prepared spells, and slots per the Bard table; swap a cantrip or spell on level-up. Focus: Musical Instrument.",
+  "Expertise": "Expertise in two proficient skills; two more at level 9.",
+  "Jack of All Trades": "Add half PB (round down) to ability checks with skills you lack proficiency in.",
+  "Font of Inspiration": "Bardic Inspiration recovers on a Short or Long Rest; spend a spell slot to regain a use.",
+  "Countercharm": "Reaction when you or a creature within 30 ft fails a save vs. Charmed/Frightened: reroll with Advantage.",
+  "Magical Secrets": "New prepared spells can come from the Bard, Cleric, Druid, or Wizard lists (they count as Bard spells).",
+  "Superior Inspiration": "Roll Initiative: regain Bardic Inspiration up to 2 uses.",
+  "Words of Creation": "Always have Power Word Heal and Power Word Kill prepared; each can also target a second creature within 10 ft of the first."
+ },
+ "srd-2024_college-of-lore-subclass": {
+  "Bonus Proficiencies": "Gain proficiency in three skills of your choice.",
+  "Cutting Words": "Reaction when a creature within 60 ft makes a damage roll or succeeds on a check/attack: spend Bardic Inspiration, subtract the roll.",
+  "Magical Discoveries": "Learn two always-prepared spells from the Cleric, Druid, or Wizard lists (cantrips or levels you can cast); swap one on level-up.",
+  "Peerless Skill": "Fail a check or attack: spend Bardic Inspiration and add it to the d20; not spent if it still fails."
+ },
+ "srd-2024_cleric-class": {
+  "Spellcasting": "Wis-based. Cantrips, prepared spells, and slots per the Cleric table; change prepared spells after a Long Rest. Focus: Holy Symbol.",
+  "Divine Order": "Choose Protector (Martial weapons, Heavy armor) or Thaumaturge (+1 cantrip; add Wis mod, min +1, to Arcana/Religion checks).",
+  "Channel Divinity": "Uses per Cleric table (1 back on Short Rest, all on Long). Divine Spark: Magic action, 30 ft, heal or deal (Con save half) Necrotic/Radiant 1d8 + Wis (more d8s at 7/13/18). Turn Undead: Undead within 30 ft Wis save or Frightened + Incapacitated 1 min.",
+  "Sear Undead": "Turn Undead also deals Radiant damage (Wis mod d8s, min 1) to each Undead that fails.",
+  "Blessed Strikes": "Choose Divine Strike (1/turn weapon hit +1d8 Necrotic or Radiant) or Potent Spellcasting (+Wis mod to Cleric cantrip damage).",
+  "Divine Intervention": "1/Long Rest, Magic action: cast any Cleric spell of level 5 or lower (no Reaction spells) without a slot or Material components.",
+  "Improved Blessed Strikes": "Divine Strike becomes 2d8, or Potent Spellcasting: a damaging Cleric cantrip grants 2x Wis mod Temp HP to you or a creature within 60 ft.",
+  "Greater Divine Intervention": "Divine Intervention can cast Wish; then it's unusable for 2d4 Long Rests."
+ },
+ "srd-2024_life-domain-subclass": {
+  "Disciple of Life": "Slot-cast healing spells restore an extra 2 + slot level HP.",
+  "Life Domain Spells": "Always prepared: 3 Aid, Bless, Cure Wounds, Lesser Restoration; 5 Mass Healing Word, Revivify; 7 Aura of Life, Death Ward; 9 Greater Restoration, Mass Cure Wounds.",
+  "Preserve Life": "Channel Divinity, Magic action: divide 5x Cleric level HP among Bloodied creatures within 30 ft (no higher than half their max HP).",
+  "Blessed Healer": "After a slot-cast spell heals someone else, you regain 2 + slot level HP.",
+  "Supreme Healing": "Healing dice from your spells and Channel Divinity always roll their maximum."
+ },
+ "srd-2024_druid-class": {
+  "Spellcasting": "Wis-based. Cantrips, prepared spells, and slots per the Druid table; change prepared spells after a Long Rest. Focus: Druidic Focus.",
+  "Druidic": "Know Druidic (hidden messages; DC 15 Investigation to spot). Speak with Animals always prepared.",
+  "Primal Order": "Choose Magician (+1 cantrip; add Wis mod, min +1, to Arcana/Nature checks) or Warden (Martial weapons, Medium armor).",
+  "Wild Shape": "Bonus Action: become a known Beast form for half Druid level hours; gain Temp HP = Druid level. Uses per Druid table (1 back on Short Rest). Max CR 1/4 no fly at 2, 1/2 at 4, 1 with fly at 8.",
+  "Wild Companion": "Magic action: spend a slot or Wild Shape use to cast Find Familiar (Fey, no Material; lasts until Long Rest).",
+  "Wild Resurgence": "1/turn with no Wild Shape uses: spend a slot to regain one. 1/Long Rest: spend a Wild Shape use for a level 1 slot.",
+  "Elemental Fury": "Choose Potent Spellcasting (+Wis mod to Druid cantrip damage) or Primal Strike (1/turn weapon or Beast hit +1d8 Cold/Fire/Lightning/Thunder).",
+  "Improved Elemental Fury": "Potent Spellcasting: Druid cantrips with 10+ ft range gain +300 ft. Primal Strike: 2d8.",
+  "Beast Spells": "Cast spells in Wild Shape, except ones with a costly or consumed Material component.",
+  "Archdruid": "Roll Initiative with no Wild Shape uses: regain one. 1/Long Rest: convert Wild Shape uses to a slot (2 levels each). Age 1 year per 10."
+ },
+ "srd-2024_circle-of-the-land-subclass": {
+  "Circle of the Land Spells": "After each Long Rest, pick a land (arid, polar, temperate, tropical); that land's circle spells for your level are always prepared.",
+  "Land's Aid": "Magic action + Wild Shape use: 10-ft Sphere within 60 ft; chosen creatures Con save or 2d6 Necrotic (half on save), one creature heals 2d6 (3d6 at 10, 4d6 at 14).",
+  "Natural Recovery": "1/Long Rest: cast a circle spell without a slot. 1/Long Rest on a Short Rest: recover slots totaling half Druid level (round up), none 6+.",
+  "Nature's Ward": "Immune to Poisoned; Resistance by land: arid Fire, polar Cold, temperate Lightning, tropical Poison.",
+  "Nature's Sanctuary": "Magic action + Wild Shape use: 15-ft Cube within 120 ft for 1 min; you and allies get Half Cover, allies gain your Nature's Ward Resistance. Bonus Action: move it 60 ft."
+ },
+ "srd-2024_fighter-class": {
+  "Second Wind": "Bonus Action: regain 1d10 + Fighter level HP. Uses per Fighter table (1 back on Short Rest, all on Long).",
+  "Weapon Mastery": "Use the mastery properties of your chosen weapon kinds (count per Fighter table); swap one after a Long Rest.",
+  "Action Surge": "Take one extra action on your turn (not Magic). 1/Short or Long Rest; 2 uses from level 17 (one per turn).",
+  "Tactical Mind": "Fail an ability check: spend a Second Wind use to add 1d10; not spent if it still fails.",
+  "Extra Attack": "Attack twice when you take the Attack action.",
+  "Tactical Shift": "Using Second Wind lets you move half your Speed without provoking Opportunity Attacks.",
+  "Indomitable": "Reroll a failed save, adding your Fighter level; must use the new roll. 1/Long Rest (2 at 13, 3 at 17).",
+  "Tactical Master": "When attacking with a mastery weapon, swap its property for Push, Sap, or Slow.",
+  "Two Extra Attacks": "Attack three times when you take the Attack action.",
+  "Studied Attacks": "Miss a creature: Advantage on your next attack against it before the end of your next turn.",
+  "Three Extra Attacks": "Attack four times when you take the Attack action."
+ },
+ "srd-2024_champion-subclass": {
+  "Improved Critical": "Weapon and Unarmed Strike attacks crit on 19-20.",
+  "Remarkable Athlete": "Advantage on Initiative and Athletics checks; after a crit, move half your Speed without provoking.",
+  "Heroic Warrior": "In combat, gain Heroic Inspiration at the start of your turn if you don't have it.",
+  "Superior Critical": "Weapon and Unarmed Strike attacks crit on 18-20.",
+  "Survivor": "Advantage on Death Saves; 18-20 counts as a 20. While Bloodied (1+ HP), regain 5 + Con mod HP at the start of each turn."
+ },
+ "srd-2024_monk-class": {
+  "Martial Arts": "Unarmed or Monk weapons, no armor/Shield: Bonus Action Unarmed Strike, Martial Arts die for damage, Dex for attack/damage and Grapple/Shove DC.",
+  "Unarmored Defense": "No armor or Shield: AC = 10 + Dex mod + Wis mod.",
+  "Monk's Focus": "Focus Points per Monk table (all back on a Short Rest); save DC 8 + Wis + PB. Flurry of Blows (1 FP: 2 Bonus Action strikes), Patient Defense (Disengage; 1 FP: + Dodge), Step of the Wind (Dash; 1 FP: + Disengage, double jump).",
+  "Unarmored Movement": "+Speed without armor or Shield (per Monk table).",
+  "Uncanny Metabolism": "1/Long Rest on Initiative: regain all Focus Points and heal Monk level + Martial Arts die.",
+  "Deflect Attacks": "Reaction when hit by B/P/S: reduce damage by 1d10 + Dex + Monk level. At 0, 1 FP: redirect for 2 Martial Arts dice + Dex (Dex save).",
+  "Slow Fall": "Reaction: reduce falling damage by 5x Monk level.",
+  "Extra Attack": "Attack twice when you take the Attack action.",
+  "Stunning Strike": "1/turn on a Monk weapon/Unarmed hit, 1 FP: Con save or Stunned until your next turn; on a success, half Speed and the next attack on it has Adv.",
+  "Empowered Strikes": "Unarmed Strikes can deal Force damage.",
+  "Evasion": "Dex save for half damage: none on a success, half on a failure (not while Incapacitated).",
+  "Acrobatic Movement": "No armor or Shield: move along vertical surfaces and across liquids on your turn.",
+  "Heightened Focus": "Flurry of Blows makes 3 strikes; Patient Defense (FP) grants 2 Martial Arts dice Temp HP; Step of the Wind (FP) carries a willing Large or smaller creature.",
+  "Self-Restoration": "End of your turn: end Charmed, Frightened, or Poisoned on yourself. No Exhaustion from lack of food or drink.",
+  "Deflect Energy": "Deflect Attacks works against any damage type.",
+  "Disciplined Survivor": "Proficiency in all saves; 1 FP to reroll a failed save.",
+  "Perfect Focus": "On Initiative without Uncanny Metabolism, regain Focus Points up to 4.",
+  "Superior Defense": "Start of turn, 3 FP: Resistance to all damage but Force for 1 min.",
+  "Body and Mind": "Dex and Wis +4 (max 25)."
+ },
+ "srd-2024_warrior-of-the-open-hand-subclass": {
+  "Open Hand Technique": "Flurry of Blows hits can impose Addle (no Opportunity Attacks), Push (Str save or 15 ft), or Topple (Dex save or Prone).",
+  "Wholeness of Body": "Bonus Action: heal Martial Arts die + Wis mod (min 1). Wis mod uses (min 1) per Long Rest.",
+  "Fleet Step": "After any other Bonus Action, also use Step of the Wind.",
+  "Quivering Palm": "Unarmed hit, 4 FP: vibrations last Monk level days. End them (action, or forgo an attack): Con save, 10d12 Force (half on save)."
+ },
+ "srd-2024_paladin-class": {
+  "Lay On Hands": "Bonus Action touch: heal from a pool of 5x Paladin level HP (refills on Long Rest); 5 HP from the pool removes Poisoned.",
+  "Spellcasting": "Cha-based. Prepared spells and slots per the Paladin table; swap one spell after a Long Rest. Focus: Holy Symbol.",
+  "Weapon Mastery": "Use the mastery properties of two weapon kinds you're proficient with; change them after a Long Rest.",
+  "Paladin's Smite": "Divine Smite always prepared; cast it once per Long Rest without a slot.",
+  "Channel Divinity": "2 uses (3 at 11); 1 back on Short Rest, all on Long. Divine Sense: Bonus Action, 10 min, sense Celestials, Fiends, and Undead within 60 ft.",
+  "Extra Attack": "Attack twice when you take the Attack action.",
+  "Faithful Steed": "Find Steed always prepared; cast it once per Long Rest without a slot.",
+  "Aura of Protection": "You and allies within 10 ft add your Cha mod (min +1) to saves. Inactive while Incapacitated.",
+  "Abjure Foes": "Channel Divinity, Magic action: Cha mod creatures (min 1) within 60 ft Wis save or Frightened 1 min (ends on damage); they can only move, act, or Bonus Action.",
+  "Aura of Courage": "You and allies in your aura are immune to Frightened.",
+  "Radiant Strikes": "Melee weapon and Unarmed Strike hits deal +1d8 Radiant.",
+  "Restoring Touch": "Lay On Hands can also remove Blinded, Charmed, Deafened, Frightened, Paralyzed, or Stunned (5 HP from the pool each).",
+  "Aura Expansion": "Aura of Protection becomes 30 ft."
+ },
+ "srd-2024_oath-of-devotion-subclass": {
+  "Oath of Devotion Spells": "Always prepared: 3 Protection from Evil and Good, Shield of Faith; 5 Aid, Zone of Truth; 9 Beacon of Hope, Dispel Magic; 13 Freedom of Movement, Guardian of Faith; 17 Commune, Flame Strike.",
+  "Sacred Weapon": "Channel Divinity on the Attack action: a held melee weapon adds Cha mod (min +1) to attacks, can deal Radiant, and sheds light, for 10 min.",
+  "Aura of Devotion": "You and allies in your aura are immune to Charmed.",
+  "Smite of Protection": "Casting Divine Smite gives you and allies in your aura Half Cover until your next turn.",
+  "Holy Nimbus": "1/Long Rest (or a level 5 slot), Bonus Action, 10 min: Adv. on saves forced by Fiends/Undead; enemies starting their turn in the aura take Cha + PB Radiant; aura is sunlight."
+ },
+ "srd-2024_ranger-class": {
+  "Spellcasting": "Wis-based. Prepared spells and slots per the Ranger table; swap one spell after a Long Rest. Focus: Druidic Focus.",
+  "Favored Enemy": "Hunter's Mark always prepared; cast it without a slot a number of times per the Ranger table (per Long Rest).",
+  "Weapon Mastery": "Use the mastery properties of two weapon kinds you're proficient with; change them after a Long Rest.",
+  "Deft Explorer": "Expertise in one proficient skill; learn two languages.",
+  "Extra Attack": "Attack twice when you take the Attack action.",
+  "Roving": "+10 ft Speed without Heavy armor; Climb and Swim Speed equal to your Speed.",
+  "Expertise": "Expertise in two more proficient skills.",
+  "Tireless": "Magic action: gain 1d8 + Wis mod Temp HP, Wis mod uses (min 1) per Long Rest. A Short Rest reduces Exhaustion by 1.",
+  "Relentless Hunter": "Damage can't break your Concentration on Hunter's Mark.",
+  "Nature's Veil": "Bonus Action: Invisible until the end of your next turn. Wis mod uses (min 1) per Long Rest.",
+  "Precise Hunter": "Advantage on attacks against the target of your Hunter's Mark.",
+  "Feral Senses": "Blindsight 30 ft.",
+  "Foe Slayer": "Hunter's Mark damage die becomes a d10."
+ },
+ "srd-2024_hunter-subclass": {
+  "Hunter's Lore": "You know the Immunities, Resistances, and Vulnerabilities of your Hunter's Mark target.",
+  "Hunter's Prey": "Choose (swap on a rest) Colossus Slayer (1/turn +1d8 weapon damage to a damaged target) or Horde Breaker (1/turn extra attack on a different creature within 5 ft of the first).",
+  "Defensive Tactics": "Choose (swap on a rest) Escape the Horde (Opportunity Attacks against you have Disadv.) or Multiattack Defense (a creature that hits you has Disadv. on its other attacks this turn).",
+  "Superior Hunter's Prey": "1/turn when you damage your Hunter's Mark target, deal the Mark's damage to another creature within 30 ft of it.",
+  "Superior Hunter's Defense": "Reaction when you take damage: Resistance to that type until end of turn."
+ },
+ "srd-2024_rogue-class": {
+  "Expertise": "Expertise in two proficient skills; two more at level 6.",
+  "Sneak Attack": "1/turn: +Sneak Attack dice on a Finesse/Ranged hit with Advantage, or with an ally within 5 ft of the target (and no Disadvantage).",
+  "Thieves' Cant": "Know Thieves' Cant and one other language.",
+  "Weapon Mastery": "Use the mastery properties of two weapon kinds you're proficient with; change them after a Long Rest.",
+  "Cunning Action": "Bonus Action: Dash, Disengage, or Hide.",
+  "Steady Aim": "Bonus Action if you haven't moved: Advantage on your next attack this turn; Speed 0 until turn ends.",
+  "Cunning Strike": "Forgo Sneak Attack dice for an effect (DC 8 + Dex + PB): Poison (1d6, Con save or Poisoned; needs Poisoner's Kit), Trip (1d6, Dex save or Prone), Withdraw (1d6, move half Speed without provoking).",
+  "Uncanny Dodge": "Reaction when an attacker you see hits you: halve the damage.",
+  "Evasion": "Dex save for half damage: none on a success, half on a failure (not while Incapacitated).",
+  "Reliable Talent": "Checks with a skill or tool proficiency treat a d20 of 9 or lower as 10.",
+  "Improved Cunning Strike": "Use up to two Cunning Strike effects per Sneak Attack.",
+  "Devious Strikes": "New Cunning Strikes: Daze (2d6, Con save or only move/act/Bonus Action), Obscure (3d6, Dex save or Blinded), Knock Out (6d6, Con save or Unconscious 1 min).",
+  "Slippery Mind": "Proficiency in Wis and Cha saves.",
+  "Elusive": "No attack roll has Advantage against you unless you're Incapacitated.",
+  "Stroke of Luck": "Turn a failed D20 Test into a 20. 1/Short or Long Rest."
+ },
+ "srd-2024_thief-subclass": {
+  "Fast Hands": "Bonus Action: Sleight of Hand (lock, trap, pocket), Utilize, or use a magic item's Magic action.",
+  "Second-Story Work": "Climb Speed equal to Speed; use Dex for jump distance.",
+  "Supreme Sneak": "Cunning Strike Stealth Attack (1d6): stay Invisible from Hide if you end the turn behind 3/4 or Total Cover.",
+  "Use Magic Device": "Attune up to 4 items; on a 6 (1d6) a charge isn't spent; use any Spell Scroll (Int; Arcana DC 10 + level for level 2+).",
+  "Thief's Reflexes": "Take two turns in the first round of combat: at your Initiative and at Initiative - 10."
+ },
+ "srd-2024_sorcerer-class": {
+  "Spellcasting": "Cha-based. Cantrips, prepared spells, and slots per the Sorcerer table; swap a cantrip or spell on level-up. Focus: Arcane Focus.",
+  "Innate Sorcery": "Bonus Action, 1 min: Sorcerer spell save DC +1 and Advantage on Sorcerer spell attacks. 2 uses per Long Rest.",
+  "Font of Magic": "Sorcery Points per Sorcerer table (Long Rest). Spend a slot for SP equal to its level; Bonus Action: SP into a slot (1st 2, 2nd 3, 3rd 5, 4th 6, 5th 7).",
+  "Metamagic": "Know two Metamagic options (two more at 10 and 17); spend Sorcery Points to modify a spell, one option per spell.",
+  "Sorcerous Restoration": "1/Long Rest on a Short Rest: regain Sorcery Points up to half Sorcerer level.",
+  "Sorcery Incarnate": "Spend 2 SP to use Innate Sorcery with no uses left; while it's active, use two Metamagic options per spell.",
+  "Arcane Apotheosis": "While Innate Sorcery is active, one Metamagic per turn costs no Sorcery Points."
+ },
+ "srd-2024_draconic-sorcery-subclass": {
+  "Draconic Resilience": "+3 max HP, +1 per later Sorcerer level. No armor: AC = 10 + Dex mod + Cha mod.",
+  "Draconic Spells": "Always prepared: 3 Alter Self, Chromatic Orb, Command, Dragon's Breath; 5 Fear, Fly; 7 Arcane Eye, Charm Monster; 9 Legend Lore, Summon Dragon.",
+  "Elemental Affinity": "Pick Acid, Cold, Fire, Lightning, or Poison: Resistance to it, and add Cha mod to one damage roll of spells dealing it.",
+  "Dragon Wings": "Bonus Action: Fly Speed 60 ft for 1 hour. 1/Long Rest, or spend 3 Sorcery Points.",
+  "Dragon Companion": "Summon Dragon needs no Material; cast it once per Long Rest without a slot, optionally without Concentration (1 min)."
+ },
+ "srd-2024_dragonborn-species": {
+  "Draconic Ancestry": "Your dragon type sets your Breath Weapon and Damage Resistance damage type.",
+  "Breath Weapon": "Replace an attack: 15-ft Cone or 30-ft Line, Dex save (DC 8 + Con + PB), 1d10 of your ancestry type, half on save (2d10 at 5, 3d10 at 11, 4d10 at 17). PB uses per Long Rest.",
+  "Damage Resistance": "Resistance to your Draconic Ancestry damage type.",
+  "Darkvision": "Darkvision 60 ft.",
+  "Draconic Flight": "Level 5+, 1/Long Rest, Bonus Action: Fly Speed equal to Speed for 10 min."
+ },
+ "srd-2024_dwarf-species": {
+  "Darkvision": "Darkvision 120 ft.",
+  "Dwarven Resilience": "Resistance to Poison damage; Advantage on saves vs. Poisoned.",
+  "Dwarven Toughness": "+1 max HP per level.",
+  "Stonecunning": "Bonus Action: Tremorsense 60 ft for 10 min while on or touching stone. PB uses per Long Rest."
+ },
+ "srd-2024_elf-species": {
+  "Darkvision": "Darkvision 60 ft.",
+  "Elven Lineage": "Your lineage grants a level 1 benefit and spells at levels 3 and 5 (always prepared, each castable 1/Long Rest without a slot). Int, Wis, or Cha casting.",
+  "Fey Ancestry": "Advantage on saves vs. Charmed.",
+  "Keen Senses": "Proficiency in Insight, Perception, or Survival.",
+  "Trance": "Don't need sleep and can't be magically slept; Long Rest in 4 hours of trance."
+ },
+ "srd-2024_gnome-species": {
+  "Darkvision": "Darkvision 60 ft.",
+  "Gnomish Cunning": "Advantage on Int, Wis, and Cha saves.",
+  "Gnomish Lineage": "Forest Gnome: Minor Illusion; Speak with Animals PB times per Long Rest. Rock Gnome: Mending, Prestidigitation; build Tiny clockwork devices. Int, Wis, or Cha casting."
+ },
+ "srd-2024_goliath-species": {
+  "Giant Ancestry": "Your chosen giant boon, PB uses per Long Rest: Cloud's Jaunt (teleport 30 ft), Fire's Burn (+1d10 Fire), Frost's Chill (+1d6 Cold, -10 ft Speed), Hill's Tumble (Prone), Stone's Endurance (reduce damage 1d12 + Con), or Storm's Thunder (1d8 Thunder to attacker).",
+  "Large Form": "Level 5+, 1/Long Rest, Bonus Action: become Large for 10 min; Advantage on Str checks, +10 ft Speed.",
+  "Powerful Build": "Advantage on checks to end Grappled; count one size larger for carrying capacity."
+ },
+ "srd-2024_halfling-species": {
+  "Brave": "Advantage on saves vs. Frightened.",
+  "Halfling Nimbleness": "Move through the space of any creature larger than you (can't stop there).",
+  "Luck": "Reroll a 1 on a D20 Test; must use the new roll.",
+  "Naturally Stealthy": "Hide when obscured only by a creature at least one size larger."
+ },
+ "srd-2024_human-species": {
+  "Resourceful": "Gain Heroic Inspiration after each Long Rest.",
+  "Skillful": "Proficiency in one skill of your choice.",
+  "Versatile": "Gain an Origin feat of your choice."
+ },
+ "srd-2024_orc-species": {
+  "Adrenaline Rush": "Bonus Action Dash and gain PB Temp HP. PB uses per Short or Long Rest.",
+  "Darkvision": "Darkvision 120 ft.",
+  "Relentless Endurance": "1/Long Rest: drop to 1 HP instead of 0 (unless killed outright)."
+ },
+ "srd-2024_tiefling-species": {
+  "Darkvision": "Darkvision 60 ft.",
+  "Fiendish Legacy": "Your legacy grants a level 1 benefit and spells at levels 3 and 5 (always prepared, each castable 1/Long Rest without a slot). Int, Wis, or Cha casting.",
+  "Otherworldly Presence": "Know Thaumaturgy (uses your Fiendish Legacy ability)."
+ },
+ "feats": {
+  "Alert": "Add PB to Initiative. After rolling Initiative, you can swap it with a willing ally's.",
+  "Magic Initiate": "Two cantrips and one always-prepared level 1 spell from the Cleric, Druid, or Wizard list; cast the spell 1/Long Rest without a slot. Int, Wis, or Cha.",
+  "Savage Attacker": "1/turn on a weapon hit, roll the damage dice twice and use either roll.",
+  "Skilled": "Proficiency in any three skills or tools.",
+  "Grappler": "+1 Str or Dex. Unarmed Strike can damage and Grapple (1/turn); Advantage vs. creatures you Grapple; move them at no extra cost.",
+  "Archery": "+2 to attack rolls with Ranged weapons.",
+  "Defense": "+1 AC while wearing armor.",
+  "Great Weapon Fighting": "Two-handed melee (Two-Handed or Versatile): treat 1s and 2s on damage dice as 3s.",
+  "Two-Weapon Fighting": "Add your ability modifier to the damage of the Light weapon extra attack.",
+  "Boon of Combat Prowess": "+1 to one ability (max 30). Turn a missed attack into a hit, once per turn.",
+  "Boon of Dimensional Travel": "+1 to one ability (max 30). After an Attack or Magic action, teleport 30 ft.",
+  "Boon of Fate": "+1 to one ability (max 30). Add or subtract 2d4 to a D20 Test within 60 ft; recharges on Initiative or a rest.",
+  "Boon of Irresistible Offense": "+1 Str or Dex (max 30). Your B/P/S damage ignores Resistance; on a natural 20, extra damage equal to that score.",
+  "Boon of Spell Recall": "+1 Int, Wis, or Cha (max 30). Casting with a level 1-4 slot: roll 1d4; if it equals the slot level, the slot isn't spent.",
+  "Boon of the Night Spirit": "+1 to one ability (max 30). In Dim Light or Darkness: Bonus Action Invisible (ends when you act); Resistance to all but Psychic and Radiant.",
+  "Boon of Truesight": "+1 to one ability (max 30). Truesight 60 ft."
+ },
+ "srd-2024_warlock-class": {
+  "Eldritch Invocations": "Know invocations per the Warlock table (meet prerequisites); swap one on level-up.",
+  "Pact Magic": "Cha-based. Cantrips, prepared spells, and slots per the Warlock table; all slots are the same level and recover on a Short or Long Rest. Focus: Arcane Focus.",
+  "Magical Cunning": "1/Long Rest, 1-minute rite: regain Pact Magic slots up to half your maximum (round up).",
+  "Contact Patron": "Contact Other Plane always prepared; 1/Long Rest cast it without a slot and automatically succeed on its save.",
+  "Mystic Arcanum": "One Warlock spell each of level 6 (and 7 at 13, 8 at 15, 9 at 17) castable once per Long Rest without a slot.",
+  "Eldritch Master": "Magical Cunning regains all Pact Magic slots."
+ },
+ "srd-2024_fiend-patron-subclass": {
+  "Dark One's Blessing": "Reduce an enemy to 0 HP (or an ally does within 10 ft of you): gain Cha mod + Warlock level Temp HP (min 1).",
+  "Fiend Spells": "Always prepared: 3 Burning Hands, Command, Scorching Ray, Suggestion; 5 Fireball, Stinking Cloud; 7 Fire Shield, Wall of Fire; 9 Geas, Insect Plague.",
+  "Dark One's Own Luck": "Add 1d10 to an ability check or save after seeing the roll. Cha mod uses (min 1) per Long Rest, once per roll.",
+  "Fiendish Resilience": "After a Short or Long Rest, choose a damage type other than Force: Resistance to it.",
+  "Hurl Through Hell": "1/turn on an attack hit: Cha save (spell DC) or 8d10 Psychic (non-Fiends) and Incapacitated until end of your next turn. 1/Long Rest, or spend a Pact slot."
+ },
+ "srd-2024_wizard-class": {
+  "Spellcasting": "Int-based. Cantrips, prepared spells (from your spellbook), and slots per the Wizard table; add two spells to the book per level. Focus: Arcane Focus or spellbook.",
+  "Ritual Adept": "Cast any Ritual spell in your spellbook as a Ritual without preparing it.",
+  "Arcane Recovery": "1/Long Rest on a Short Rest: recover slots totaling half Wizard level (round up), none 6+.",
+  "Scholar": "Expertise in one proficient skill: Arcana, History, Investigation, Medicine, Nature, or Religion.",
+  "Memorize Spell": "After a Short Rest, swap one prepared level 1+ spell for another in your spellbook.",
+  "Spell Mastery": "A chosen level 1 and level 2 spellbook spell (Action casting time) are always prepared and castable at their base level without a slot.",
+  "Signature Spells": "Two level 3 spellbook spells are always prepared; cast each once at level 3 without a slot per Short or Long Rest."
+ },
+ "srd-2024_evoker-subclass": {
+  "Evocation Savant": "Add two level 2 or lower Evocation spells to your spellbook free, plus one free Evocation spell each time you gain a new slot level.",
+  "Potent Cantrip": "A damaging cantrip that misses or is saved against still deals half damage (no other effect).",
+  "Sculpt Spells": "Evocation spells: 1 + spell level creatures you see auto-succeed on the save and take no damage on a half-damage save.",
+  "Empowered Evocation": "Add Int mod to one damage roll of Wizard Evocation spells.",
+  "Overchannel": "Deal max damage with a level 1-5 Wizard spell. First use per Long Rest is free; each later one deals 2d12 (then +1d12) Necrotic per slot level to you."
+ }
+}

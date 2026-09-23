@@ -1,0 +1,72 @@
+[
+  {
+    "key": "srd-2024_carriage-tack",
+    "name": "Carriage",
+    "weight": "600 lb.",
+    "cost": "100 GP",
+    "document": "srd-2024"
+  },
+  {
+    "key": "srd-2024_cart-tack",
+    "name": "Cart",
+    "weight": "200 lb.",
+    "cost": "15 GP",
+    "document": "srd-2024"
+  },
+  {
+    "key": "srd-2024_chariot-tack",
+    "name": "Chariot",
+    "weight": "100 lb.",
+    "cost": "250 GP",
+    "document": "srd-2024"
+  },
+  {
+    "key": "srd-2024_feed-per-day-tack",
+    "name": "Feed per day",
+    "weight": "10 lb.",
+    "cost": "5 CP",
+    "document": "srd-2024"
+  },
+  {
+    "key": "srd-2024_saddle-exotic-tack",
+    "name": "Saddle, Exotic",
+    "weight": "40 lb.",
+    "cost": "60 GP",
+    "document": "srd-2024"
+  },
+  {
+    "key": "srd-2024_saddle-military-tack",
+    "name": "Saddle, Military",
+    "weight": "30 lb.",
+    "cost": "20 GP",
+    "document": "srd-2024"
+  },
+  {
+    "key": "srd-2024_saddle-riding-tack",
+    "name": "Saddle, Riding",
+    "weight": "25 lb.",
+    "cost": "10 GP",
+    "document": "srd-2024"
+  },
+  {
+    "key": "srd-2024_sled-tack",
+    "name": "Sled",
+    "weight": "300 lb.",
+    "cost": "20 GP",
+    "document": "srd-2024"
+  },
+  {
+    "key": "srd-2024_stabling-per-day-tack",
+    "name": "Stabling per day",
+    "weight": null,
+    "cost": "5 SP",
+    "document": "srd-2024"
+  },
+  {
+    "key": "srd-2024_wagon-tack",
+    "name": "Wagon",
+    "weight": "400 lb.",
+    "cost": "35 GP",
+    "document": "srd-2024"
+  }
+]

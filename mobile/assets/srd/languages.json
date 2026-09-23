@@ -1,0 +1,154 @@
+[
+  {
+    "key": "srd-2024_common-language",
+    "name": "Common",
+    "category": "Standard",
+    "desc": "",
+    "document": "srd-2024",
+    "source": "hand-extracted from SRD 5.2.1 character-creation.md (Open5e's 'core' language data is 2014-era and missing the 2024 addition of Common Sign Language)"
+  },
+  {
+    "key": "srd-2024_common-sign-language-language",
+    "name": "Common Sign Language",
+    "category": "Standard",
+    "desc": "",
+    "document": "srd-2024",
+    "source": "hand-extracted from SRD 5.2.1 character-creation.md (Open5e's 'core' language data is 2014-era and missing the 2024 addition of Common Sign Language)"
+  },
+  {
+    "key": "srd-2024_draconic-language",
+    "name": "Draconic",
+    "category": "Standard",
+    "desc": "",
+    "document": "srd-2024",
+    "source": "hand-extracted from SRD 5.2.1 character-creation.md (Open5e's 'core' language data is 2014-era and missing the 2024 addition of Common Sign Language)"
+  },
+  {
+    "key": "srd-2024_dwarvish-language",
+    "name": "Dwarvish",
+    "category": "Standard",
+    "desc": "",
+    "document": "srd-2024",
+    "source": "hand-extracted from SRD 5.2.1 character-creation.md (Open5e's 'core' language data is 2014-era and missing the 2024 addition of Common Sign Language)"
+  },
+  {
+    "key": "srd-2024_elvish-language",
+    "name": "Elvish",
+    "category": "Standard",
+    "desc": "",
+    "document": "srd-2024",
+    "source": "hand-extracted from SRD 5.2.1 character-creation.md (Open5e's 'core' language data is 2014-era and missing the 2024 addition of Common Sign Language)"
+  },
+  {
+    "key": "srd-2024_giant-language",
+    "name": "Giant",
+    "category": "Standard",
+    "desc": "",
+    "document": "srd-2024",
+    "source": "hand-extracted from SRD 5.2.1 character-creation.md (Open5e's 'core' language data is 2014-era and missing the 2024 addition of Common Sign Language)"
+  },
+  {
+    "key": "srd-2024_gnomish-language",
+    "name": "Gnomish",
+    "category": "Standard",
+    "desc": "",
+    "document": "srd-2024",
+    "source": "hand-extracted from SRD 5.2.1 character-creation.md (Open5e's 'core' language data is 2014-era and missing the 2024 addition of Common Sign Language)"
+  },
+  {
+    "key": "srd-2024_goblin-language",
+    "name": "Goblin",
+    "category": "Standard",
+    "desc": "",
+    "document": "srd-2024",
+    "source": "hand-extracted from SRD 5.2.1 character-creation.md (Open5e's 'core' language data is 2014-era and missing the 2024 addition of Common Sign Language)"
+  },
+  {
+    "key": "srd-2024_halfling-language",
+    "name": "Halfling",
+    "category": "Standard",
+    "desc": "",
+    "document": "srd-2024",
+    "source": "hand-extracted from SRD 5.2.1 character-creation.md (Open5e's 'core' language data is 2014-era and missing the 2024 addition of Common Sign Language)"
+  },
+  {
+    "key": "srd-2024_orc-language",
+    "name": "Orc",
+    "category": "Standard",
+    "desc": "",
+    "document": "srd-2024",
+    "source": "hand-extracted from SRD 5.2.1 character-creation.md (Open5e's 'core' language data is 2014-era and missing the 2024 addition of Common Sign Language)"
+  },
+  {
+    "key": "srd-2024_abyssal-language",
+    "name": "Abyssal",
+    "category": "Rare",
+    "desc": "",
+    "document": "srd-2024",
+    "source": "hand-extracted from SRD 5.2.1 character-creation.md (Open5e's 'core' language data is 2014-era and missing the 2024 addition of Common Sign Language)"
+  },
+  {
+    "key": "srd-2024_primordial-language",
+    "name": "Primordial",
+    "category": "Rare",
+    "desc": "Includes the Aquan, Auran, Ignan, and Terran dialects. Creatures that know one of these dialects can communicate with those that know a different one.",
+    "document": "srd-2024",
+    "source": "hand-extracted from SRD 5.2.1 character-creation.md (Open5e's 'core' language data is 2014-era and missing the 2024 addition of Common Sign Language)"
+  },
+  {
+    "key": "srd-2024_celestial-language",
+    "name": "Celestial",
+    "category": "Rare",
+    "desc": "",
+    "document": "srd-2024",
+    "source": "hand-extracted from SRD 5.2.1 character-creation.md (Open5e's 'core' language data is 2014-era and missing the 2024 addition of Common Sign Language)"
+  },
+  {
+    "key": "srd-2024_sylvan-language",
+    "name": "Sylvan",
+    "category": "Rare",
+    "desc": "",
+    "document": "srd-2024",
+    "source": "hand-extracted from SRD 5.2.1 character-creation.md (Open5e's 'core' language data is 2014-era and missing the 2024 addition of Common Sign Language)"
+  },
+  {
+    "key": "srd-2024_deep-speech-language",
+    "name": "Deep Speech",
+    "category": "Rare",
+    "desc": "",
+    "document": "srd-2024",
+    "source": "hand-extracted from SRD 5.2.1 character-creation.md (Open5e's 'core' language data is 2014-era and missing the 2024 addition of Common Sign Language)"
+  },
+  {
+    "key": "srd-2024_thieves-cant-language",
+    "name": "Thieves' Cant",
+    "category": "Rare",
+    "desc": "",
+    "document": "srd-2024",
+    "source": "hand-extracted from SRD 5.2.1 character-creation.md (Open5e's 'core' language data is 2014-era and missing the 2024 addition of Common Sign Language)"
+  },
+  {
+    "key": "srd-2024_druidic-language",
+    "name": "Druidic",
+    "category": "Rare",
+    "desc": "",
+    "document": "srd-2024",
+    "source": "hand-extracted from SRD 5.2.1 character-creation.md (Open5e's 'core' language data is 2014-era and missing the 2024 addition of Common Sign Language)"
+  },
+  {
+    "key": "srd-2024_undercommon-language",
+    "name": "Undercommon",
+    "category": "Rare",
+    "desc": "",
+    "document": "srd-2024",
+    "source": "hand-extracted from SRD 5.2.1 character-creation.md (Open5e's 'core' language data is 2014-era and missing the 2024 addition of Common Sign Language)"
+  },
+  {
+    "key": "srd-2024_infernal-language",
+    "name": "Infernal",
+    "category": "Rare",
+    "desc": "",
+    "document": "srd-2024",
+    "source": "hand-extracted from SRD 5.2.1 character-creation.md (Open5e's 'core' language data is 2014-era and missing the 2024 addition of Common Sign Language)"
+  }
+]

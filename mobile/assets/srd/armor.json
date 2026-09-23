@@ -1,0 +1,145 @@
+[
+  {
+    "key": "srd-2024_padded-armor-armor",
+    "name": "Padded Armor",
+    "category": "Light Armor (1 Minute to Don or Doff)",
+    "armorClass": "11 + Dex modifier",
+    "strength": null,
+    "stealth": true,
+    "weight": "8 lb.",
+    "cost": "5 GP",
+    "document": "srd-2024"
+  },
+  {
+    "key": "srd-2024_leather-armor-armor",
+    "name": "Leather Armor",
+    "category": "Light Armor (1 Minute to Don or Doff)",
+    "armorClass": "11 + Dex modifier",
+    "strength": null,
+    "stealth": false,
+    "weight": "10 lb.",
+    "cost": "10 GP",
+    "document": "srd-2024"
+  },
+  {
+    "key": "srd-2024_studded-leather-armor-armor",
+    "name": "Studded Leather Armor",
+    "category": "Light Armor (1 Minute to Don or Doff)",
+    "armorClass": "12 + Dex modifier",
+    "strength": null,
+    "stealth": false,
+    "weight": "13 lb.",
+    "cost": "45 GP",
+    "document": "srd-2024"
+  },
+  {
+    "key": "srd-2024_hide-armor-armor",
+    "name": "Hide Armor",
+    "category": "Medium Armor (5 Minutes to Don and 1 Minute to Doff)",
+    "armorClass": "12 + Dex modifier (max 2)",
+    "strength": null,
+    "stealth": false,
+    "weight": "12 lb.",
+    "cost": "10 GP",
+    "document": "srd-2024"
+  },
+  {
+    "key": "srd-2024_chain-shirt-armor",
+    "name": "Chain Shirt",
+    "category": "Medium Armor (5 Minutes to Don and 1 Minute to Doff)",
+    "armorClass": "13 + Dex modifier (max 2)",
+    "strength": null,
+    "stealth": false,
+    "weight": "20 lb.",
+    "cost": "50 GP",
+    "document": "srd-2024"
+  },
+  {
+    "key": "srd-2024_scale-mail-armor",
+    "name": "Scale Mail",
+    "category": "Medium Armor (5 Minutes to Don and 1 Minute to Doff)",
+    "armorClass": "14 + Dex modifier (max 2)",
+    "strength": null,
+    "stealth": true,
+    "weight": "45 lb.",
+    "cost": "50 GP",
+    "document": "srd-2024"
+  },
+  {
+    "key": "srd-2024_breastplate-armor",
+    "name": "Breastplate",
+    "category": "Medium Armor (5 Minutes to Don and 1 Minute to Doff)",
+    "armorClass": "14 + Dex modifier (max 2)",
+    "strength": null,
+    "stealth": false,
+    "weight": "20 lb.",
+    "cost": "400 GP",
+    "document": "srd-2024"
+  },
+  {
+    "key": "srd-2024_half-plate-armor-armor",
+    "name": "Half Plate Armor",
+    "category": "Medium Armor (5 Minutes to Don and 1 Minute to Doff)",
+    "armorClass": "15 + Dex modifier (max 2)",
+    "strength": null,
+    "stealth": true,
+    "weight": "40 lb.",
+    "cost": "750 GP",
+    "document": "srd-2024"
+  },
+  {
+    "key": "srd-2024_ring-mail-armor",
+    "name": "Ring Mail",
+    "category": "Heavy Armor (10 Minutes to Don and 5 Minutes to Doff)",
+    "armorClass": "14",
+    "strength": null,
+    "stealth": true,
+    "weight": "40 lb.",
+    "cost": "30 GP",
+    "document": "srd-2024"
+  },
+  {
+    "key": "srd-2024_chain-mail-armor",
+    "name": "Chain Mail",
+    "category": "Heavy Armor (10 Minutes to Don and 5 Minutes to Doff)",
+    "armorClass": "16",
+    "strength": "Str 13",
+    "stealth": true,
+    "weight": "55 lb.",
+    "cost": "75 GP",
+    "document": "srd-2024"
+  },
+  {
+    "key": "srd-2024_splint-armor-armor",
+    "name": "Splint Armor",
+    "category": "Heavy Armor (10 Minutes to Don and 5 Minutes to Doff)",
+    "armorClass": "17",
+    "strength": "Str 15",
+    "stealth": true,
+    "weight": "60 lb.",
+    "cost": "200 GP",
+    "document": "srd-2024"
+  },
+  {
+    "key": "srd-2024_plate-armor-armor",
+    "name": "Plate Armor",
+    "category": "Heavy Armor (10 Minutes to Don and 5 Minutes to Doff)",
+    "armorClass": "18",
+    "strength": "Str 15",
+    "stealth": true,
+    "weight": "65 lb.",
+    "cost": "1,500 GP",
+    "document": "srd-2024"
+  },
+  {
+    "key": "srd-2024_shield-armor",
+    "name": "Shield",
+    "category": "Shield (Utilize Action to Don or Doff)",
+    "armorClass": "+2",
+    "strength": null,
+    "stealth": false,
+    "weight": "6 lb.",
+    "cost": "10 GP",
+    "document": "srd-2024"
+  }
+]

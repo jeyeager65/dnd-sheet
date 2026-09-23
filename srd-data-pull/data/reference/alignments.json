@@ -1,0 +1,299 @@
+[
+  {
+    "key": "chaotic-evil",
+    "morality": "evil",
+    "societal_attitude": "chaotic",
+    "short_name": "CE",
+    "descriptions": [
+      {
+        "desc": "Chaotic evil (CE) creatures act with arbitrary violence, spurred by their greed, hatred, or bloodlust. Demons, red dragons, and orcs are chaotic evil.",
+        "document": "srd-2014",
+        "gamesystem": "5e-2014"
+      },
+      {
+        "desc": "Chaotic Evil creatures act with arbitrary violence, spurred by their hatred or bloodlust. A villain pursuing schemes of vengeance and havoc is probably Chaotic Evil.",
+        "document": "srd-2024",
+        "gamesystem": "5e-2024"
+      }
+    ],
+    "document": {
+      "name": "5e Core Concepts",
+      "key": "core",
+      "type": "MISC",
+      "display_name": "5e Core",
+      "publisher": {
+        "name": "Open5e",
+        "key": "open5e"
+      },
+      "gamesystem": {
+        "name": "5th Edition 2014",
+        "key": "5e-2014"
+      },
+      "permalink": "https://dnd.wizards.com/resources/systems-reference-document"
+    }
+  },
+  {
+    "key": "chaotic-good",
+    "morality": "good",
+    "societal_attitude": "chaotic",
+    "short_name": "CG",
+    "descriptions": [
+      {
+        "desc": "Chaotic good (CG) creatures act as their conscience directs, with little regard for what others expect.  Copper dragons, many elves, and unicorns are chaotic good.",
+        "document": "srd-2014",
+        "gamesystem": "5e-2014"
+      },
+      {
+        "desc": "Chaotic Good creatures act as their conscience directs with little regard for what others expect. A rebel who waylays a cruel baron's tax collectors and uses the stolen money to help the poor is probably Chaotic Good.",
+        "document": "srd-2024",
+        "gamesystem": "5e-2024"
+      }
+    ],
+    "document": {
+      "name": "5e Core Concepts",
+      "key": "core",
+      "type": "MISC",
+      "display_name": "5e Core",
+      "publisher": {
+        "name": "Open5e",
+        "key": "open5e"
+      },
+      "gamesystem": {
+        "name": "5th Edition 2014",
+        "key": "5e-2014"
+      },
+      "permalink": "https://dnd.wizards.com/resources/systems-reference-document"
+    }
+  },
+  {
+    "key": "chaotic-neutral",
+    "morality": "neutral",
+    "societal_attitude": "chaotic",
+    "short_name": "CN",
+    "descriptions": [
+      {
+        "desc": "Chaotic neutral (CN) creatures follow their whims, holding their personal freedom above all else. Many barbarians and rogues, and some bards, are chaotic neutral.",
+        "document": "srd-2014",
+        "gamesystem": "5e-2014"
+      },
+      {
+        "desc": "Chaotic Neutral creatures follow their whims, valuing their personal freedom above all else. A scoundrel who wanders the land living by their wits is probably Chaotic Neutral.",
+        "document": "srd-2024",
+        "gamesystem": "5e-2024"
+      }
+    ],
+    "document": {
+      "name": "5e Core Concepts",
+      "key": "core",
+      "type": "MISC",
+      "display_name": "5e Core",
+      "publisher": {
+        "name": "Open5e",
+        "key": "open5e"
+      },
+      "gamesystem": {
+        "name": "5th Edition 2014",
+        "key": "5e-2014"
+      },
+      "permalink": "https://dnd.wizards.com/resources/systems-reference-document"
+    }
+  },
+  {
+    "key": "lawful-evil",
+    "morality": "evil",
+    "societal_attitude": "lawful",
+    "short_name": "LE",
+    "descriptions": [
+      {
+        "desc": "Lawful evil (LE) creatures methodically take what they want, within the limits of a code of tradition, loyalty, or order. Devils, blue dragons, and hobgoblins are lawful evil.",
+        "document": "srd-2014",
+        "gamesystem": "5e-2014"
+      },
+      {
+        "desc": "Lawful Evil creatures methodically take what they want within the limits of a code of tradition, loyalty, or order. An aristocrat exploiting citizens while scheming for power is probably Lawful Evil.",
+        "document": "srd-2024",
+        "gamesystem": "5e-2024"
+      }
+    ],
+    "document": {
+      "name": "5e Core Concepts",
+      "key": "core",
+      "type": "MISC",
+      "display_name": "5e Core",
+      "publisher": {
+        "name": "Open5e",
+        "key": "open5e"
+      },
+      "gamesystem": {
+        "name": "5th Edition 2014",
+        "key": "5e-2014"
+      },
+      "permalink": "https://dnd.wizards.com/resources/systems-reference-document"
+    }
+  },
+  {
+    "key": "lawful-good",
+    "morality": "good",
+    "societal_attitude": "lawful",
+    "short_name": "LG",
+    "descriptions": [
+      {
+        "desc": "Lawful good (LG) creatures can be counted on to do the right thing as expected by society. Gold dragons, paladins, and most dwarves are lawful good.",
+        "document": "srd-2014",
+        "gamesystem": "5e-2014"
+      },
+      {
+        "desc": "Lawful Good creatures endeavor to do the right thing as expected by society. Someone who fights injustice and protects the innocent without hesitation is probably Lawful Good.",
+        "document": "srd-2024",
+        "gamesystem": "5e-2024"
+      }
+    ],
+    "document": {
+      "name": "5e Core Concepts",
+      "key": "core",
+      "type": "MISC",
+      "display_name": "5e Core",
+      "publisher": {
+        "name": "Open5e",
+        "key": "open5e"
+      },
+      "gamesystem": {
+        "name": "5th Edition 2014",
+        "key": "5e-2014"
+      },
+      "permalink": "https://dnd.wizards.com/resources/systems-reference-document"
+    }
+  },
+  {
+    "key": "lawful-neutral",
+    "morality": "neutral",
+    "societal_attitude": "lawful",
+    "short_name": "LN",
+    "descriptions": [
+      {
+        "desc": "Lawful neutral (LN) individuals act in accordance with law, tradition, or personal codes. Many monks and some wizards are lawful neutral.",
+        "document": "srd-2014",
+        "gamesystem": "5e-2014"
+      },
+      {
+        "desc": "Lawful Neutral individuals act in accordance with law, tradition, or personal codes. Someone who follows a disciplined rule of life and isn't swayed either by the demands of those in need or by the temptations of evil is probably Lawful Neutral.",
+        "document": "srd-2024",
+        "gamesystem": "5e-2024"
+      }
+    ],
+    "document": {
+      "name": "5e Core Concepts",
+      "key": "core",
+      "type": "MISC",
+      "display_name": "5e Core",
+      "publisher": {
+        "name": "Open5e",
+        "key": "open5e"
+      },
+      "gamesystem": {
+        "name": "5th Edition 2014",
+        "key": "5e-2014"
+      },
+      "permalink": "https://dnd.wizards.com/resources/systems-reference-document"
+    }
+  },
+  {
+    "key": "neutral",
+    "morality": "neutral",
+    "societal_attitude": "neutral",
+    "short_name": "N",
+    "descriptions": [
+      {
+        "desc": "Neutral (N) is the alignment of those who prefer to steer clear of moral questions and don’t take sides, doing what seems best at the time. Lizardfolk, most druids, and many humans are neutral.",
+        "document": "srd-2014",
+        "gamesystem": "5e-2014"
+      },
+      {
+        "desc": "Neutral is the alignment of those who prefer to avoid moral questions and don't take sides, doing what seems best at the time. Someone who's bored by moral debate is probably Neutral.",
+        "document": "srd-2024",
+        "gamesystem": "5e-2024"
+      }
+    ],
+    "document": {
+      "name": "5e Core Concepts",
+      "key": "core",
+      "type": "MISC",
+      "display_name": "5e Core",
+      "publisher": {
+        "name": "Open5e",
+        "key": "open5e"
+      },
+      "gamesystem": {
+        "name": "5th Edition 2014",
+        "key": "5e-2014"
+      },
+      "permalink": "https://dnd.wizards.com/resources/systems-reference-document"
+    }
+  },
+  {
+    "key": "neutral-evil",
+    "morality": "evil",
+    "societal_attitude": "neutral",
+    "short_name": "NE",
+    "descriptions": [
+      {
+        "desc": "Neutral evil (NE) is the alignment of those who do whatever they can get away with, without compassion or qualms. Many drow, some cloud giants, and goblins are neutral evil.",
+        "document": "srd-2014",
+        "gamesystem": "5e-2014"
+      },
+      {
+        "desc": "Neutral Evil is the alignment of those who are untroubled by the harm they cause as they pursue their desires. A criminal who robs and murders as they please is probably Neutral Evil.",
+        "document": "srd-2024",
+        "gamesystem": "5e-2024"
+      }
+    ],
+    "document": {
+      "name": "5e Core Concepts",
+      "key": "core",
+      "type": "MISC",
+      "display_name": "5e Core",
+      "publisher": {
+        "name": "Open5e",
+        "key": "open5e"
+      },
+      "gamesystem": {
+        "name": "5th Edition 2014",
+        "key": "5e-2014"
+      },
+      "permalink": "https://dnd.wizards.com/resources/systems-reference-document"
+    }
+  },
+  {
+    "key": "neutral-good",
+    "morality": "good",
+    "societal_attitude": "neutral",
+    "short_name": "NG",
+    "descriptions": [
+      {
+        "desc": "Neutral good (NG) folk do the best they can to help others according to their needs. Many celestials, some cloud giants, and most gnomes are neutral good.",
+        "document": "srd-2014",
+        "gamesystem": "5e-2014"
+      },
+      {
+        "desc": "Neutral Good creatures do the best they can, working within rules but not feeling bound by them. A kindly person who helps others according to their needs is probably Neutral Good.",
+        "document": "srd-2024",
+        "gamesystem": "5e-2024"
+      }
+    ],
+    "document": {
+      "name": "5e Core Concepts",
+      "key": "core",
+      "type": "MISC",
+      "display_name": "5e Core",
+      "publisher": {
+        "name": "Open5e",
+        "key": "open5e"
+      },
+      "gamesystem": {
+        "name": "5th Edition 2014",
+        "key": "5e-2014"
+      },
+      "permalink": "https://dnd.wizards.com/resources/systems-reference-document"
+    }
+  }
+]

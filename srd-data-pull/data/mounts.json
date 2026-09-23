@@ -1,0 +1,58 @@
+[
+  {
+    "key": "srd-2024_camel-mount",
+    "name": "Camel",
+    "carryingCapacity": "450 lb.",
+    "cost": "50 GP",
+    "document": "srd-2024"
+  },
+  {
+    "key": "srd-2024_elephant-mount",
+    "name": "Elephant",
+    "carryingCapacity": "1,320 lb.",
+    "cost": "200 GP",
+    "document": "srd-2024"
+  },
+  {
+    "key": "srd-2024_horse-draft-mount",
+    "name": "Horse, Draft",
+    "carryingCapacity": "540 lb.",
+    "cost": "50 GP",
+    "document": "srd-2024"
+  },
+  {
+    "key": "srd-2024_horse-riding-mount",
+    "name": "Horse, Riding",
+    "carryingCapacity": "480 lb.",
+    "cost": "75 GP",
+    "document": "srd-2024"
+  },
+  {
+    "key": "srd-2024_mastiff-mount",
+    "name": "Mastiff",
+    "carryingCapacity": "195 lb.",
+    "cost": "25 GP",
+    "document": "srd-2024"
+  },
+  {
+    "key": "srd-2024_mule-mount",
+    "name": "Mule",
+    "carryingCapacity": "420 lb.",
+    "cost": "8 GP",
+    "document": "srd-2024"
+  },
+  {
+    "key": "srd-2024_pony-mount",
+    "name": "Pony",
+    "carryingCapacity": "225 lb.",
+    "cost": "30 GP",
+    "document": "srd-2024"
+  },
+  {
+    "key": "srd-2024_warhorse-mount",
+    "name": "Warhorse",
+    "carryingCapacity": "540 lb.",
+    "cost": "400 GP",
+    "document": "srd-2024"
+  }
+]

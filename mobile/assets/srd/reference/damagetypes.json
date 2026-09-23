@@ -1,0 +1,223 @@
+[
+  {
+    "key": "acid",
+    "descriptions": [
+      {
+        "desc": "The corrosive spray of a black dragon’s breath and the dissolving enzymes secreted by a black pudding deal acid damage.",
+        "document": "srd-2014",
+        "gamesystem": "5e-2014"
+      },
+      {
+        "desc": "Corrosive liquids, digestive enzymes",
+        "document": "srd-2024",
+        "gamesystem": "5e-2024"
+      }
+    ],
+    "name": "Acid",
+    "document": "core"
+  },
+  {
+    "key": "bludgeoning",
+    "descriptions": [
+      {
+        "desc": "Blunt force attacks - hammers, falling, constriction, and the like - deal bludgeoning damage.",
+        "document": "srd-2014",
+        "gamesystem": "5e-2014"
+      },
+      {
+        "desc": "Blunt objects, constriction, falling",
+        "document": "srd-2024",
+        "gamesystem": "5e-2024"
+      }
+    ],
+    "name": "Bludgeoning",
+    "document": "core"
+  },
+  {
+    "key": "cold",
+    "descriptions": [
+      {
+        "desc": "The infernal chill radiating from an ice devil’s spear and the frigid blast of a white dragon’s breath deal cold damage.",
+        "document": "srd-2014",
+        "gamesystem": "5e-2014"
+      },
+      {
+        "desc": "Freezing water, icy blasts",
+        "document": "srd-2024",
+        "gamesystem": "5e-2024"
+      }
+    ],
+    "name": "Cold",
+    "document": "core"
+  },
+  {
+    "key": "fire",
+    "descriptions": [
+      {
+        "desc": "Red dragons breathe fire, and many spells conjure flames to deal fire damage.",
+        "document": "srd-2014",
+        "gamesystem": "5e-2014"
+      },
+      {
+        "desc": "Flames, unbearable heat",
+        "document": "srd-2024",
+        "gamesystem": "5e-2024"
+      }
+    ],
+    "name": "Fire",
+    "document": "core"
+  },
+  {
+    "key": "force",
+    "descriptions": [
+      {
+        "desc": "Force is pure magical energy focused into a damaging form. Most effects that deal force damage are spells, including magic missile and spiritual weapon.",
+        "document": "srd-2014",
+        "gamesystem": "5e-2014"
+      },
+      {
+        "desc": "Pure magical energy",
+        "document": "srd-2024",
+        "gamesystem": "5e-2024"
+      }
+    ],
+    "name": "Force",
+    "document": "core"
+  },
+  {
+    "key": "lightning",
+    "descriptions": [
+      {
+        "desc": "A *lightning bolt* spell and a blue dragon’s breath deal lightning damage.",
+        "document": "srd-2014",
+        "gamesystem": "5e-2014"
+      },
+      {
+        "desc": "Electricity",
+        "document": "srd-2024",
+        "gamesystem": "5e-2024"
+      }
+    ],
+    "name": "Lightning",
+    "document": "core"
+  },
+  {
+    "key": "necrotic",
+    "descriptions": [
+      {
+        "desc": "Necrotic damage, dealt by certain undead and a spell such as chill touch, withers matter and even the soul.",
+        "document": "srd-2014",
+        "gamesystem": "5e-2014"
+      },
+      {
+        "desc": "Life-draining energy",
+        "document": "srd-2024",
+        "gamesystem": "5e-2024"
+      }
+    ],
+    "name": "Necrotic",
+    "document": "core"
+  },
+  {
+    "key": "piercing",
+    "descriptions": [
+      {
+        "desc": "Puncturing and impaling attacks, including spears and monsters’ bites, deal piercing damage.",
+        "document": "srd-2014",
+        "gamesystem": "5e-2014"
+      },
+      {
+        "desc": "Fangs, puncturing objects",
+        "document": "srd-2024",
+        "gamesystem": "5e-2024"
+      }
+    ],
+    "name": "Piercing",
+    "document": "core"
+  },
+  {
+    "key": "poison",
+    "descriptions": [
+      {
+        "desc": "Venomous stings and the toxic gas of a green dragon’s breath deal poison damage.",
+        "document": "srd-2014",
+        "gamesystem": "5e-2014"
+      },
+      {
+        "desc": "Toxic gas, venom",
+        "document": "srd-2024",
+        "gamesystem": "5e-2024"
+      }
+    ],
+    "name": "Poison",
+    "document": "core"
+  },
+  {
+    "key": "psychic",
+    "descriptions": [
+      {
+        "desc": "Mental abilities such as a mind flayer’s psionic blast deal psychic damage.",
+        "document": "srd-2014",
+        "gamesystem": "5e-2014"
+      },
+      {
+        "desc": "Mind-rending energy",
+        "document": "srd-2024",
+        "gamesystem": "5e-2024"
+      }
+    ],
+    "name": "Psychic",
+    "document": "core"
+  },
+  {
+    "key": "radiant",
+    "descriptions": [
+      {
+        "desc": "Radiant damage, dealt by a cleric’s *flame strike* spell or an angel’s smiting weapon, sears the flesh like fire and overloads the spirit with power.",
+        "document": "srd-2014",
+        "gamesystem": "5e-2014"
+      },
+      {
+        "desc": "Holy energy, searing radiation",
+        "document": "srd-2024",
+        "gamesystem": "5e-2024"
+      }
+    ],
+    "name": "Radiant",
+    "document": "core"
+  },
+  {
+    "key": "slashing",
+    "descriptions": [
+      {
+        "desc": "Swords, axes, and monsters’ claws deal slashing damage.",
+        "document": "srd-2014",
+        "gamesystem": "5e-2014"
+      },
+      {
+        "desc": "Claws, cutting objects",
+        "document": "srd-2024",
+        "gamesystem": "5e-2024"
+      }
+    ],
+    "name": "Slashing",
+    "document": "core"
+  },
+  {
+    "key": "thunder",
+    "descriptions": [
+      {
+        "desc": "A concussive burst of sound, such as the effect of the *thunderwave* spell, deals thunder damage.",
+        "document": "srd-2014",
+        "gamesystem": "5e-2014"
+      },
+      {
+        "desc": "Concussive sound",
+        "document": "srd-2024",
+        "gamesystem": "5e-2024"
+      }
+    ],
+    "name": "Thunder",
+    "document": "core"
+  }
+]

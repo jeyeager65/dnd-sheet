@@ -1,0 +1,70 @@
+[
+  {
+    "key": "srd-2024_acolyte-background",
+    "name": "Acolyte",
+    "abilityScores": [
+      "Intelligence",
+      "Wisdom",
+      "Charisma"
+    ],
+    "feat": "Magic Initiate (Cleric)",
+    "skillProficiencies": [
+      "Insight",
+      "Religion"
+    ],
+    "toolProficiency": "Calligrapher's Supplies",
+    "equipment": "_Choose A or B:_ (A) Calligrapher's Supplies, Book (prayers), Holy Symbol, Parchment (10 sheets), Robe, 8 GP; or (B) 50 GP",
+    "document": "srd-2024"
+  },
+  {
+    "key": "srd-2024_criminal-background",
+    "name": "Criminal",
+    "abilityScores": [
+      "Dexterity",
+      "Constitution",
+      "Intelligence"
+    ],
+    "feat": "Alert",
+    "skillProficiencies": [
+      "Sleight of Hand",
+      "Stealth"
+    ],
+    "toolProficiency": "Thieves' Tools",
+    "equipment": "_Choose A or B:_ (A) 2 Daggers, Thieves' Tools, Crowbar, 2 Pouches, Traveler's Clothes, 16 GP; or (B) 50 GP",
+    "document": "srd-2024"
+  },
+  {
+    "key": "srd-2024_sage-background",
+    "name": "Sage",
+    "abilityScores": [
+      "Constitution",
+      "Intelligence",
+      "Wisdom"
+    ],
+    "feat": "Magic Initiate (Wizard)",
+    "skillProficiencies": [
+      "Arcana",
+      "History"
+    ],
+    "toolProficiency": "Calligrapher's Supplies",
+    "equipment": "_Choose A or B:_ (A) Quarterstaff, Calligrapher's Supplies, Book (history), Parchment (8 sheets), Robe, 8 GP; or (B) 50 GP",
+    "document": "srd-2024"
+  },
+  {
+    "key": "srd-2024_soldier-background",
+    "name": "Soldier",
+    "abilityScores": [
+      "Strength",
+      "Dexterity",
+      "Constitution"
+    ],
+    "feat": "Savage Attacker",
+    "skillProficiencies": [
+      "Athletics",
+      "Intimidation"
+    ],
+    "toolProficiency": "_Choose one kind of_ Gaming Set (see \"Equipment\")",
+    "equipment": "_Choose A or B:_ (A) Spear, Shortbow, 20 Arrows, Gaming Set (same as above), Healer's Kit, Quiver, Traveler's Clothes, 14 GP; or (B) 50 GP",
+    "document": "srd-2024"
+  }
+]
