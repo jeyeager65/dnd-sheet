@@ -138,6 +138,16 @@ void main() {
   testWidgets(
     "a weapon row's collapsed header shows its attack/damage as a subtitle, and expanding it reveals Edit/Remove for that weapon specifically",
     (WidgetTester tester) async {
+      // The default 800x600 test surface is tall enough for
+      // dragUntilVisible to consider Greatsword "visible" the moment its
+      // top pixel enters view, but not tall enough for its full row -
+      // leaving a tap at the row's (off-viewport) center silently
+      // missing. A taller surface keeps the whole row on screen.
+      tester.view.physicalSize = const Size(800, 1200);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
       await tester.pumpWidget(const DndSheetApp());
 
       await tester.tap(find.text('Jarson').first);

@@ -511,10 +511,8 @@ class _OverviewTabState extends State<_OverviewTab> {
     _setSkillState(ref, proficient: entry.proficient, expertise: checked);
   }
 
-  Widget _editToggle(bool editing, VoidCallback onToggle) => TextButton(
-    onPressed: onToggle,
-    child: Text(editing ? 'Done' : 'Edit'),
-  );
+  Widget _editToggle(bool editing, VoidCallback onToggle) =>
+      TextButton(onPressed: onToggle, child: Text(editing ? 'Done' : 'Edit'));
 
   @override
   Widget build(BuildContext context) {
@@ -699,9 +697,7 @@ class _OverviewTabState extends State<_OverviewTab> {
               final skill = _skillEntryFor(ref);
               return Container(
                 decoration: const BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(color: LedgerColors.rule),
-                  ),
+                  border: Border(bottom: BorderSide(color: LedgerColors.rule)),
                 ),
                 child: Row(
                   children: [
@@ -724,9 +720,7 @@ class _OverviewTabState extends State<_OverviewTab> {
                     ),
                     const SizedBox(width: 6),
                     Expanded(
-                      child: Text(
-                        '${ref.name} (${_abilityName(ref.ability)})',
-                      ),
+                      child: Text('${ref.name} (${_abilityName(ref.ability)})'),
                     ),
                     Text(
                       rules.formatModifier(
@@ -2516,7 +2510,7 @@ class _WeaponRow extends StatelessWidget {
 
     return ExpandableRow(
       group: group,
-      groupId: weapon.name,
+      groupId: weapon,
       title: weapon.name,
       subtitle: Text(
         '${rules.formatModifier(attack.bonus)} / ${damage.text}',
@@ -3138,7 +3132,7 @@ class _MountRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return ExpandableRow(
       group: group,
-      groupId: mount.name,
+      groupId: mount,
       title: mount.name,
       tag: mount.disappeared
           ? 'GONE'
@@ -5295,16 +5289,11 @@ class _ProficienciesSection extends StatelessWidget {
                         ),
                         onSelected: (v) {
                           final picked = req.tool.variants
-                              .where(
-                                character.toolProficiencyChoices.contains,
-                              )
+                              .where(character.toolProficiencyChoices.contains)
                               .length;
                           if (v && picked >= req.count) return;
                           character.toolProficiencyChoices = v
-                              ? [
-                                  ...character.toolProficiencyChoices,
-                                  variant,
-                                ]
+                              ? [...character.toolProficiencyChoices, variant]
                               : character.toolProficiencyChoices
                                     .where((x) => x != variant)
                                     .toList();

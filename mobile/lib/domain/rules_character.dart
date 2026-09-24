@@ -86,12 +86,13 @@ List<String> toolProficiencies(Character c) {
   final background = c.backgroundKey != null
       ? srdCatalog.backgroundsByKey[c.backgroundKey]
       : null;
-  final fixed = [
-    _classData(c)?.traits['Tool Proficiencies'],
-    background?.toolProficiency,
-  ].nonNulls
-      .where((s) => s.isNotEmpty && s != 'None' && parseToolChoice(s) == null)
-      .toList();
+  final fixed =
+      [_classData(c)?.traits['Tool Proficiencies'], background?.toolProficiency]
+          .nonNulls
+          .where(
+            (s) => s.isNotEmpty && s != 'None' && parseToolChoice(s) == null,
+          )
+          .toList();
   return [...fixed, ...c.toolProficiencyChoices, ...c.extraToolProficiencies];
 }
 

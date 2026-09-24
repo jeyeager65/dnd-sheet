@@ -11,7 +11,6 @@ import '../models/homebrew.dart';
 import 'export_bundle.dart';
 import 'homebrew_catalog.dart';
 import 'sheet_text_repository.dart';
-import 'sample_data.dart';
 
 const _uuid = Uuid();
 
@@ -44,11 +43,6 @@ class CharacterRepository extends ChangeNotifier {
     Hive.init(supportDir.path);
     final box = await Hive.openBox<String>(_boxName);
     _box = box;
-
-    if (box.isEmpty) {
-      final jarson = buildSampleJarson();
-      await box.put(jarson.id, jsonEncode(jarson.toJson()));
-    }
 
     characters.clear();
     for (final key in box.keys) {
