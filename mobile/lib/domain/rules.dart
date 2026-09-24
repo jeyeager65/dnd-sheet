@@ -1099,6 +1099,9 @@ void applyLongRest(Character c) {
   c.exhaustionLevel = (c.exhaustionLevel - 1).clamp(0, 6);
   c.deathSaveSuccesses = 0;
   c.deathSaveFailures = 0;
+  for (final m in c.mounts) {
+    m.rechargeActionUsed = false;
+  }
 }
 
 /// What a Short or Long Rest would change for [c], one line per change
@@ -1160,6 +1163,12 @@ List<String> restPreview(Character c, {required bool longRest}) {
       s.freeCasts - spellsAfter[i].freeCastsUsed,
       ' of ${s.freeCasts} left',
     );
+  }
+  for (var i = 0; i < c.mounts.length; i++) {
+    final m = c.mounts[i];
+    if (m.rechargeActionUsed && !after.mounts[i].rechargeActionUsed) {
+      changes.add('${m.name}: ${m.rechargeAction} available again');
+    }
   }
   final concentrating = c.spellcasting?.concentratingOn;
   if (concentrating != null && after.spellcasting?.concentratingOn == null) {
@@ -1822,6 +1831,82 @@ String? castSpell(
   final previous = sc.concentratingOn;
   sc.concentratingOn = spell.key;
   return previous != null && previous != spell.key ? previous : null;
+}
+
+const findSteedKey = 'srd-2024_find-steed-spell';
+
+/// Find Steed's creature types - each changes the Otherworldly Steed's
+/// damage type and its once-per-Long-Rest bonus action.
+const steedCreatureTypes = ['Celestial', 'Fey', 'Fiend'];
+
+/// The mount [spellKey] summoned, or null.
+Mount? summonedMount(Character c, String spellKey) =>
+    c.mounts.where((m) => m.summonedBy == spellKey).firstOrNull;
+
+/// Casting Find Steed: summons the Otherworldly Steed at [spellLevel]
+/// (the slot's level) as a mount, replacing any steed the spell already
+/// summoned - "If you already have a steed from this spell, the steed is
+/// replaced by the new one." A replaced steed keeps the name the player
+/// gave it, their notes, and whether it's being ridden; its stats,
+/// traits, and bonus action are rebuilt for the new level and
+/// [creatureType].
+Mount summonSteed(
+  Character c, {
+  required int spellLevel,
+  required String creatureType,
+  String? ability,
+}) {
+  final attack = formatModifier(spellAttackBonus(c, ability: ability));
+  final dc = spellSaveDc(c, ability: ability);
+  final (damageType, bonusAction, bonusText) = switch (creatureType) {
+    'Fey' => (
+      'Psychic',
+      'Fey Step',
+      'The steed teleports, along with its rider, to an unoccupied space '
+          'of your choice up to 60 feet away from itself.',
+    ),
+    'Fiend' => (
+      'Necrotic',
+      'Fell Glare',
+      'DC $dc Wisdom save, one creature within 60 feet the steed can see. '
+          'Failure: Frightened until the end of your next turn.',
+    ),
+    _ => (
+      'Radiant',
+      'Healing Touch',
+      'One creature within 5 feet of the steed regains 2d8 + $spellLevel '
+          'Hit Points.',
+    ),
+  };
+  final previous = summonedMount(c, findSteedKey);
+  final steed = Mount(
+    name: previous?.name ?? 'Otherworldly Steed',
+    armorClass: 10 + spellLevel,
+    maxHp: 5 + 10 * spellLevel,
+    speed: 60,
+    flySpeed: spellLevel >= 4 ? 60 : 0,
+    active: previous?.active ?? false,
+    notes: previous?.notes ?? '',
+    summonedBy: findSteedKey,
+    creatureType: creatureType,
+    rechargeAction: bonusAction,
+    traits:
+        '_Large $creatureType, level $spellLevel steed. Str 18, Dex 12, '
+        'Con 14, Int 6, Wis 12, Cha 8. $spellLevel Hit Dice (d10). '
+        'Telepathy 1 mile (with you only). Shares your Initiative._\n\n'
+        '**Life Bond.** When you regain Hit Points from a level 1+ spell, '
+        'the steed regains the same number if you are within 5 feet of '
+        'it.\n\n'
+        '**Otherworldly Slam.** $attack to hit, reach 5 ft. '
+        'Hit: 1d8 + $spellLevel $damageType damage.\n\n'
+        '**$bonusAction** (bonus action, once per Long Rest). $bonusText',
+  );
+  c.mounts = [
+    for (final m in c.mounts)
+      if (m != previous) m,
+    steed,
+  ];
+  return steed;
 }
 
 void endConcentration(Character c) => c.spellcasting?.concentratingOn = null;

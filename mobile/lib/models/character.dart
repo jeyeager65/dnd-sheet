@@ -530,12 +530,42 @@ class Mount {
     this.speed = 30,
     this.notes = '',
     this.active = false,
+    this.flySpeed = 0,
+    this.summonedBy,
+    this.creatureType,
+    this.traits = '',
+    this.rechargeAction,
+    this.rechargeActionUsed = false,
   }) : currentHp = currentHp ?? maxHp;
   String name;
   int armorClass;
   int maxHp;
   int currentHp;
   int speed;
+
+  /// 0 when it can't fly.
+  int flySpeed;
+
+  /// The spell that summoned it (Find Steed's key), or null for an
+  /// ordinary mount. A summoned mount is replaced when the spell is cast
+  /// again, and disappears at 0 HP - see rules.summonSteed.
+  String? summonedBy;
+
+  /// Celestial, Fey, or Fiend for an Otherworldly Steed.
+  String? creatureType;
+
+  /// Its stat block's traits and actions, worked out when it was summoned
+  /// (attack bonus, damage, save DC). Regenerated on every recast, unlike
+  /// [notes], which are the player's own.
+  String traits;
+
+  /// A once-per-Long-Rest action ("Healing Touch"), or null - tracked by
+  /// [rechargeActionUsed] and reset by a Long Rest.
+  String? rechargeAction;
+  bool rechargeActionUsed;
+
+  /// A summoned mount at 0 HP has disappeared until it's summoned again.
+  bool get disappeared => summonedBy != null && currentHp <= 0;
 
   /// Freeform - attacks, traits, tack equipped, anything worth a
   /// reminder mid-session.
@@ -554,6 +584,12 @@ class Mount {
     'speed': speed,
     'notes': notes,
     'active': active,
+    if (flySpeed > 0) 'flySpeed': flySpeed,
+    'summonedBy': ?summonedBy,
+    'creatureType': ?creatureType,
+    if (traits.isNotEmpty) 'traits': traits,
+    'rechargeAction': ?rechargeAction,
+    if (rechargeActionUsed) 'rechargeActionUsed': true,
   };
 
   factory Mount.fromJson(Map<String, dynamic> j) => Mount(
@@ -564,6 +600,12 @@ class Mount {
     speed: j['speed'] as int? ?? 30,
     notes: j['notes'] as String? ?? '',
     active: j['active'] as bool? ?? false,
+    flySpeed: j['flySpeed'] as int? ?? 0,
+    summonedBy: j['summonedBy'] as String?,
+    creatureType: j['creatureType'] as String?,
+    traits: j['traits'] as String? ?? '',
+    rechargeAction: j['rechargeAction'] as String?,
+    rechargeActionUsed: j['rechargeActionUsed'] as bool? ?? false,
   );
 }
 

@@ -2972,7 +2972,11 @@ class _MountRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return ExpandableRow(
       title: mount.name,
-      tag: mount.active ? 'MOUNTED' : null,
+      tag: mount.disappeared
+          ? 'GONE'
+          : mount.active
+          ? 'MOUNTED'
+          : null,
       trailing: Padding(
         padding: const EdgeInsets.only(top: 1),
         child: Text(
@@ -2986,7 +2990,37 @@ class _MountRow extends StatelessWidget {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Speed ${mount.speed} ft.'),
+          Text(
+            'Speed ${mount.speed} ft.'
+            '${mount.flySpeed > 0 ? ', Fly ${mount.flySpeed} ft.' : ''}',
+          ),
+          if (mount.disappeared) ...[
+            const SizedBox(height: 4),
+            const Text(
+              'Disappeared at 0 HP - cast Find Steed again to bring it '
+              'back.',
+              style: TextStyle(color: LedgerColors.inkDim),
+            ),
+          ],
+          if (mount.traits.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            MarkdownText(mount.traits),
+          ],
+          if (mount.rechargeAction != null) ...[
+            const SizedBox(height: 6),
+            FilterChip(
+              label: Text(
+                mount.rechargeActionUsed
+                    ? '${mount.rechargeAction} - used'
+                    : '${mount.rechargeAction} - available',
+              ),
+              selected: mount.rechargeActionUsed,
+              onSelected: (v) {
+                mount.rechargeActionUsed = v;
+                onChanged();
+              },
+            ),
+          ],
           if (mount.notes.isNotEmpty) ...[
             const SizedBox(height: 4),
             Text(mount.notes),
@@ -3001,6 +3035,7 @@ class _MountRow extends StatelessWidget {
                           0,
                           mount.maxHp,
                         );
+                        if (mount.disappeared) mount.active = false;
                         onChanged();
                       }
                     : null,
@@ -4636,6 +4671,10 @@ Future<void> _showCastDialog(
   final freeLeft = known != null ? rules.freeCastsLeft(known) : null;
   final messenger = ScaffoldMessenger.of(context);
   int? choice;
+  final summonsSteed = spell.key == rules.findSteedKey;
+  var steedType =
+      rules.summonedMount(character, rules.findSteedKey)?.creatureType ??
+      rules.steedCreatureTypes.first;
 
   if (spell.level > 0) {
     final levels = rules.castableSlotLevels(character, spell.level);
@@ -4695,6 +4734,25 @@ Future<void> _showCastDialog(
                       ),
                   ],
                 ),
+                if (summonsSteed) ...[
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Steed creature type',
+                    style: TextStyle(fontSize: 12, color: LedgerColors.inkDim),
+                  ),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      for (final type in rules.steedCreatureTypes)
+                        ChoiceChip(
+                          label: Text(type),
+                          selected: steedType == type,
+                          onSelected: (_) => setState(() => steedType = type),
+                        ),
+                    ],
+                  ),
+                ],
                 if (choice == ritual)
                   const Padding(
                     padding: EdgeInsets.only(top: 10),
@@ -4708,7 +4766,8 @@ Future<void> _showCastDialog(
                   ),
                 if (choice != null &&
                     choice! > spell.level &&
-                    spell.higherLevel != null)
+                    spell.higherLevel != null &&
+                    !summonsSteed)
                   Padding(
                     padding: const EdgeInsets.only(top: 10),
                     child: Text(
@@ -4758,6 +4817,14 @@ Future<void> _showCastDialog(
     slotLevel: slotLevel,
     freeCastFrom: choice == free ? known : null,
   );
+  final steed = summonsSteed
+      ? rules.summonSteed(
+          character,
+          spellLevel: slotLevel ?? spell.level,
+          creatureType: steedType,
+          ability: known?.abilityOverride,
+        )
+      : null;
   onChanged();
   final how = slotLevel != null
       ? ' with a level $slotLevel slot'
@@ -4769,8 +4836,11 @@ Future<void> _showCastDialog(
   final endedText = ended == null
       ? ''
       : ' - ended Concentration on ${rules.spellRefFor(ended)?.name ?? ended}';
+  final steedText = steed == null
+      ? ''
+      : ' - ${steed.name} is under Mounts on the Combat tab';
   messenger.showSnackBar(
-    SnackBar(content: Text('Cast ${spell.name}$how$endedText.')),
+    SnackBar(content: Text('Cast ${spell.name}$how$endedText$steedText.')),
   );
 }
 

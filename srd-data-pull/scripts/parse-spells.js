@@ -2,9 +2,12 @@
 // (spells.md). The file also contains creature stat blocks referenced by
 // some spells (e.g. Animate Objects' "Animated Object", Find Steed's
 // "Otherworldly Steed") using the same #### heading level as real spells,
-// plus a few intro-section #### headings before the spell list starts. Both
-// are filtered out by requiring the "_Level N School (Classes)_" tag line
-// immediately after the heading - only real spells have it.
+// plus a few intro-section #### headings before the spell list starts. Real
+// spells are recognized by the "_Level N School (Classes)_" tag line
+// immediately after the heading. Any other heading after a spell (a stat
+// block's Traits/Actions/Bonus Actions, Animate Objects' "Animated
+// Object") is part of that spell and is appended to its text as a ###
+// section; the intro headings before the first spell are skipped.
 import { readFile, writeFile } from "node:fs/promises";
 
 const text = await readFile(new URL("../source/srd-markdown/spells.md", import.meta.url), "utf8");
@@ -22,7 +25,22 @@ for (const part of parts) {
   const lines = rest.split("\n");
   const tagLine = lines[0].trim();
   const tagMatch = tagLine.match(TAG_RE);
-  if (!tagMatch) continue; // not a spell (stat block or stray heading)
+  if (!tagMatch) {
+    // Part of the previous spell's stat block - or an intro heading.
+    const prev = spells.at(-1);
+    if (prev) {
+      const section = `### ${name}
+
+${rest}`;
+      if (prev.higherLevel != null) prev.higherLevel += `
+
+${section}`;
+      else prev.desc += `
+
+${section}`;
+    }
+    continue;
+  }
 
   const [, levelStr, school1, school2, classesStr] = tagMatch;
   const level = levelStr ? parseInt(levelStr, 10) : 0; // cantrip = level 0

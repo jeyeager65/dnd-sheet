@@ -640,4 +640,72 @@ void main() {
       expect(c.maxHp, before + 5);
     });
   });
+
+  group('Find Steed', () {
+    test('casting summons the Otherworldly Steed for the slot level and '
+        'creature type, and recasting replaces it', () {
+      final c = _make(cls: 'Paladin', level: 2);
+      final steed = rules.summonSteed(
+        c,
+        spellLevel: 2,
+        creatureType: 'Celestial',
+      );
+      expect(c.mounts, [steed]);
+      expect(steed.armorClass, 12);
+      expect(steed.maxHp, 25);
+      expect(steed.currentHp, 25);
+      expect(steed.flySpeed, 0);
+      expect(steed.rechargeAction, 'Healing Touch');
+      // Charisma 14 (+2) + proficiency +2.
+      expect(steed.traits, contains('+4 to hit'));
+      expect(steed.traits, contains('1d8 + 2 Radiant'));
+
+      steed
+        ..name = 'Dawnmane'
+        ..active = true
+        ..rechargeActionUsed = true;
+      final recast = rules.summonSteed(c, spellLevel: 4, creatureType: 'Fiend');
+      expect(c.mounts, [recast]);
+      expect(recast.name, 'Dawnmane');
+      expect(recast.active, isTrue);
+      expect(recast.armorClass, 14);
+      expect(recast.maxHp, 45);
+      expect(recast.flySpeed, 60);
+      expect(recast.rechargeAction, 'Fell Glare');
+      expect(recast.rechargeActionUsed, isFalse);
+      expect(recast.traits, contains('DC 12 Wisdom'));
+      expect(recast.traits, contains('Necrotic'));
+
+      final restored = Mount.fromJson(recast.toJson());
+      expect(restored.summonedBy, rules.findSteedKey);
+      expect(restored.creatureType, 'Fiend');
+      expect(restored.traits, recast.traits);
+      expect(restored.flySpeed, 60);
+    });
+
+    test('its bonus action recharges on a Long Rest, and it disappears at '
+        '0 HP', () {
+      final c = _make(cls: 'Paladin', level: 2);
+      final steed = rules.summonSteed(c, spellLevel: 2, creatureType: 'Fey');
+      steed.rechargeActionUsed = true;
+      expect(
+        rules.restPreview(c, longRest: false),
+        isNot(contains('Otherworldly Steed: Fey Step available again')),
+      );
+      expect(
+        rules.restPreview(c, longRest: true),
+        contains('Otherworldly Steed: Fey Step available again'),
+      );
+      rules.applyLongRest(c);
+      expect(steed.rechargeActionUsed, isFalse);
+
+      expect(steed.disappeared, isFalse);
+      steed.currentHp = 0;
+      expect(steed.disappeared, isTrue);
+      expect(
+        Mount(name: 'Horse', maxHp: 13, currentHp: 0).disappeared,
+        isFalse,
+      );
+    });
+  });
 }
