@@ -173,6 +173,106 @@ FeatAbilityIncrease? featAbilityIncrease(String featName) {
   );
 }
 
+/// Why [c] can't take [featName] now, or null if they can: an unmet
+/// prerequisite ("Requires Level 4+, Strength 13+"), or already having a
+/// feat that isn't Repeatable. A homebrew feat is checked against its own
+/// Prerequisite text and Repeatable switch; an SRD feat against the SRD's.
+String? featUnavailableReason(Character c, String featName) {
+  final base = baseFeatName(featName).toLowerCase();
+  final homebrew = _homebrewFeat(featName);
+  final srd = homebrew == null
+      ? srdCatalog.featsByKey.values
+            .where((f) => f.name.toLowerCase() == base)
+            .firstOrNull
+      : null;
+  final repeatable = homebrew != null
+      ? homebrew.data['repeatable'] == true
+      : srd?.benefits.any((b) => b.name == 'Repeatable') ?? false;
+  if (!repeatable &&
+      c.feats.any((f) => baseFeatName(f.name).toLowerCase() == base)) {
+    return 'Already taken';
+  }
+  final prerequisite = homebrew?.prerequisite ?? srd?.prerequisite;
+  if (prerequisite == null || prerequisite.trim().isEmpty) return null;
+  final unmet = unmetPrerequisites(c, prerequisite);
+  return unmet.isEmpty ? null : 'Requires ${unmet.join(', ')}';
+}
+
+/// The parts of a prerequisite [text] [c] doesn't meet - each written as
+/// the text says it. Understands the SRD's (and the Player's Handbook's)
+/// phrasing: "Level 4+", "Strength or Dexterity 13+", "Spellcasting or
+/// Pact Magic Feature", "Fighting Style Feature", "Medium Armor
+/// Training", "Shield Training", "Proficiency with a Martial weapon".
+/// Anything else (a species, a background) isn't checked - it's left for
+/// the player to judge rather than wrongly blocking the feat.
+List<String> unmetPrerequisites(Character c, String text) {
+  final unmet = <String>[];
+
+  final level = RegExp(r'Level (\d+)\+').firstMatch(text);
+  if (level != null && c.level < int.parse(level.group(1)!)) {
+    unmet.add(level.group(0)!);
+  }
+
+  final names = _abilityKeysByName.keys.join('|');
+  final score = RegExp('((?:$names)(?:,? (?:or )?(?:$names))*) (\\d+)\\+')
+      .firstMatch(text);
+  if (score != null) {
+    final min = int.parse(score.group(2)!);
+    final scores = effectiveScores(c);
+    final met = _abilityKeysByName.entries.any(
+      (e) => score.group(1)!.contains(e.key) && scores.of(e.value) >= min,
+    );
+    if (!met) unmet.add(score.group(0)!);
+  }
+
+  final casting = RegExp(r'[^,]*(?:Spellcasting|Pact Magic)[^,]*')
+      .firstMatch(text);
+  if (casting != null && c.spellcasting == null) {
+    unmet.add(casting.group(0)!.trim());
+  }
+
+  if (text.contains('Fighting Style') && !_hasFightingStyle(c)) {
+    unmet.add('Fighting Style Feature');
+  }
+
+  final training = armorTraining(c);
+  for (final m in RegExp(
+    r'(Light|Medium|Heavy) Armor Training|Shield Training',
+  ).allMatches(text)) {
+    final category = m.group(1) ?? 'Shields';
+    if (!training.contains(category)) unmet.add(m.group(0)!);
+  }
+
+  final martial = RegExp(r'Proficiency with (?:a |any )?Martial [Ww]eapons?')
+      .firstMatch(text);
+  if (martial != null &&
+      !classWeaponCategories(c).contains('Martial weapons') &&
+      !c.extraWeaponProficiencies.contains('Martial weapons')) {
+    unmet.add(martial.group(0)!);
+  }
+  return unmet;
+}
+
+/// Whether [c] has a Fighting Style feature - their class's or
+/// subclass's (Fighter at level 1, Paladin and Ranger at 2), or a
+/// Fighting Style feat already taken some other way.
+bool _hasFightingStyle(Character c) {
+  bool fromFeatures(Iterable<SrdClassFeature> features) => features.any(
+    (f) => f.level <= c.level && f.name.contains('Fighting Style'),
+  );
+  if (fromFeatures(_classData(c)?.features ?? const [])) return true;
+  if (fromFeatures(chosenSubclass(c)?.features ?? const [])) return true;
+  return c.feats.any(
+        (f) =>
+            srdCatalog.featsByKey.values
+                .where((s) => s.name == baseFeatName(f.name))
+                .firstOrNull
+                ?.category ==
+            'Fighting Style Feat',
+      ) ||
+      c.features.any((f) => f.name.startsWith('Fighting Style'));
+}
+
 int abilityModifier(int score) => ((score - 10) / 2).floor();
 
 /// [c]'s ability scores as they currently apply: their own scores

@@ -8,6 +8,7 @@ import 'package:dnd_sheet/data/starting_equipment.dart';
 import 'package:dnd_sheet/domain/rules.dart' as rules;
 import 'package:dnd_sheet/models/character.dart';
 import 'package:dnd_sheet/models/effect.dart';
+import 'package:dnd_sheet/models/homebrew.dart';
 
 SrdRefItem _pick(List<SrdRefItem> items, String name) =>
     items.firstWhere((i) => i.name == name);
@@ -711,6 +712,79 @@ void main() {
       ),
     );
     expect(notes.map((n) => n.$1), ['Versatile (1d10)']);
+  });
+
+  test('feat prerequisites and repeatability decide which feats can be '
+      'taken', () {
+    final fighter1 = _make(cls: 'Fighter');
+    // Level 4+, Strength or Dexterity 13+.
+    expect(
+      rules.featUnavailableReason(fighter1, 'Grappler'),
+      'Requires Level 4+',
+    );
+    // Fighter has Fighting Style at level 1.
+    expect(rules.featUnavailableReason(fighter1, 'Archery'), isNull);
+    expect(rules.featUnavailableReason(fighter1, 'Alert'), isNull);
+
+    final fighter4 = _make(cls: 'Fighter', level: 4);
+    expect(rules.featUnavailableReason(fighter4, 'Grappler'), isNull);
+    fighter4.abilityScores = const AbilityScores(
+      str: 10,
+      dex: 12,
+      con: 14,
+      intel: 10,
+      wis: 10,
+      cha: 10,
+    );
+    expect(
+      rules.featUnavailableReason(fighter4, 'Grappler'),
+      'Requires Strength or Dexterity 13+',
+    );
+
+    final wizard = _make(cls: 'Wizard', increases: const {'int': 2, 'con': 1});
+    expect(
+      rules.featUnavailableReason(wizard, 'Archery'),
+      'Requires Fighting Style Feature',
+    );
+    expect(
+      rules.featUnavailableReason(wizard, 'Boon of Spell Recall'),
+      'Requires Level 19+',
+    );
+
+    rules.grantFeat(fighter1, GrantedFeature(name: 'Archery', source: 'feat'));
+    expect(rules.featUnavailableReason(fighter1, 'Archery'), 'Already taken');
+    rules.grantFeat(
+      fighter1,
+      GrantedFeature(name: 'Magic Initiate (Cleric)', source: 'feat'),
+    );
+    // Repeatable.
+    expect(rules.featUnavailableReason(fighter1, 'Magic Initiate'), isNull);
+
+    final entry = homebrewRepo.create('feat', 'Great Weapon Master');
+    homebrewRepo.update(
+      HomebrewEntry(
+        id: entry.id,
+        kind: entry.kind,
+        name: entry.name,
+        source: 'official',
+        prerequisite: 'Level 4+, Strength 13+',
+      ),
+    );
+    expect(
+      rules.featUnavailableReason(fighter1, 'Great Weapon Master'),
+      'Requires Level 4+',
+    );
+    expect(
+      rules.featUnavailableReason(fighter4, 'Great Weapon Master'),
+      'Requires Strength 13+',
+    );
+    expect(
+      rules.unmetPrerequisites(
+        wizard,
+        'Medium Armor Training, Proficiency with a Martial weapon',
+      ),
+      ['Medium Armor Training', 'Proficiency with a Martial weapon'],
+    );
   });
 
   group('Find Steed', () {

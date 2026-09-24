@@ -1309,6 +1309,8 @@ Future<void> _pickAndGrantFeat(
         title: 'Feat',
         options: options,
         homebrewKind: 'feat',
+        unavailableReason: (item) =>
+            rules.featUnavailableReason(character, item.name),
         // A category-restricted picker (resolving a "Choose a Fighting
         // Style"/"Choose an Epic Boon" Pending Choice) only offers
         // homebrew feats tagged with that same category - an

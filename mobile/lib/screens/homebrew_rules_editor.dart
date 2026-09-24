@@ -528,6 +528,7 @@ class _HomebrewRulesEditorState extends State<HomebrewRulesEditor> {
   // ---- per kind ----------------------------------------------------------
 
   List<Widget> _feat() => [
+    _switch('repeatable', 'Repeatable (can be taken more than once)'),
     _chips(
       'abilityIncrease',
       'Ability score increase: which scores it can raise (pick one when '

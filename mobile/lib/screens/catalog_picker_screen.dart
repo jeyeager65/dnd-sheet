@@ -27,6 +27,7 @@ class CatalogPickerScreen extends StatefulWidget {
     this.onHomebrewCreated,
     this.broaderOptions,
     this.broaderLabel,
+    this.unavailableReason,
   });
 
   final String title;
@@ -58,6 +59,11 @@ class CatalogPickerScreen extends StatefulWidget {
   /// allowance). Null means [options] is the whole list, no toggle.
   final List<SrdRefItem>? broaderOptions;
   final String? broaderLabel;
+
+  /// Why an option can't be picked (an unmet feat prerequisite), or null
+  /// if it can. Unavailable options are listed last, greyed out, with the
+  /// reason under the name.
+  final String? Function(SrdRefItem item)? unavailableReason;
 
   @override
   State<CatalogPickerScreen> createState() => _CatalogPickerScreenState();
@@ -93,11 +99,19 @@ class _CatalogPickerScreenState extends State<CatalogPickerScreen> {
           if (widget.homebrewFilter == null || widget.homebrewFilter!(entry))
             SrdRefItem(key: entry.id, name: entry.name, isHomebrew: true),
     ];
-    final filtered = _query.isEmpty
+    final matching = _query.isEmpty
         ? allOptions
         : allOptions
               .where((o) => o.name.toLowerCase().contains(_query.toLowerCase()))
               .toList();
+    // Ones that can't be picked go last, keeping their order otherwise.
+    final unavailable = widget.unavailableReason;
+    final filtered = unavailable == null
+        ? matching
+        : [
+            ...matching.where((o) => unavailable(o) == null),
+            ...matching.where((o) => unavailable(o) != null),
+          ];
     final exactMatch = allOptions.any(
       (o) => o.name.toLowerCase() == _query.trim().toLowerCase(),
     );
@@ -178,21 +192,33 @@ class _CatalogPickerScreenState extends State<CatalogPickerScreen> {
                       separatorBuilder: (_, _) => const Divider(height: 1),
                       itemBuilder: (context, i) {
                         final item = filtered[i];
+                        final reason = widget.unavailableReason?.call(item);
+                        final caption = [
+                          if (item.isHomebrew) 'Homebrew',
+                          if (!item.isHomebrew && item.detail != null)
+                            item.detail!,
+                          ?reason,
+                        ].join(' Â· ');
                         return ListTile(
                           contentPadding: EdgeInsets.zero,
+                          enabled: reason == null,
                           title: Text(
                             item.name,
-                            style: const TextStyle(color: LedgerColors.ink),
+                            style: TextStyle(
+                              color: reason == null
+                                  ? LedgerColors.ink
+                                  : LedgerColors.inkDim,
+                            ),
                           ),
-                          subtitle: item.isHomebrew || item.detail != null
-                              ? Text(
-                                  item.isHomebrew ? 'Homebrew' : item.detail!,
+                          subtitle: caption.isEmpty
+                              ? null
+                              : Text(
+                                  caption,
                                   style: const TextStyle(
                                     color: LedgerColors.inkDim,
                                     fontSize: 11,
                                   ),
-                                )
-                              : null,
+                                ),
                           onTap: () => Navigator.of(context).pop(item),
                         );
                       },
