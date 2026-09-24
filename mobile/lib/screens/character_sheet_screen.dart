@@ -1350,6 +1350,14 @@ Future<void> _pickAndGrantFeat(
   if (picked.name == 'Ability Score Improvement') {
     deltas = await _showAsiDialog(context);
     if (deltas == null) return; // cancelled the sub-dialog - grant nothing
+  } else if (rules.featAbilityIncrease(picked.name) case final increase?) {
+    deltas = await _pickFeatAbilityIncrease(
+      context,
+      character,
+      picked.name,
+      increase,
+    );
+    if (deltas == null) return; // cancelled - grant nothing
   }
 
   // A homebrew pick's key is the HomebrewEntry's id, not an SRD feat key -
@@ -4865,6 +4873,53 @@ Future<void> _showCastDialog(
       : ' - ${steed.name} is under Mounts on the Combat tab';
   messenger.showSnackBar(
     SnackBar(content: Text('Cast ${spell.name}$how$endedText$steedText.')),
+  );
+}
+
+/// A feat's own ability score increase: applied straight away when it can
+/// only go to one ability (Great Weapon Master's Strength), otherwise the
+/// player picks which (Grappler's Strength or Dexterity, an Epic Boon's
+/// any). Scores already at the feat's maximum can't be picked. Null if
+/// cancelled.
+Future<Map<String, int>?> _pickFeatAbilityIncrease(
+  BuildContext context,
+  Character character,
+  String featName,
+  rules.FeatAbilityIncrease increase,
+) async {
+  final scores = character.abilityScores;
+  if (increase.abilities.length == 1) {
+    return {increase.abilities.single: increase.amount};
+  }
+  return showDialog<Map<String, int>>(
+    context: context,
+    builder: (context) => SimpleDialog(
+      title: Text('$featName: increase which score?'),
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+          child: Text(
+            '+${increase.amount}, to a maximum of ${increase.max}.',
+            style: const TextStyle(fontSize: 12, color: LedgerColors.inkDim),
+          ),
+        ),
+        for (final key in increase.abilities)
+          SimpleDialogOption(
+            onPressed: scores.of(key) >= increase.max
+                ? null
+                : () => Navigator.of(context).pop({key: increase.amount}),
+            child: Text(
+              '${_abilityLabels[key] ?? key}  ${scores.of(key)}'
+              '${scores.of(key) >= increase.max ? ' (at maximum)' : ' â†’ ${(scores.of(key) + increase.amount).clamp(0, increase.max)}'}',
+              style: TextStyle(
+                color: scores.of(key) >= increase.max
+                    ? LedgerColors.inkDim
+                    : LedgerColors.ink,
+              ),
+            ),
+          ),
+      ],
+    ),
   );
 }
 

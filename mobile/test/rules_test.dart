@@ -627,6 +627,63 @@ void main() {
     expect(choices.first.featCategory, 'Fighting Style Feat');
   });
 
+  test('feat ability score increases: read from SRD feat text, or set '
+      "on a homebrew feat, and capped at the feat's maximum", () {
+    final grappler = rules.featAbilityIncrease('Grappler')!;
+    expect(grappler.abilities, ['str', 'dex']);
+    expect((grappler.amount, grappler.max), (1, 20));
+    final boon = rules.featAbilityIncrease('Boon of Combat Prowess')!;
+    expect(boon.abilities, hasLength(6));
+    expect(boon.max, 30);
+    expect(rules.featAbilityIncrease('Boon of Spell Recall')!.abilities, [
+      'int',
+      'wis',
+      'cha',
+    ]);
+    expect(rules.featAbilityIncrease('Ability Score Improvement'), isNull);
+    expect(rules.featAbilityIncrease('Alert'), isNull);
+
+    final entry = homebrewRepo.create('feat', 'Great Weapon Master');
+    homebrewRepo.update(
+      HomebrewEntry(
+        id: entry.id,
+        kind: entry.kind,
+        name: entry.name,
+        source: 'official',
+        data: const {
+          'abilityIncrease': ['str'],
+        },
+      ),
+    );
+    final gwm = rules.featAbilityIncrease('Great Weapon Master')!;
+    expect(gwm.abilities, ['str']);
+    expect((gwm.amount, gwm.max), (1, 20));
+
+    final jarson = buildSampleJarson();
+    jarson.feats.removeWhere((f) => f.name == 'Great Weapon Master');
+    jarson.abilityScores = const AbilityScores(
+      str: 20,
+      dex: 12,
+      con: 14,
+      intel: 10,
+      wis: 10,
+      cha: 10,
+    );
+    rules.grantFeat(
+      jarson,
+      GrantedFeature(name: 'Great Weapon Master', source: 'feat'),
+      abilityScoreDeltas: {'str': 1},
+    );
+    expect(jarson.abilityScores.str, 20); // already at the maximum
+
+    rules.grantFeat(
+      jarson,
+      GrantedFeature(name: 'Boon of Combat Prowess', source: 'feat'),
+      abilityScoreDeltas: {'str': 1},
+    );
+    expect(jarson.abilityScores.str, 21); // an Epic Boon goes to 30
+  });
+
   test('Great Weapon Master (a homebrew "official" entry, since it\'s a '
       'real 2024 feat NOT in the free SRD - see _builtinFeatEffects\' doc '
       'comment) only adds its Proficiency Bonus damage with a Heavy '

@@ -83,7 +83,10 @@ void grantFeat(
   final details = <String>[];
   if (abilityScoreDeltas != null && abilityScoreDeltas.isNotEmpty) {
     final before = c.abilityScores;
-    c.abilityScores = before.increase(abilityScoreDeltas);
+    c.abilityScores = before.increase(
+      abilityScoreDeltas,
+      max: featAbilityIncrease(feat.name)?.max ?? 20,
+    );
     final diff = _abilityScoreDiff(before, c.abilityScores);
     if (diff.isNotEmpty) details.add(diff.join(', '));
   }
@@ -99,6 +102,74 @@ void grantFeat(
     c,
     'Feat: ${feat.name} (Level ${c.level})',
     detail: details.isEmpty ? null : details.join('. '),
+  );
+}
+
+/// A feat's own ability score increase - "Increase your Strength or
+/// Dexterity score by 1, to a maximum of 20" - as the abilities it can go
+/// to, how much, and the cap.
+class FeatAbilityIncrease {
+  const FeatAbilityIncrease({
+    required this.abilities,
+    this.amount = 1,
+    this.max = 20,
+  });
+
+  /// Ability keys ('str', ...) the increase can go to - pick one.
+  final List<String> abilities;
+  final int amount;
+  final int max;
+}
+
+const _abilityKeysByName = {
+  'Strength': 'str',
+  'Dexterity': 'dex',
+  'Constitution': 'con',
+  'Intelligence': 'int',
+  'Wisdom': 'wis',
+  'Charisma': 'cha',
+};
+
+/// The ability score increase [featName] grants, or null. A homebrew feat
+/// says so in its own rules (My Homebrew > the feat > Ability score
+/// increase); an SRD feat's is read from its text - Grappler and the Epic
+/// Boons. Ability Score Improvement itself has its own +2 / +1+1 picker,
+/// so it isn't one of these.
+FeatAbilityIncrease? featAbilityIncrease(String featName) {
+  final homebrew = _homebrewFeat(featName);
+  if (homebrew != null) {
+    final abilities = [
+      for (final a in homebrew.data['abilityIncrease'] as List? ?? const [])
+        if (_abilityKeysByName.values.contains(a)) a as String,
+    ];
+    if (abilities.isEmpty) return null;
+    return FeatAbilityIncrease(
+      abilities: abilities,
+      amount: homebrew.data['abilityIncreaseAmount'] as int? ?? 1,
+      max: homebrew.data['abilityIncreaseMax'] as int? ?? 20,
+    );
+  }
+  final base = baseFeatName(featName);
+  if (base == 'Ability Score Improvement') return null;
+  final feat = srdCatalog.featsByKey.values
+      .where((f) => f.name == base)
+      .firstOrNull;
+  if (feat == null) return null;
+  final m = RegExp(
+    r'Increase (?:one ability score of your choice|your ([A-Za-z, ]+?) '
+    r'score) by (\d+), to a maximum of (\d+)',
+  ).firstMatch(feat.fullDescription);
+  if (m == null) return null;
+  final named = m.group(1);
+  return FeatAbilityIncrease(
+    abilities: named == null
+        ? _abilityKeysByName.values.toList()
+        : [
+            for (final e in _abilityKeysByName.entries)
+              if (named.contains(e.key)) e.value,
+          ],
+    amount: int.parse(m.group(2)!),
+    max: int.parse(m.group(3)!),
   );
 }
 

@@ -528,6 +528,35 @@ class _HomebrewRulesEditorState extends State<HomebrewRulesEditor> {
   // ---- per kind ----------------------------------------------------------
 
   List<Widget> _feat() => [
+    _chips(
+      'abilityIncrease',
+      'Ability score increase: which scores it can raise (pick one when '
+          'the feat is taken)',
+      const ['str', 'dex', 'con', 'int', 'wis', 'cha'],
+      display: (k) => _abilityNames[k] ?? k,
+    ),
+    if (_list('abilityIncrease').isNotEmpty)
+      Row(
+        children: [
+          Expanded(
+            child: _dropdown<int>(
+              'Increase by',
+              _d['abilityIncreaseAmount'] as int? ?? 1,
+              const [1, 2],
+              (v) => _set('abilityIncreaseAmount', v),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: _dropdown<int>(
+              'To a maximum of',
+              _d['abilityIncreaseMax'] as int? ?? 20,
+              const [20, 30],
+              (v) => _set('abilityIncreaseMax', v),
+            ),
+          ),
+        ],
+      ),
     _featChoice(),
     _grantedSpells(levelLabel: 'Character level'),
   ];

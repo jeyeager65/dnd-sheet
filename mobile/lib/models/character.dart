@@ -31,11 +31,17 @@ class AbilityScores {
     _ => throw ArgumentError('Unknown ability key: $key'),
   };
 
-  /// A copy with [deltas] applied (ability key -> amount), each clamped to
-  /// 20 - the max any Ability Score Improvement can push a score to.
-  AbilityScores increase(Map<String, int> deltas) {
-    int next(String key, int current) =>
-        (current + (deltas[key] ?? 0)).clamp(1, 20);
+  /// A copy with [deltas] applied (ability key -> amount), each capped at
+  /// [max] - 20 for an Ability Score Improvement and most feats, 30 for an
+  /// Epic Boon. A score already above [max] is left as it is, never
+  /// lowered.
+  AbilityScores increase(Map<String, int> deltas, {int max = 20}) {
+    int next(String key, int current) {
+      final raised = current + (deltas[key] ?? 0);
+      if (raised <= current) return raised.clamp(1, 30);
+      return raised > max ? (current > max ? current : max) : raised;
+    }
+
     return AbilityScores(
       str: next('str', str),
       dex: next('dex', dex),
