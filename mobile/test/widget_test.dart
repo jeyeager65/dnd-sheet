@@ -652,6 +652,25 @@ void main() {
       await tester.tap(find.text('+ Add Effect'));
       await tester.pumpAndSettle();
 
+      // "Affects" is grouped, and explains the pick under the field.
+      expect(find.text('Attack rolls'), findsOneWidget);
+      expect(
+        find.text('Added to weapon and Unarmed Strike attack rolls.'),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('Attack rolls'));
+      await tester.pumpAndSettle();
+      expect(find.text('DEFENSE AND HEALTH'), findsOneWidget);
+      await tester.tap(find.text('Damage rolls').last);
+      await tester.pumpAndSettle();
+      expect(find.text('Added to weapon damage.'), findsOneWidget);
+
+      // Weapon conditions are offered for a damage roll.
+      await tester.tap(find.text('Always'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Using a Heavy weapon').last);
+      await tester.pumpAndSettle();
+
       // The formula editor builds terms via a dialog rather than free
       // text - add a single "Proficiency Bonus" term.
       await tester.tap(find.text('+ Term'));
@@ -672,7 +691,8 @@ void main() {
           .firstWhere((e) => e.id == entry.id);
       expect(saved.effects, hasLength(1));
       expect(saved.effects.first.formula, 'Proficiency Bonus');
-      expect(saved.effects.first.target, 'attackRoll'); // the default
+      expect(saved.effects.first.target, 'damageRoll');
+      expect(saved.effects.first.condition, 'heavyWeapon');
     },
   );
 

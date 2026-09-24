@@ -315,6 +315,129 @@ enum _EffectCategory {
   damageReduction,
 }
 
+/// The "Affects" dropdown, grouped: (group, [(category, label, hint)]).
+/// The hint is shown under each option in the menu and under the field
+/// once picked, so it's clear what the formula is added to.
+const _categoryGroups = <(String, List<(_EffectCategory, String, String)>)>[
+  (
+    'Attacks',
+    [
+      (
+        _EffectCategory.attackRoll,
+        'Attack rolls',
+        'Added to weapon and Unarmed Strike attack rolls.',
+      ),
+      (_EffectCategory.damageRoll, 'Damage rolls', 'Added to weapon damage.'),
+    ],
+  ),
+  (
+    'Spellcasting',
+    [
+      (
+        _EffectCategory.spellAttack,
+        'Spell attack bonus',
+        'Added to your spell attack rolls.',
+      ),
+      (
+        _EffectCategory.spellSaveDc,
+        'Spell save DC',
+        'Added to the DC of saves against your spells.',
+      ),
+    ],
+  ),
+  (
+    'Checks and saves',
+    [
+      (_EffectCategory.initiative, 'Initiative', 'Added to Initiative rolls.'),
+      (
+        _EffectCategory.save,
+        'Saving throws',
+        "Added to one ability's saving throws.",
+      ),
+      (_EffectCategory.skill, 'Skill checks', 'Added to one skill.'),
+    ],
+  ),
+  (
+    'Defense and health',
+    [
+      (_EffectCategory.ac, 'Armor Class', 'Added to your AC.'),
+      (
+        _EffectCategory.maxHp,
+        'Hit Point maximum',
+        'Added to max HP. "Level" in the formula scales it by level.',
+      ),
+      (
+        _EffectCategory.damageResistance,
+        'Resistance to a damage type',
+        'Halves damage of one type (rounded down). No formula needed.',
+      ),
+      (
+        _EffectCategory.damageReduction,
+        'Reduce damage taken',
+        'Subtracts the formula from damage of one type.',
+      ),
+    ],
+  ),
+  (
+    'Movement',
+    [(_EffectCategory.speed, 'Speed', 'Added to your Speed, in feet.')],
+  ),
+  (
+    'Ability scores',
+    [
+      (
+        _EffectCategory.setScore,
+        'Set an ability score',
+        'Raises one score to a fixed number (21 for a Belt of Giant '
+            "Strength) - only if it's higher than the character's own. "
+            'Use a plain number.',
+      ),
+    ],
+  ),
+];
+
+/// The "Only when" dropdown, grouped. Weapon conditions only mean
+/// something for attack and damage rolls (there's no weapon to check
+/// otherwise), so they're only offered there.
+const _conditionGroups = <(String, bool, List<(String, String)>)>[
+  (
+    'Weapon',
+    true,
+    [
+      ('meleeWeapon', 'Using a Melee weapon'),
+      ('rangedWeapon', 'Using a Ranged weapon'),
+      ('heavyWeapon', 'Using a Heavy weapon'),
+    ],
+  ),
+  (
+    'Armor',
+    false,
+    [
+      ('wearingArmor', 'Wearing any armor'),
+      ('heavyArmor', 'Wearing Heavy armor'),
+      ('noArmor', 'Wearing no armor'),
+    ],
+  ),
+  (
+    'Hit Points',
+    false,
+    [('bloodied', 'Bloodied (half HP or less)'), ('anyDamage', 'Below max HP')],
+  ),
+];
+
+/// A small, dim group heading inside a dropdown menu (a disabled item).
+DropdownMenuItem<T> _menuHeading<T>(String label) => DropdownMenuItem<T>(
+  enabled: false,
+  child: Text(
+    label.toUpperCase(),
+    style: const TextStyle(
+      fontSize: 11,
+      letterSpacing: 1,
+      color: LedgerColors.accent,
+    ),
+  ),
+);
+
 _EffectCategory _categoryOf(String target) {
   if (target.startsWith('save:')) return _EffectCategory.save;
   if (target.startsWith('setScore:')) return _EffectCategory.setScore;
@@ -353,20 +476,6 @@ const _abilityLabels = {
   'int': 'Intelligence',
   'wis': 'Wisdom',
   'cha': 'Charisma',
-};
-
-const _conditionLabels = {
-  'heavyWeapon': 'Heavy Weapon',
-  // Deliberately plain, not an invented status name - only "Bloodied" is
-  // a real 5e term; different tables have their own word for this tier
-  // (this app's own example: "scratched").
-  'anyDamage': 'Below Max HP (any damage taken)',
-  'bloodied': 'Bloodied',
-  'heavyArmor': 'Wearing Heavy Armor',
-  'wearingArmor': 'Wearing Any Armor',
-  'noArmor': 'Wearing No Armor',
-  'rangedWeapon': 'Ranged Weapon',
-  'meleeWeapon': 'Melee Weapon',
 };
 
 const _fullNameToAbilityKey = {
@@ -966,6 +1075,12 @@ class _HomebrewEditScreenState extends State<HomebrewEditScreen> {
   }
 }
 
+String _hintFor(_EffectCategory category) => [
+  for (final (_, options) in _categoryGroups)
+    for (final (value, _, hint) in options)
+      if (value == category) hint,
+].first;
+
 class _EffectRow extends StatelessWidget {
   const _EffectRow({
     required this.effect,
@@ -1018,66 +1133,52 @@ class _EffectRow extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: DropdownButtonFormField<_EffectCategory>(
+                child: DropdownButtonFormField<_EffectCategory?>(
                   initialValue: category,
                   isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Applies to',
+                  itemHeight: null,
+                  decoration: InputDecoration(
+                    labelText: 'Affects',
                     isDense: true,
+                    helperText: _hintFor(category),
+                    helperMaxLines: 3,
                   ),
-                  items: const [
-                    DropdownMenuItem(
-                      value: _EffectCategory.initiative,
-                      child: Text('Your Initiative'),
-                    ),
-                    DropdownMenuItem(
-                      value: _EffectCategory.attackRoll,
-                      child: Text('Your Attack Roll'),
-                    ),
-                    DropdownMenuItem(
-                      value: _EffectCategory.damageRoll,
-                      child: Text('Damage You Deal'),
-                    ),
-                    DropdownMenuItem(
-                      value: _EffectCategory.spellAttack,
-                      child: Text('Your Spell Attack Bonus'),
-                    ),
-                    DropdownMenuItem(
-                      value: _EffectCategory.spellSaveDc,
-                      child: Text('Your Spell Save DC'),
-                    ),
-                    DropdownMenuItem(
-                      value: _EffectCategory.ac,
-                      child: Text('Your Armor Class'),
-                    ),
-                    DropdownMenuItem(
-                      value: _EffectCategory.speed,
-                      child: Text('Your Speed'),
-                    ),
-                    DropdownMenuItem(
-                      value: _EffectCategory.maxHp,
-                      child: Text('Your Hit Point Maximum'),
-                    ),
-                    DropdownMenuItem(
-                      value: _EffectCategory.setScore,
-                      child: Text('Sets an Ability Score'),
-                    ),
-                    DropdownMenuItem(
-                      value: _EffectCategory.save,
-                      child: Text('Your Saving Throw'),
-                    ),
-                    DropdownMenuItem(
-                      value: _EffectCategory.skill,
-                      child: Text('Your Skill Check'),
-                    ),
-                    DropdownMenuItem(
-                      value: _EffectCategory.damageResistance,
-                      child: Text('Resistance to Damage You Take'),
-                    ),
-                    DropdownMenuItem(
-                      value: _EffectCategory.damageReduction,
-                      child: Text('Reduction to Damage You Take'),
-                    ),
+                  // The closed field shows just the name, not the hint.
+                  selectedItemBuilder: (context) => [
+                    for (final (_, options) in _categoryGroups) ...[
+                      const SizedBox.shrink(),
+                      for (final (_, label, _) in options)
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(label),
+                        ),
+                    ],
+                  ],
+                  items: [
+                    for (final (group, options) in _categoryGroups) ...[
+                      _menuHeading(group),
+                      for (final (value, label, hint) in options)
+                        DropdownMenuItem(
+                          value: value,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 6),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(label),
+                                Text(
+                                  hint,
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: LedgerColors.inkDim,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
                   ],
                   onChanged: (v) {
                     if (v != null) _setCategory(v);
@@ -1091,16 +1192,6 @@ class _EffectRow extends StatelessWidget {
               ),
             ],
           ),
-          if (category == _EffectCategory.setScore)
-            const Padding(
-              padding: EdgeInsets.only(top: 6),
-              child: Text(
-                'Sets the score to a single number (e.g. 21 for a Belt of '
-                'Giant Strength) - only if higher than the score the character '
-                'already has. Use one flat number, no modifiers.',
-                style: TextStyle(fontSize: 11, color: LedgerColors.inkDim),
-              ),
-            ),
           if (category == _EffectCategory.save ||
               category == _EffectCategory.setScore)
             DropdownButtonFormField<String>(
@@ -1179,16 +1270,7 @@ class _EffectRow extends StatelessWidget {
                 );
               },
             ),
-          if (category == _EffectCategory.damageResistance)
-            const Padding(
-              padding: EdgeInsets.only(top: 8),
-              child: Text(
-                'Halves that damage type when taken (rounded down) - no '
-                'formula needed.',
-                style: TextStyle(fontSize: 12, color: LedgerColors.inkDim),
-              ),
-            )
-          else ...[
+          if (category != _EffectCategory.damageResistance) ...[
             const SizedBox(height: 8),
             const Text(
               'Formula',
@@ -1207,25 +1289,45 @@ class _EffectRow extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 8),
-          DropdownButtonFormField<String?>(
-            initialValue: effect.condition,
-            isExpanded: true,
-            decoration: const InputDecoration(
-              labelText: 'Condition',
-              isDense: true,
-            ),
-            items: [
-              const DropdownMenuItem(value: null, child: Text('None')),
-              for (final entry in _conditionLabels.entries)
-                DropdownMenuItem(value: entry.key, child: Text(entry.value)),
-            ],
-            onChanged: (v) => onChanged(
-              Effect(
-                target: effect.target,
-                formula: effect.formula,
-                condition: v,
-              ),
-            ),
+          Builder(
+            builder: (context) {
+              final weaponRoll =
+                  category == _EffectCategory.attackRoll ||
+                  category == _EffectCategory.damageRoll;
+              final groups = [
+                for (final group in _conditionGroups)
+                  if (!group.$2 ||
+                      weaponRoll ||
+                      group.$3.any((o) => o.$1 == effect.condition))
+                    group,
+              ];
+              // '' stands for "Always" (no condition): the group headings'
+              // values are null, and the selected value must match exactly
+              // one item.
+              return DropdownButtonFormField<String?>(
+                initialValue: effect.condition ?? '',
+                isExpanded: true,
+                decoration: const InputDecoration(
+                  labelText: 'Only when',
+                  isDense: true,
+                ),
+                items: [
+                  const DropdownMenuItem(value: '', child: Text('Always')),
+                  for (final (group, _, options) in groups) ...[
+                    _menuHeading<String?>(group),
+                    for (final (value, label) in options)
+                      DropdownMenuItem(value: value, child: Text(label)),
+                  ],
+                ],
+                onChanged: (v) => onChanged(
+                  Effect(
+                    target: effect.target,
+                    formula: effect.formula,
+                    condition: v == null || v.isEmpty ? null : v,
+                  ),
+                ),
+              );
+            },
           ),
         ],
       ),
