@@ -306,8 +306,8 @@ void main() {
       // headers - taller than any real phone screen, so enlarge the test
       // viewport rather than juggle scroll positions per assertion (a
       // plain ListView only builds elements within its viewport + cache
-      // extent).
-      tester.view.physicalSize = const Size(1080, 4000);
+      // extent). Phone width: this is the phone layout's landing list.
+      tester.view.physicalSize = const Size(600, 4000);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
@@ -527,6 +527,11 @@ void main() {
   testWidgets(
     'Level Up advances the sheet by one level, leaves an automatic backup at the old level in the character list, and that backup can be promoted back',
     (WidgetTester tester) async {
+      // Phone layout: back to the list is the AppBar's back arrow.
+      tester.view.physicalSize = const Size(600, 1200);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
       await tester.pumpWidget(const DndSheetApp());
 
       await tester.tap(find.text('Jarson').first);
@@ -1458,6 +1463,41 @@ void main() {
       expect(leveled.level, 10);
       expect(leveled.hitPointRolls[10], 9);
       expect(leveled.maxHp, before + 9 + 2);
+    },
+  );
+
+  testWidgets(
+    'on a wide window the sheet uses a side rail with My Characters at its top, and Reference shows categories beside their entries',
+    (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1200, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(const DndSheetApp());
+      await tester.tap(find.text('Jarson').first);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(NavigationRail), findsOneWidget);
+      expect(find.byType(NavigationBar), findsNothing);
+      expect(find.byType(BackButton), findsNothing);
+      await tester.tap(find.text('Spells'));
+      await tester.pumpAndSettle();
+      expect(find.text('Enable Spellcasting'), findsOneWidget);
+
+      // Reference: categories on the left, entries on the right.
+      await tester.tap(find.byTooltip('Reference'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Species'));
+      await tester.pumpAndSettle();
+      expect(find.text('Dwarf'), findsOneWidget);
+      await tester.tap(find.text('Back'));
+      await tester.pumpAndSettle();
+
+      // My Characters, from the top of the rail.
+      await tester.tap(find.text('My Characters').last);
+      await tester.pumpAndSettle();
+      expect(find.text('+ New Character'), findsOneWidget);
     },
   );
 }

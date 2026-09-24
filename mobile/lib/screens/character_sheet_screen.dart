@@ -11,6 +11,7 @@ import '../models/character.dart';
 import '../models/homebrew.dart';
 import '../theme/ledger_theme.dart';
 import '../widgets/expandable_row.dart';
+import '../widgets/layout.dart';
 import '../widgets/ledger_bits.dart';
 import '../widgets/markdown_text.dart';
 import '../widgets/stat_grid.dart';
@@ -248,8 +249,47 @@ class _CharacterSheetScreenState extends State<CharacterSheetScreen> {
           ),
         ];
 
+        // On a wide window (desktop, tablet landscape) the tabs sit in a
+        // rail on the left, with "My Characters" at its top instead of the
+        // AppBar's back arrow; on a phone they're the bottom bar.
+        final wide = isWideLayout(context);
+        const tabItems = [
+          (Icons.person_outline, 'Overview'),
+          (Icons.shield_outlined, 'Combat'),
+          (Icons.menu_book_outlined, 'Features'),
+          (Icons.backpack_outlined, 'Items'),
+          (Icons.auto_fix_high_outlined, 'Spells'),
+        ];
+        final content = Column(
+          children: [
+            if (!character.isCurrent)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 8,
+                ),
+                color: LedgerColors.accent.withValues(alpha: 0.18),
+                child: Text(
+                  '${character.snapshotStatusLabel} — not the current in-play sheet.',
+                  style: const TextStyle(fontSize: 12, color: LedgerColors.ink),
+                ),
+              ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 6,
+                ),
+                child: tabs[_tab],
+              ),
+            ),
+          ],
+        );
+
         return Scaffold(
           appBar: AppBar(
+            automaticallyImplyLeading: !wide,
             title: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -302,64 +342,47 @@ class _CharacterSheetScreenState extends State<CharacterSheetScreen> {
             ],
           ),
           body: SafeArea(
-            child: Column(
-              children: [
-                if (!character.isCurrent)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 8,
-                    ),
-                    color: LedgerColors.accent.withValues(alpha: 0.18),
-                    child: Text(
-                      '${character.snapshotStatusLabel} — not the current in-play sheet.',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: LedgerColors.ink,
+            child: wide
+                ? Row(
+                    children: [
+                      NavigationRail(
+                        selectedIndex: _tab,
+                        onDestinationSelected: (i) => setState(() => _tab = i),
+                        labelType: NavigationRailLabelType.all,
+                        leading: Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: TextButton.icon(
+                            onPressed: () => Navigator.of(context).maybePop(),
+                            icon: const Icon(Icons.arrow_back, size: 18),
+                            label: const Text('My Characters'),
+                          ),
+                        ),
+                        destinations: [
+                          for (final (icon, label) in tabItems)
+                            NavigationRailDestination(
+                              icon: Icon(icon),
+                              label: Text(label),
+                            ),
+                        ],
                       ),
-                    ),
-                  ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 6,
-                    ),
-                    child: tabs[_tab],
-                  ),
-                ),
-              ],
-            ),
+                      const VerticalDivider(width: 1),
+                      Expanded(child: ReadableWidth(child: content)),
+                    ],
+                  )
+                : content,
           ),
-          bottomNavigationBar: SafeArea(
-            child: NavigationBar(
-              selectedIndex: _tab,
-              onDestinationSelected: (i) => setState(() => _tab = i),
-              destinations: const [
-                NavigationDestination(
-                  icon: Icon(Icons.person_outline),
-                  label: 'Overview',
+          bottomNavigationBar: wide
+              ? null
+              : SafeArea(
+                  child: NavigationBar(
+                    selectedIndex: _tab,
+                    onDestinationSelected: (i) => setState(() => _tab = i),
+                    destinations: [
+                      for (final (icon, label) in tabItems)
+                        NavigationDestination(icon: Icon(icon), label: label),
+                    ],
+                  ),
                 ),
-                NavigationDestination(
-                  icon: Icon(Icons.shield_outlined),
-                  label: 'Combat',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.menu_book_outlined),
-                  label: 'Features',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.backpack_outlined),
-                  label: 'Items',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.auto_fix_high_outlined),
-                  label: 'Spells',
-                ),
-              ],
-            ),
-          ),
         );
       },
     );

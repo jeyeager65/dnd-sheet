@@ -4,6 +4,7 @@ import '../data/homebrew_repository.dart';
 import '../data/srd_catalog.dart';
 import '../models/homebrew.dart';
 import '../theme/ledger_theme.dart';
+import '../widgets/layout.dart';
 
 /// A searchable full-screen picker over a list of SRD catalog entries -
 /// used for Species/Background/Class in New Character, and every "add X"
@@ -106,99 +107,101 @@ class _CatalogPickerScreenState extends State<CatalogPickerScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text(widget.title)),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(18, 10, 18, 6),
-              child: TextField(
-                controller: _searchController,
-                autofocus: true,
-                onChanged: (v) => setState(() => _query = v),
-                style: const TextStyle(color: LedgerColors.ink),
-                decoration: InputDecoration(
-                  hintText: 'Search…',
-                  hintStyle: const TextStyle(color: LedgerColors.inkDim),
-                  prefixIcon: const Icon(
-                    Icons.search,
-                    color: LedgerColors.inkDim,
-                    size: 20,
-                  ),
-                  filled: true,
-                  fillColor: LedgerColors.paper2,
-                  border: const UnderlineInputBorder(
-                    borderSide: BorderSide(
-                      color: LedgerColors.inkDim,
-                      width: 2,
-                    ),
-                  ),
-                  enabledBorder: const UnderlineInputBorder(
-                    borderSide: BorderSide(color: LedgerColors.rule),
-                  ),
-                  focusedBorder: const UnderlineInputBorder(
-                    borderSide: BorderSide(
-                      color: LedgerColors.accent,
-                      width: 2,
-                    ),
-                  ),
-                  isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                ),
-              ),
-            ),
-            if (widget.broaderOptions != null)
-              SwitchListTile(
-                dense: true,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 18),
-                title: Text(widget.broaderLabel ?? 'Show everything'),
-                value: _broad,
-                onChanged: (v) => setState(() => _broad = v),
-              ),
-            if (offerHomebrew)
+      body: ReadableWidth(
+        child: SafeArea(
+          child: Column(
+            children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(18, 0, 18, 6),
-                child: OutlinedButton.icon(
-                  onPressed: _addHomebrew,
-                  icon: const Icon(Icons.add, size: 18),
-                  label: Text('Add "${_query.trim()}" as homebrew'),
+                padding: const EdgeInsets.fromLTRB(18, 10, 18, 6),
+                child: TextField(
+                  controller: _searchController,
+                  autofocus: true,
+                  onChanged: (v) => setState(() => _query = v),
+                  style: const TextStyle(color: LedgerColors.ink),
+                  decoration: InputDecoration(
+                    hintText: 'Search…',
+                    hintStyle: const TextStyle(color: LedgerColors.inkDim),
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      color: LedgerColors.inkDim,
+                      size: 20,
+                    ),
+                    filled: true,
+                    fillColor: LedgerColors.paper2,
+                    border: const UnderlineInputBorder(
+                      borderSide: BorderSide(
+                        color: LedgerColors.inkDim,
+                        width: 2,
+                      ),
+                    ),
+                    enabledBorder: const UnderlineInputBorder(
+                      borderSide: BorderSide(color: LedgerColors.rule),
+                    ),
+                    focusedBorder: const UnderlineInputBorder(
+                      borderSide: BorderSide(
+                        color: LedgerColors.accent,
+                        width: 2,
+                      ),
+                    ),
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                  ),
                 ),
               ),
-            Expanded(
-              child: filtered.isEmpty
-                  ? const Padding(
-                      padding: EdgeInsets.all(18),
-                      child: Text(
-                        'Nothing matches that search.',
-                        style: TextStyle(color: LedgerColors.inkDim),
+              if (widget.broaderOptions != null)
+                SwitchListTile(
+                  dense: true,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 18),
+                  title: Text(widget.broaderLabel ?? 'Show everything'),
+                  value: _broad,
+                  onChanged: (v) => setState(() => _broad = v),
+                ),
+              if (offerHomebrew)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(18, 0, 18, 6),
+                  child: OutlinedButton.icon(
+                    onPressed: _addHomebrew,
+                    icon: const Icon(Icons.add, size: 18),
+                    label: Text('Add "${_query.trim()}" as homebrew'),
+                  ),
+                ),
+              Expanded(
+                child: filtered.isEmpty
+                    ? const Padding(
+                        padding: EdgeInsets.all(18),
+                        child: Text(
+                          'Nothing matches that search.',
+                          style: TextStyle(color: LedgerColors.inkDim),
+                        ),
+                      )
+                    : ListView.separated(
+                        padding: const EdgeInsets.symmetric(horizontal: 18),
+                        itemCount: filtered.length,
+                        separatorBuilder: (_, _) => const Divider(height: 1),
+                        itemBuilder: (context, i) {
+                          final item = filtered[i];
+                          return ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: Text(
+                              item.name,
+                              style: const TextStyle(color: LedgerColors.ink),
+                            ),
+                            subtitle: item.isHomebrew || item.detail != null
+                                ? Text(
+                                    item.isHomebrew ? 'Homebrew' : item.detail!,
+                                    style: const TextStyle(
+                                      color: LedgerColors.inkDim,
+                                      fontSize: 11,
+                                    ),
+                                  )
+                                : null,
+                            onTap: () => Navigator.of(context).pop(item),
+                          );
+                        },
                       ),
-                    )
-                  : ListView.separated(
-                      padding: const EdgeInsets.symmetric(horizontal: 18),
-                      itemCount: filtered.length,
-                      separatorBuilder: (_, _) => const Divider(height: 1),
-                      itemBuilder: (context, i) {
-                        final item = filtered[i];
-                        return ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: Text(
-                            item.name,
-                            style: const TextStyle(color: LedgerColors.ink),
-                          ),
-                          subtitle: item.isHomebrew || item.detail != null
-                              ? Text(
-                                  item.isHomebrew ? 'Homebrew' : item.detail!,
-                                  style: const TextStyle(
-                                    color: LedgerColors.inkDim,
-                                    fontSize: 11,
-                                  ),
-                                )
-                              : null,
-                          onTap: () => Navigator.of(context).pop(item),
-                        );
-                      },
-                    ),
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );

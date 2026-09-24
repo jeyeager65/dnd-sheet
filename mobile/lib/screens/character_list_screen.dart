@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../data/character_repository.dart';
 import '../models/character.dart';
 import '../theme/ledger_theme.dart';
+import '../widgets/layout.dart';
 import 'character_form_screen.dart';
 import 'character_sheet_screen.dart';
 import 'reference_screen.dart';
@@ -114,45 +115,50 @@ class CharacterListScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: SafeArea(
-        child: ListenableBuilder(
-          listenable: charactersRepo,
-          builder: (context, _) {
-            final families = charactersRepo.listFamilies();
-            return ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-              children: [
-                if (families.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24),
-                    child: Text(
-                      'No characters yet. Add one below.',
-                      style: TextStyle(color: LedgerColors.inkDim),
-                    ),
-                  ),
-                for (final family in families)
-                  _CharacterFamilyCard(
-                    key: ValueKey(family.first.familyId),
-                    family: family,
-                    onDelete: (c) => _confirmDelete(context, c),
-                  ),
-                const SizedBox(height: 20),
-                OutlinedButton(
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const CharacterFormScreen(
-                        mode: CharacterFormMode.create,
+      body: ReadableWidth(
+        child: SafeArea(
+          child: ListenableBuilder(
+            listenable: charactersRepo,
+            builder: (context, _) {
+              final families = charactersRepo.listFamilies();
+              return ListView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 8,
+                ),
+                children: [
+                  if (families.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Text(
+                        'No characters yet. Add one below.',
+                        style: TextStyle(color: LedgerColors.inkDim),
                       ),
                     ),
+                  for (final family in families)
+                    _CharacterFamilyCard(
+                      key: ValueKey(family.first.familyId),
+                      family: family,
+                      onDelete: (c) => _confirmDelete(context, c),
+                    ),
+                  const SizedBox(height: 20),
+                  OutlinedButton(
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const CharacterFormScreen(
+                          mode: CharacterFormMode.create,
+                        ),
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(46),
+                    ),
+                    child: const Text('+ New Character'),
                   ),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(46),
-                  ),
-                  child: const Text('+ New Character'),
-                ),
-              ],
-            );
-          },
+                ],
+              );
+            },
+          ),
         ),
       ),
     );

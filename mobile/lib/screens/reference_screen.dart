@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../data/srd_catalog.dart';
 import '../theme/ledger_theme.dart';
 import '../widgets/expandable_row.dart';
+import '../widgets/layout.dart';
 import '../widgets/ledger_bits.dart';
 import '../widgets/markdown_text.dart';
 import 'homebrew_screen.dart';
@@ -42,8 +43,111 @@ class _RefCategory {
 /// is a regular pushed route. Categories are grouped under [SectionLabel]
 /// headers by what a player is actually looking for, rather than listed
 /// in whatever order they were ported in.
-class ReferenceScreen extends StatelessWidget {
+class ReferenceScreen extends StatefulWidget {
   const ReferenceScreen({super.key});
+
+  @override
+  State<ReferenceScreen> createState() => _ReferenceScreenState();
+}
+
+/// Every items-kind category's entries in one list, each tagged with the
+/// category it's from - "Search Everything".
+List<RefEntry> _everythingEntries(List<(String, List<_RefCategory>)> groups) =>
+    [
+      for (final (_, categories) in groups)
+        for (final category in categories)
+          if (category.kind == _RefKind.items)
+            for (final e in category.entries())
+              RefEntry(
+                name: e.name,
+                tag: [category.title, ?e.tag].join(' · '),
+                desc: e.desc,
+              ),
+    ];
+
+const _searchEverything = 'Search Everything';
+
+class _ReferenceScreenState extends State<ReferenceScreen> {
+  /// The category shown on the right in the wide layout.
+  String _selected = _searchEverything;
+
+  /// Wide layout: Back and the categories in a panel on the left, the
+  /// selected category's entries (searchable, expandable) on the right.
+  Widget _wide(
+    BuildContext context,
+    List<(String, List<_RefCategory>)> groups,
+  ) {
+    final all = [for (final (_, cats) in groups) ...cats];
+    final selected = all.where((c) => c.title == _selected).firstOrNull;
+    final entries = selected == null
+        ? _everythingEntries(groups)
+        : selected.entries();
+
+    Widget tile(String title, {String? subtitle}) => ListTile(
+      dense: true,
+      selected: _selected == title,
+      selectedTileColor: LedgerColors.accent.withValues(alpha: 0.15),
+      title: Text(title),
+      subtitle: subtitle == null ? null : Text(subtitle),
+      onTap: () => setState(() => _selected = title),
+    );
+
+    return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: Text(selected?.title ?? _searchEverything),
+      ),
+      body: SafeArea(
+        child: Row(
+          children: [
+            SizedBox(
+              width: 260,
+              child: ListView(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      onPressed: () => Navigator.of(context).maybePop(),
+                      icon: const Icon(Icons.arrow_back, size: 18),
+                      label: const Text('Back'),
+                    ),
+                  ),
+                  tile(_searchEverything),
+                  ListTile(
+                    dense: true,
+                    title: const Text('My Homebrew'),
+                    trailing: const Icon(Icons.chevron_right, size: 18),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const HomebrewListScreen(),
+                      ),
+                    ),
+                  ),
+                  for (final (label, categories) in groups) ...[
+                    Padding(
+                      padding: const EdgeInsets.only(left: 16),
+                      child: SectionLabel(label),
+                    ),
+                    for (final c in categories) tile(c.title),
+                  ],
+                ],
+              ),
+            ),
+            const VerticalDivider(width: 1),
+            Expanded(
+              child: ReadableWidth(
+                child: ReferenceListView(
+                  key: ValueKey(_selected),
+                  entries: entries,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -205,6 +309,8 @@ class ReferenceScreen extends StatelessWidget {
       ),
     ];
 
+    if (isWideLayout(context)) return _wide(context, groups);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Reference'),
@@ -215,18 +321,8 @@ class ReferenceScreen extends StatelessWidget {
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (_) => ReferenceListScreen(
-                  title: 'Search Everything',
-                  entries: [
-                    for (final (_, categories) in groups)
-                      for (final category in categories)
-                        if (category.kind == _RefKind.items)
-                          for (final e in category.entries())
-                            RefEntry(
-                              name: e.name,
-                              tag: [category.title, ?e.tag].join(' · '),
-                              desc: e.desc,
-                            ),
-                  ],
+                  title: _searchEverything,
+                  entries: _everythingEntries(groups),
                 ),
               ),
             ),
@@ -582,7 +678,7 @@ List<RefEntry> _mountsAndVehiclesEntries() => [
 
 /// Search + tap-to-expand list over a category's [RefEntry]s - reused for
 /// every Reference category, small glossary or large catalog alike.
-class ReferenceListScreen extends StatefulWidget {
+class ReferenceListScreen extends StatelessWidget {
   const ReferenceListScreen({
     super.key,
     required this.title,
@@ -592,10 +688,26 @@ class ReferenceListScreen extends StatefulWidget {
   final List<RefEntry> entries;
 
   @override
-  State<ReferenceListScreen> createState() => _ReferenceListScreenState();
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(title: Text(title)),
+    body: SafeArea(
+      child: ReadableWidth(child: ReferenceListView(entries: entries)),
+    ),
+  );
 }
 
-class _ReferenceListScreenState extends State<ReferenceListScreen> {
+/// A search box over [entries], each an expandable row with its rules
+/// text - the phone's category page, and the right side of the wide
+/// Reference layout.
+class ReferenceListView extends StatefulWidget {
+  const ReferenceListView({super.key, required this.entries});
+  final List<RefEntry> entries;
+
+  @override
+  State<ReferenceListView> createState() => _ReferenceListViewState();
+}
+
+class _ReferenceListViewState extends State<ReferenceListView> {
   final _searchController = TextEditingController();
   String _query = '';
 
@@ -613,56 +725,51 @@ class _ReferenceListScreenState extends State<ReferenceListScreen> {
               .where((e) => e.name.toLowerCase().contains(_query.toLowerCase()))
               .toList();
 
-    return Scaffold(
-      appBar: AppBar(title: Text(widget.title)),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(18, 10, 18, 6),
-              child: TextField(
-                controller: _searchController,
-                onChanged: (v) => setState(() => _query = v),
-                style: const TextStyle(color: LedgerColors.ink),
-                decoration: const InputDecoration(
-                  hintText: 'Search…',
-                  prefixIcon: Icon(
-                    Icons.search,
-                    color: LedgerColors.inkDim,
-                    size: 20,
-                  ),
-                  isDense: true,
-                ),
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(18, 10, 18, 6),
+          child: TextField(
+            controller: _searchController,
+            onChanged: (v) => setState(() => _query = v),
+            style: const TextStyle(color: LedgerColors.ink),
+            decoration: const InputDecoration(
+              hintText: 'Search…',
+              prefixIcon: Icon(
+                Icons.search,
+                color: LedgerColors.inkDim,
+                size: 20,
               ),
+              isDense: true,
             ),
-            Expanded(
-              child: filtered.isEmpty
-                  ? const Padding(
-                      padding: EdgeInsets.all(18),
-                      child: Text(
-                        'Nothing matches that search.',
-                        style: TextStyle(color: LedgerColors.inkDim),
-                      ),
-                    )
-                  : ListView(
-                      padding: const EdgeInsets.symmetric(horizontal: 18),
-                      children: [
-                        for (final entry in filtered)
-                          ExpandableRow(
-                            title: entry.name,
-                            tag: entry.tag,
-                            body: MarkdownText(
-                              entry.desc.isEmpty
-                                  ? 'No further rules text.'
-                                  : entry.desc,
-                            ),
-                          ),
-                      ],
-                    ),
-            ),
-          ],
+          ),
         ),
-      ),
+        Expanded(
+          child: filtered.isEmpty
+              ? const Padding(
+                  padding: EdgeInsets.all(18),
+                  child: Text(
+                    'Nothing matches that search.',
+                    style: TextStyle(color: LedgerColors.inkDim),
+                  ),
+                )
+              : ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 18),
+                  children: [
+                    for (final entry in filtered)
+                      ExpandableRow(
+                        title: entry.name,
+                        tag: entry.tag,
+                        body: MarkdownText(
+                          entry.desc.isEmpty
+                              ? 'No further rules text.'
+                              : entry.desc,
+                        ),
+                      ),
+                  ],
+                ),
+        ),
+      ],
     );
   }
 }
