@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import 'package:dnd_sheet/data/character_repository.dart';
 import 'package:dnd_sheet/data/homebrew_repository.dart';
@@ -32,6 +33,26 @@ void main() {
       ..clear()
       ..add(buildSampleJarson());
     homebrewRepo.entries.clear();
+  });
+
+  testWidgets('About shows the version and the SRD attribution', (
+    WidgetTester tester,
+  ) async {
+    PackageInfo.setMockInitialValues(
+      appName: 'D&D Sheet',
+      packageName: 'com.dndsheet.dnd_sheet',
+      version: '1.2.0',
+      buildNumber: '57',
+      buildSignature: '',
+    );
+    await tester.pumpWidget(const DndSheetApp());
+    await tester.tap(find.byTooltip('About'));
+    await tester.pumpAndSettle();
+    expect(find.text('1.2.0 (build 57)'), findsOneWidget);
+    expect(
+      find.textContaining('System Reference Document 5.2.1'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('shows the character list with Jarson in it', (

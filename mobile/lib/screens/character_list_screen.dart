@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../data/character_repository.dart';
 import '../models/character.dart';
 import '../theme/ledger_theme.dart';
+import 'about.dart';
 import 'character_form_screen.dart';
 import 'character_sheet_screen.dart';
 import 'reference_screen.dart';
@@ -111,6 +112,11 @@ class CharacterListScreen extends StatelessWidget {
             onPressed: () => Navigator.of(
               context,
             ).push(MaterialPageRoute(builder: (_) => const ReferenceScreen())),
+          ),
+          IconButton(
+            tooltip: 'About',
+            icon: const Icon(Icons.info_outline),
+            onPressed: () => showAppAbout(context),
           ),
         ],
       ),
