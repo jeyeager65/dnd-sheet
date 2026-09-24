@@ -49,7 +49,7 @@ void main() {
       'range': '60 feet',
       'classes': ['Runescribe'],
     }, desc: 'Make a ranged spell attack. On a hit, 2d8 Force damage.');
-    final grantedSpell = _hb('spell', 'Glyph Glow', {'level': 0});
+    _hb('spell', 'Glyph Glow', {'level': 0});
     final species = _hb('species', 'Stoneborn', {
       'speed': 25,
       'traits': [
