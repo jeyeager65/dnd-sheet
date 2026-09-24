@@ -1471,14 +1471,13 @@ const _staticResourceHints = {
       'Take one additional action this turn (not the Magic action).',
   'Indomitable': "Failed a save? Reroll it, adding your Fighter level.",
   'Rages': 'Bonus Action: Resistance to B/P/S damage, extra Strength damage, adv. on Str checks/saves.',
-  'Channel Divinity': 'Fuel a Channel Divinity option (see Features & Traits for which ones you know).',
+  'Channel Divinity': 'Fuel a Channel Divinity option.',
   'Wild Shape': 'Bonus Action: shape-shift into a known Beast form.',
   'Focus Points':
       'Spend to fuel Flurry of Blows, Patient Defense, Step of the Wind, etc.',
   'Sorcery Points': 'Spend on Metamagic or to create/convert spell slots.',
   'Stonecunning': 'Bonus Action: gain Tremorsense 60 ft for 10 min (must be on/touching stone).',
-  'Giant Ancestry':
-      'Use your chosen Giant boon (see Features & Traits for which one).',
+  'Giant Ancestry': 'Use your chosen Giant boon.',
   'Adrenaline Rush':
       'Bonus Action Dash; gain temporary HP equal to your Proficiency Bonus.',
 };
@@ -1530,6 +1529,67 @@ String resourceHint(String resourceKey, String resourceName, Character c) {
   }
   return _staticResourceHints[resourceName] ?? '';
 }
+
+/// What [c] can do with [r], right where it's tracked: every one of their
+/// features whose rules text mentions it - "Channel Divinity" finds the
+/// class's own Channel Divinity (Divine Spark, Turn Undead) and subclass
+/// options like Preserve Life or Sacred Weapon; "Focus Points" finds
+/// Monk's Focus, Deflect Attacks, Stunning Strike, ...; "Giant Ancestry"
+/// finds the trait, whose text is the chosen boon. Each is (name, its
+/// short sheet text). Works the same for a homebrew feature that
+/// mentions the resource by name.
+List<(String, String)> resourceUses(Character c, Resource r) {
+  // "Focus Points" / "Rages" are written "Focus Point" / "Rage" in most
+  // rules text, so match the singular with an optional s.
+  final name = r.name;
+  final singular = name.endsWith('s') && !name.endsWith('ss')
+      ? name.substring(0, name.length - 1)
+      : name;
+  final mention = RegExp('\\b${RegExp.escape(singular)}s?\\b');
+  final seen = <String>{};
+  return [
+    for (final f in [...c.features, ...speciesTraitFeatures(c)])
+      if (seen.add(f.name) &&
+          (f.name == name ||
+              mention.hasMatch(liveFeatureText(c, f) ?? f.desc ?? '')))
+        (f.name, sheetText(c, f)),
+  ];
+}
+
+/// One-line reminders of what each (non-Mastery) weapon property does,
+/// shown on the weapon's row - condensed from the SRD's Weapon Properties.
+const _weaponPropertyShort = {
+  'Ammunition':
+      'Needs ammunition to fire; drawing it is part of the attack. After a '
+      'fight, spend 1 minute to recover half of what you fired.',
+  'Finesse':
+      'Use Strength or Dexterity for the attack and damage rolls (the same '
+      'one for both).',
+  'Heavy':
+      'Disadvantage on attacks if your Strength (melee) or Dexterity '
+      '(ranged) is below 13.',
+  'Light':
+      'After attacking with it on the Attack action, make one extra attack '
+      'as a Bonus Action with a different Light weapon - no ability '
+      'modifier to that damage unless it is negative.',
+  'Loading':
+      'Fire only one piece of ammunition per action, Bonus Action, or '
+      'Reaction, however many attacks you have.',
+  'Reach': '+5 feet of reach, including for Opportunity Attacks.',
+  'Thrown':
+      'Throw it for a ranged attack (a melee weapon uses the same ability '
+      'as in melee); drawing it is part of the attack.',
+  'Two-Handed': 'Needs two hands to attack with it.',
+  'Versatile': 'One or two hands; the damage in parentheses is for two hands.',
+};
+
+/// (property, reminder) for each of [w]'s properties that has one -
+/// "Versatile (1d10)" matches Versatile.
+List<(String, String)> weaponPropertyNotes(Weapon w) => [
+  for (final p in w.properties)
+    if (_weaponPropertyShort[p.split(' (').first.trim()] case final note?)
+      (p, note),
+];
 
 /// Every resource *name* [c]'s class/species could ever grant at some
 /// level, whether or not it's currently unlocked - lets "not unlocked yet"

@@ -661,6 +661,58 @@ void main() {
     expect(rules.classWeaponCategories(wizard), {'Simple weapons'});
   });
 
+  test('a resource lists the features that use it, with their short text', () {
+    final cleric = _make(
+      cls: 'Cleric',
+      level: 3,
+      increases: const {'wis': 2, 'con': 1},
+    );
+    final choice = cleric.pendingChoices.firstWhere(
+      (p) => p.kind == 'subclass',
+    );
+    rules.resolveSubclassChoice(
+      cleric,
+      choice.id,
+      'srd-2024_life-domain-subclass',
+    );
+    final channel = cleric.resources.firstWhere(
+      (r) => r.name == 'Channel Divinity',
+    );
+    final uses = rules.resourceUses(cleric, channel);
+    expect(
+      uses.map((u) => u.$1),
+      containsAll(['Channel Divinity', 'Preserve Life']),
+    );
+    expect(
+      uses.firstWhere((u) => u.$1 == 'Channel Divinity').$2,
+      contains('Turn Undead'),
+    );
+
+    final monk = _make(
+      cls: 'Monk',
+      level: 5,
+      increases: const {'dex': 2, 'wis': 1},
+    );
+    final focus = monk.resources.firstWhere((r) => r.name == 'Focus Points');
+    expect(
+      rules.resourceUses(monk, focus).map((u) => u.$1),
+      containsAll(["Monk's Focus", 'Deflect Attacks', 'Stunning Strike']),
+    );
+  });
+
+  test('weapon rows explain each property', () {
+    final notes = rules.weaponPropertyNotes(
+      Weapon(
+        name: 'Longsword',
+        damageDice: '1d8',
+        damageType: 'slashing',
+        properties: ['Versatile (1d10)', 'Sap'],
+        proficient: true,
+      ),
+    );
+    expect(notes.map((n) => n.$1), ['Versatile (1d10)']);
+  });
+
   group('Find Steed', () {
     test('casting summons the Otherworldly Steed for the slot level and '
         'creature type, and recasting replaces it', () {

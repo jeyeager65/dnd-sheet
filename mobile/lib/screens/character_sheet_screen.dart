@@ -1160,7 +1160,7 @@ class _CombatTab extends StatelessWidget {
             body: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(resource.hint),
+                ..._resourceUseLines(character, resource),
                 if (rules.isCustomResource(character, resource)) ...[
                   const SizedBox(height: 8),
                   Row(
@@ -2300,6 +2300,25 @@ class _InnateAttackRow extends StatelessWidget {
   }
 }
 
+/// A resource row's body: the features that use it, each with its short
+/// text, so there's no need to go find them on the Features tab - or the
+/// resource's own hint when nothing mentions it (a hand-added resource
+/// keeps its hint either way).
+List<Widget> _resourceUseLines(Character character, Resource resource) {
+  final uses = rules.resourceUses(character, resource);
+  final showHint =
+      resource.hint.isNotEmpty &&
+      (uses.isEmpty || rules.isCustomResource(character, resource));
+  return [
+    if (showHint) Text(resource.hint),
+    for (final (name, text) in uses)
+      Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: MarkdownText('**$name.** $text'),
+      ),
+  ];
+}
+
 class _WeaponRow extends StatelessWidget {
   const _WeaponRow({
     required this.character,
@@ -2370,6 +2389,11 @@ class _WeaponRow extends StatelessWidget {
             '${weapon.damageType.substring(0, 1).toUpperCase()}${weapon.damageType.substring(1)} · ${weapon.properties.join(', ')}',
           ),
           Text('Attack: ${attack.breakdown} · Damage: ${damage.breakdown}'),
+          for (final (property, note) in rules.weaponPropertyNotes(weapon))
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: MarkdownText('**$property.** $note'),
+            ),
           if (rules.masteryApplies(character, weapon)) ...[
             const SizedBox(height: 4),
             _Chip('${weapon.mastery!.toUpperCase()} MASTERY'),
