@@ -448,12 +448,13 @@ void main() {
     }
   });
 
-  test('EQUIPMENT TRAINING & PROFICIENCIES shows the class\'s real Weapon Proficiencies text and the combined class + background Tool Proficiencies text', () async {
+  test('EQUIPMENT TRAINING & PROFICIENCIES shows the class\'s real Weapon Proficiencies text, and omits an unresolved background Tool Proficiency choice rather than printing the raw prompt', () async {
     final jarson = buildSampleJarson();
     final classInfo = srdCatalog.byKey(jarson.classKey!)!;
     final backgroundInfo = srdCatalog.backgroundsByKey[jarson.backgroundKey]!;
     expect(classInfo.traits['Weapon Proficiencies'], isNotNull);
     expect(backgroundInfo.toolProficiency, isNotNull); // Soldier's Gaming Set
+    expect(jarson.toolProficiencyChoices, isEmpty); // never resolved
 
     final result = await fillCharacterSheetTopSection(
       await _blankBasePdf(),
@@ -464,10 +465,11 @@ void main() {
     document.dispose();
 
     expect(text, contains(classInfo.traits['Weapon Proficiencies']!));
-    // Background text still shows correctly even after markdown-stripping
-    // (real SRD text uses "_Choose one kind of_ Gaming Set..." - the
-    // underscores shouldn't survive into the exported sheet).
-    expect(text, contains('Choose one kind of Gaming Set'));
+    // An unresolved "Choose N <Tool>" requirement isn't a real granted
+    // proficiency yet, so its raw, unparsed SRD prompt text (real SRD
+    // text: "_Choose one kind of_ Gaming Set...") must never be printed
+    // as though it were one.
+    expect(text, isNot(contains('Choose one kind of Gaming Set')));
     expect(text, isNot(contains('_Choose')));
   });
 

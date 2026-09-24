@@ -15,6 +15,7 @@ import 'package:dnd_sheet/models/homebrew.dart';
 import 'package:dnd_sheet/screens/character_form_screen.dart';
 import 'package:dnd_sheet/screens/homebrew_screen.dart';
 import 'package:dnd_sheet/widgets/expandable_row.dart';
+import 'package:dnd_sheet/widgets/ledger_bits.dart';
 
 void main() {
   // Bypasses charactersRepo.init() (which needs Hive/path_provider plugin
@@ -72,9 +73,9 @@ void main() {
     await tester.tap(find.text('Jarson').first);
     await tester.pumpAndSettle();
 
-    // The Combat tab has Rest buttons/Inspiration/HP/Hit Dice above
-    // Weapons, so it's off the default test viewport - scroll it into
-    // view rather than assuming everything fits on screen.
+    // Weapons sits below the stat grid and Hit Points, so it may be off
+    // the default test viewport - scroll it into view rather than
+    // assuming everything fits on screen.
     await tester.dragUntilVisible(
       find.text('Greatsword'),
       find.byType(ListView),
@@ -94,6 +95,13 @@ void main() {
     await tester.tap(find.text('Jarson').first);
     await tester.pumpAndSettle();
 
+    // Rests now sits below Hit Points/Weapons/Resources/Mounts, off the
+    // default test viewport - scroll it into view first.
+    await tester.dragUntilVisible(
+      find.text('Long Rest'),
+      find.byType(ListView),
+      const Offset(0, -400),
+    );
     await tester.tap(find.text('Long Rest'));
     await tester.pumpAndSettle();
     expect(find.text('Take a Long Rest?'), findsOneWidget);
@@ -224,7 +232,7 @@ void main() {
       // juggling scroll positions per assertion (a real ListView only
       // builds elements within its viewport + cache extent, so anything
       // still off-screen genuinely isn't findable).
-      tester.view.physicalSize = const Size(1080, 4000);
+      tester.view.physicalSize = const Size(1080, 6000);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
@@ -265,6 +273,28 @@ void main() {
 
       final jarson = charactersRepo.byId('jarson');
 
+      // Saving Throws' and Skills' checkboxes are each locked until that
+      // section's own Edit is tapped. Scoped to the section specifically,
+      // since the sheet's own AppBar also has an unrelated "Edit" button
+      // (opens Edit Character) that a bare find.text('Edit') would match
+      // first.
+      Future<void> tapSectionEdit(String sectionLabel) async {
+        final header = find.ancestor(
+          of: find.text(sectionLabel),
+          matching: find.byType(SectionLabel),
+        );
+        await tester.tap(
+          find.descendant(
+            of: header,
+            matching: find.widgetWithText(TextButton, 'Edit'),
+          ),
+        );
+        await tester.pumpAndSettle();
+      }
+
+      await tapSectionEdit('SAVING THROWS');
+      expect(find.text('Done'), findsOneWidget);
+
       // Saving throws: Jarson starts proficient in Str and Con only -
       // toggle Dex on via its checkbox.
       expect(jarson.savingThrowProficiencies, isNot(contains('dex')));
@@ -277,6 +307,11 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(jarson.savingThrowProficiencies, contains('dex'));
+
+      // Skills has its own separate Edit/Done toggle - Saving Throws
+      // being unlocked doesn't unlock it too.
+      await tapSectionEdit('SKILLS');
+      expect(find.text('Done'), findsNWidgets(2));
 
       // Skills: Jarson isn't proficient in Stealth - toggle it on, then
       // toggle Expertise on too, then verify unchecking Proficient also

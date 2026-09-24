@@ -387,10 +387,24 @@ class _CharacterSheetScreenState extends State<CharacterSheetScreen> {
 /// scrollbar sits in the margin instead of over the content.
 const _tabPadding = EdgeInsets.symmetric(horizontal: 18, vertical: 6);
 
-class _OverviewTab extends StatelessWidget {
+class _OverviewTab extends StatefulWidget {
   const _OverviewTab({required this.character, required this.onChanged});
   final Character character;
   final VoidCallback onChanged;
+
+  @override
+  State<_OverviewTab> createState() => _OverviewTabState();
+}
+
+class _OverviewTabState extends State<_OverviewTab> {
+  Character get character => widget.character;
+  VoidCallback get onChanged => widget.onChanged;
+
+  // Saving Throws' and Skills' proficiency checkboxes are each locked
+  // (visible but not tappable) until their own section's Edit/Done
+  // toggle is on - separate flags, so unlocking one doesn't unlock both.
+  bool _editingSavingThrows = false;
+  bool _editingSkills = false;
 
   /// The species' embedded choice table (Dragonborn's Draconic Ancestors,
   /// Elf's Elven Lineages, ...), or null if the species isn't cataloged or
@@ -497,6 +511,11 @@ class _OverviewTab extends StatelessWidget {
     _setSkillState(ref, proficient: entry.proficient, expertise: checked);
   }
 
+  Widget _editToggle(bool editing, VoidCallback onToggle) => TextButton(
+    onPressed: onToggle,
+    child: Text(editing ? 'Done' : 'Edit'),
+  );
+
   @override
   Widget build(BuildContext context) {
     // Effective scores (an attuned Belt of Giant Strength's 21), with the
@@ -510,11 +529,47 @@ class _OverviewTab extends StatelessWidget {
     return ListView(
       padding: _tabPadding,
       children: [
+        SectionLabel(
+          'Ability Scores',
+          trailing: TextButton(
+            onPressed: () =>
+                _showEditAbilityScoresDialog(context, character, onChanged),
+            child: const Text('Edit Scores'),
+          ),
+        ),
+        BigStatGrid(
+          cells: [
+            BigStatCell(cell(scores.str), 'STR', secondary: '${scores.str}'),
+            BigStatCell(cell(scores.dex), 'DEX', secondary: '${scores.dex}'),
+            BigStatCell(cell(scores.con), 'CON', secondary: '${scores.con}'),
+            BigStatCell(
+              cell(scores.intel),
+              'INT',
+              secondary: '${scores.intel}',
+            ),
+            BigStatCell(cell(scores.wis), 'WIS', secondary: '${scores.wis}'),
+            BigStatCell(cell(scores.cha), 'CHA', secondary: '${scores.cha}'),
+          ],
+        ),
+        for (final MapEntry(key: key, value: (source, value)) in setBy.entries)
+          if (value > character.abilityScores.of(key))
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                '${key.toUpperCase()} $value from $source '
+                '(your own score: ${character.abilityScores.of(key)}).',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: LedgerColors.inkDim,
+                ),
+              ),
+            ),
+        const SectionLabel('Species'),
         GestureDetector(
           onTap: table != null ? () => _pickSpeciesChoice(context) : null,
           child: FactRow(
             label: table != null ? table.caption : 'Species',
-            value: character.speciesChoice ?? character.speciesLabel,
+            value: character.speciesLabel,
             caption: table != null
                 ? switch (character.speciesKey) {
                     'srd-2024_dragonborn-species' => 'Sets Breath Weapon damage type and your damage resistance — tap to change',
@@ -597,92 +652,93 @@ class _OverviewTab extends StatelessWidget {
           ),
         ],
         SectionLabel(
-          'Ability Scores',
-          trailing: TextButton(
-            onPressed: () =>
-                _showEditAbilityScoresDialog(context, character, onChanged),
-            child: const Text('Edit Scores'),
+          'Saving Throws',
+          trailing: _editToggle(
+            _editingSavingThrows,
+            () => setState(() => _editingSavingThrows = !_editingSavingThrows),
           ),
         ),
-        StatGrid(
-          cells: [
-            StatCell('${scores.str}', 'Str · ${cell(scores.str)}'),
-            StatCell('${scores.dex}', 'Dex · ${cell(scores.dex)}'),
-            StatCell('${scores.con}', 'Con · ${cell(scores.con)}'),
-            StatCell('${scores.intel}', 'Int · ${cell(scores.intel)}'),
-            StatCell('${scores.wis}', 'Wis · ${cell(scores.wis)}'),
-            StatCell('${scores.cha}', 'Cha · ${cell(scores.cha)}'),
-          ],
-        ),
-        for (final MapEntry(key: key, value: (source, value)) in setBy.entries)
-          if (value > character.abilityScores.of(key))
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                '${key.toUpperCase()} $value from $source '
-                '(your own score: ${character.abilityScores.of(key)}).',
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: LedgerColors.inkDim,
-                ),
-              ),
-            ),
-        const SectionLabel('Saving Throws'),
         for (final ability in const ['str', 'dex', 'con', 'int', 'wis', 'cha'])
-          Row(
-            children: [
-              Checkbox(
-                value: character.savingThrowProficiencies.contains(ability),
-                onChanged: (v) => _toggleSavingThrow(ability, v ?? false),
-              ),
-              Expanded(child: Text(_abilityName(ability))),
-              Text(
-                rules.formatModifier(
-                  rules.savingThrowModifier(character, ability),
+          Container(
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: LedgerColors.rule)),
+            ),
+            child: Row(
+              children: [
+                Checkbox(
+                  value: character.savingThrowProficiencies.contains(ability),
+                  onChanged: _editingSavingThrows
+                      ? (v) => _toggleSavingThrow(ability, v ?? false)
+                      : null,
                 ),
-                style: LedgerTheme.dataStyle(
-                  fontSize: 14,
-                  weight: FontWeight.w600,
+                Expanded(child: Text(_abilityName(ability))),
+                Text(
+                  rules.formatModifier(
+                    rules.savingThrowModifier(character, ability),
+                  ),
+                  style: LedgerTheme.dataStyle(
+                    fontSize: 14,
+                    weight: FontWeight.w600,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        const SectionLabel('Skills'),
+        SectionLabel(
+          'Skills',
+          trailing: _editToggle(
+            _editingSkills,
+            () => setState(() => _editingSkills = !_editingSkills),
+          ),
+        ),
         for (final ref
             in srdCatalog.skillsByName.values.toList()
               ..sort((a, b) => a.name.compareTo(b.name)))
           Builder(
             builder: (context) {
               final skill = _skillEntryFor(ref);
-              return Row(
-                children: [
-                  Checkbox(
-                    value: skill.proficient,
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    visualDensity: VisualDensity.compact,
-                    onChanged: (v) => _toggleSkillProficient(ref, v ?? false),
+              return Container(
+                decoration: const BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(color: LedgerColors.rule),
                   ),
-                  const SizedBox(width: 4),
-                  Checkbox(
-                    value: skill.expertise,
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    visualDensity: VisualDensity.compact,
-                    onChanged: skill.proficient
-                        ? (v) => _toggleSkillExpertise(ref, v ?? false)
-                        : null,
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text('${ref.name} (${_abilityName(ref.ability)})'),
-                  ),
-                  Text(
-                    rules.formatModifier(rules.skillModifier(character, skill)),
-                    style: LedgerTheme.dataStyle(
-                      fontSize: 14,
-                      weight: FontWeight.w600,
+                ),
+                child: Row(
+                  children: [
+                    Checkbox(
+                      value: skill.proficient,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      visualDensity: VisualDensity.compact,
+                      onChanged: _editingSkills
+                          ? (v) => _toggleSkillProficient(ref, v ?? false)
+                          : null,
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 4),
+                    Checkbox(
+                      value: skill.expertise,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      visualDensity: VisualDensity.compact,
+                      onChanged: _editingSkills && skill.proficient
+                          ? (v) => _toggleSkillExpertise(ref, v ?? false)
+                          : null,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        '${ref.name} (${_abilityName(ref.ability)})',
+                      ),
+                    ),
+                    Text(
+                      rules.formatModifier(
+                        rules.skillModifier(character, skill),
+                      ),
+                      style: LedgerTheme.dataStyle(
+                        fontSize: 14,
+                        weight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
               );
             },
           ),
@@ -967,69 +1023,37 @@ class _CombatTab extends StatelessWidget {
     return ListView(
       padding: _tabPadding,
       children: [
-        StatGrid(
+        const SectionLabel('Stats'),
+        BigStatGrid(
           cells: [
-            StatCell('${character.currentHp}/${character.maxHp}', 'HP'),
-            StatCell('${rules.armorClassFor(character)}', 'AC'),
-            StatCell(
+            BigStatCell('${character.currentHp}/${character.maxHp}', 'HP'),
+            BigStatCell('${rules.armorClassFor(character)}', 'AC'),
+            BigStatCell(
               rules.formatModifier(rules.initiativeModifier(character)),
-              'Init',
+              'INIT',
             ),
-            StatCell('${rules.speedFor(character)}', 'Spd'),
-            StatCell(rules.formatModifier(prof), 'Prof'),
+            BigStatCell('${rules.speedFor(character)}', 'SPD'),
+            BigStatCell(rules.formatModifier(prof), 'PROF'),
           ],
         ),
         if (character.spellcasting?.concentratingOn != null) ...[
           const SizedBox(height: 12),
           _ConcentrationBanner(character: character, onChanged: onChanged),
         ],
-        const SectionLabel('Rests'),
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () => _rest(context, longRest: false),
-                child: const Text('Short Rest'),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () => _rest(context, longRest: true),
-                child: const Text('Long Rest'),
-              ),
-            ),
-          ],
-        ),
         SectionLabel(
-          'Hit Points',
+          'Hit Points (${character.currentHp}/${character.maxHp})',
           trailing: TextButton(
             onPressed: () => _showMaxHpDialog(context, character, onChanged),
             child: const Text('Max HP'),
           ),
         ),
-        Row(
-          children: [
-            Text(
-              '${character.currentHp} / ${character.maxHp}',
-              style: LedgerTheme.dataStyle(
-                fontSize: 16,
-                weight: FontWeight.w700,
-              ),
-            ),
-            if (character.tempHp > 0) ...[
-              const SizedBox(width: 8),
-              Text(
-                '+${character.tempHp} temp',
-                style: const TextStyle(
-                  color: LedgerColors.inkDim,
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ],
-        ),
-        const SizedBox(height: 8),
+        if (character.tempHp > 0) ...[
+          Text(
+            '+${character.tempHp} temp',
+            style: const TextStyle(color: LedgerColors.inkDim, fontSize: 12),
+          ),
+          const SizedBox(height: 8),
+        ],
         Wrap(
           spacing: 8,
           children: [
@@ -1070,106 +1094,70 @@ class _CombatTab extends StatelessWidget {
             ),
           ],
         ),
-        const SectionLabel('Hit Dice'),
-        Row(
-          children: [
-            Text(
-              '${character.hitDiceTotal - character.hitDiceSpent} / ${character.hitDiceTotal} ${character.hitDiceDie} remaining',
-              style: const TextStyle(color: LedgerColors.inkDim),
-            ),
-          ],
+        SectionLabel(
+          'Weapons',
+          trailing: TextButton(
+            onPressed: () => _addWeapon(context),
+            child: const Text('+ Add Weapon'),
+          ),
         ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            OutlinedButton(
-              onPressed: character.hitDiceSpent < character.hitDiceTotal
-                  ? () => _showSpendHitDieDialog(context, character, onChanged)
-                  : null,
-              child: const Text('Spend'),
-            ),
-            const SizedBox(width: 8),
-            IconButton(
-              onPressed: character.hitDiceSpent > 0
-                  ? () {
-                      character.hitDiceSpent--;
-                      onChanged();
-                    }
-                  : null,
-              icon: const Icon(Icons.undo, size: 18),
-              tooltip: 'Undo a spent Hit Die (no HP change)',
-              color: LedgerColors.inkDim,
-            ),
-          ],
-        ),
-        const SectionLabel('Death Saves'),
-        _DeathSaves(character: character, onChanged: onChanged),
-        const SectionLabel('Status'),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'HEROIC INSPIRATION',
-                    style: TextStyle(
-                      fontSize: 11,
-                      letterSpacing: 0.6,
-                      fontWeight: FontWeight.w600,
-                      color: LedgerColors.inkDim,
+        ExpandableGroup(
+          builder: (context, group) => Column(
+            children: [
+              Builder(
+                builder: (context) {
+                  final unarmed = rules.unarmedStrike(character);
+                  return ExpandableRow(
+                    group: group,
+                    groupId: 'Unarmed Strike',
+                    title: 'Unarmed Strike',
+                    subtitle: Text(
+                      '${rules.formatModifier(unarmed.attack)} / ${unarmed.damage}',
+                      style: LedgerTheme.dataStyle(
+                        fontSize: 13,
+                        color: LedgerColors.inkDim,
+                      ),
                     ),
-                  ),
-                  Row(
-                    children: [
-                      IconButton(
-                        onPressed: character.heroicInspiration > 0
-                            ? () {
-                                character.heroicInspiration--;
-                                onChanged();
-                              }
-                            : null,
-                        icon: const Icon(Icons.remove),
-                      ),
-                      Text(
-                        '${character.heroicInspiration}',
-                        style: LedgerTheme.dataStyle(
-                          fontSize: 16,
-                          weight: FontWeight.w700,
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () {
-                          character.heroicInspiration++;
-                          onChanged();
-                        },
-                        icon: const Icon(Icons.add),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'EXHAUSTION',
-                    style: TextStyle(
-                      fontSize: 11,
-                      letterSpacing: 0.6,
-                      fontWeight: FontWeight.w600,
-                      color: LedgerColors.inkDim,
+                    body: MarkdownText(
+                      'Punch, kick, headbutt: ${unarmed.ability} + Proficiency '
+                      'Bonus to hit, ${unarmed.damage} damage. Or instead: '
+                      '**Grapple** (target makes a Str or Dex save, DC '
+                      '${unarmed.grappleDc}, or is Grappled) or **Shove** (same '
+                      'DC, or pushed 5 ft or knocked Prone). Needs a free hand to '
+                      'grapple.',
                     ),
-                  ),
-                  _ExhaustionRow(character: character, onChanged: onChanged),
-                ],
+                  );
+                },
               ),
-            ),
-          ],
+              for (final attack in character.innateAttacks)
+                _InnateAttackRow(
+                  character: character,
+                  attack: attack,
+                  onChanged: onChanged,
+                  group: group,
+                ),
+              for (final weapon in character.weapons)
+                _WeaponRow(
+                  character: character,
+                  weapon: weapon,
+                  onRemove: () => _removeWeapon(weapon.name),
+                  onChanged: onChanged,
+                  group: group,
+                ),
+            ],
+          ),
         ),
+        if (rules.pdfAttackRowCount(character) > 6)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text(
+              'The PDF sheet has room for 6 attacks; '
+              '${rules.pdfAttackRowCount(character) - 6} past that '
+              "(weapons first, then Breath Weapon, then damage cantrips) "
+              "won't be printed.",
+              style: const TextStyle(fontSize: 12, color: LedgerColors.inkDim),
+            ),
+          ),
         SectionLabel(
           'Resources',
           trailing: TextButton(
@@ -1237,70 +1225,6 @@ class _CombatTab extends StatelessWidget {
           ),
         ),
         SectionLabel(
-          'Weapons',
-          trailing: TextButton(
-            onPressed: () => _addWeapon(context),
-            child: const Text('+ Add Weapon'),
-          ),
-        ),
-        ExpandableGroup(
-          builder: (context, group) => Column(
-            children: [
-              Builder(
-                builder: (context) {
-                  final unarmed = rules.unarmedStrike(character);
-                  return ExpandableRow(
-                    group: group,
-                    groupId: 'Unarmed Strike',
-                    title: 'Unarmed Strike',
-                    subtitle: Text(
-                      '${rules.formatModifier(unarmed.attack)} / ${unarmed.damage}',
-                      style: LedgerTheme.dataStyle(
-                        fontSize: 13,
-                        color: LedgerColors.inkDim,
-                      ),
-                    ),
-                    body: MarkdownText(
-                      'Punch, kick, headbutt: ${unarmed.ability} + Proficiency '
-                      'Bonus to hit, ${unarmed.damage} damage. Or instead: '
-                      '**Grapple** (target makes a Str or Dex save, DC '
-                      '${unarmed.grappleDc}, or is Grappled) or **Shove** (same '
-                      'DC, or pushed 5 ft or knocked Prone). Needs a free hand to '
-                      'grapple.',
-                    ),
-                  );
-                },
-              ),
-              for (final attack in character.innateAttacks)
-                _InnateAttackRow(
-                  character: character,
-                  attack: attack,
-                  onChanged: onChanged,
-                  group: group,
-                ),
-              for (final weapon in character.weapons)
-                _WeaponRow(
-                  character: character,
-                  weapon: weapon,
-                  onRemove: () => _removeWeapon(weapon.name),
-                  onChanged: onChanged,
-                  group: group,
-                ),
-            ],
-          ),
-        ),
-        if (rules.pdfAttackRowCount(character) > 6)
-          Padding(
-            padding: const EdgeInsets.only(top: 6),
-            child: Text(
-              'The PDF sheet has room for 6 attacks; '
-              '${rules.pdfAttackRowCount(character) - 6} past that '
-              "(weapons first, then Breath Weapon, then damage cantrips) "
-              "won't be printed.",
-              style: const TextStyle(fontSize: 12, color: LedgerColors.inkDim),
-            ),
-          ),
-        SectionLabel(
           'Mounts',
           trailing: TextButton(
             onPressed: () => _addMount(context),
@@ -1320,6 +1244,124 @@ class _CombatTab extends StatelessWidget {
             ],
           ),
         ),
+        const SectionLabel('Rests'),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => _rest(context, longRest: false),
+                child: const Text('Short Rest'),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => _rest(context, longRest: true),
+                child: const Text('Long Rest'),
+              ),
+            ),
+          ],
+        ),
+        const SectionLabel('Hit Dice'),
+        Row(
+          children: [
+            Text(
+              '${character.hitDiceTotal - character.hitDiceSpent} / ${character.hitDiceTotal} ${character.hitDiceDie} remaining',
+              style: const TextStyle(color: LedgerColors.inkDim),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            OutlinedButton(
+              onPressed: character.hitDiceSpent < character.hitDiceTotal
+                  ? () => _showSpendHitDieDialog(context, character, onChanged)
+                  : null,
+              child: const Text('Spend'),
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              onPressed: character.hitDiceSpent > 0
+                  ? () {
+                      character.hitDiceSpent--;
+                      onChanged();
+                    }
+                  : null,
+              icon: const Icon(Icons.undo, size: 18),
+              tooltip: 'Undo a spent Hit Die (no HP change)',
+              color: LedgerColors.inkDim,
+            ),
+          ],
+        ),
+        const SectionLabel('Status'),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'HEROIC INSPIRATION',
+                    style: TextStyle(
+                      fontSize: 11,
+                      letterSpacing: 0.6,
+                      fontWeight: FontWeight.w600,
+                      color: LedgerColors.inkDim,
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      IconButton(
+                        onPressed: character.heroicInspiration > 0
+                            ? () {
+                                character.heroicInspiration--;
+                                onChanged();
+                              }
+                            : null,
+                        icon: const Icon(Icons.remove),
+                      ),
+                      Text(
+                        '${character.heroicInspiration}',
+                        style: LedgerTheme.dataStyle(
+                          fontSize: 16,
+                          weight: FontWeight.w700,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () {
+                          character.heroicInspiration++;
+                          onChanged();
+                        },
+                        icon: const Icon(Icons.add),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'EXHAUSTION',
+                    style: TextStyle(
+                      fontSize: 11,
+                      letterSpacing: 0.6,
+                      fontWeight: FontWeight.w600,
+                      color: LedgerColors.inkDim,
+                    ),
+                  ),
+                  _ExhaustionRow(character: character, onChanged: onChanged),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SectionLabel('Death Saves'),
+        _DeathSaves(character: character, onChanged: onChanged),
         const SectionLabel('Actions'),
         const _ActionsReference(),
         const SectionLabel('Conditions'),
@@ -4142,13 +4184,13 @@ class _ItemsTab extends StatelessWidget {
         ),
         GestureDetector(
           onTap: () => _editCurrency(context),
-          child: StatGrid(
+          child: BigStatGrid(
             cells: [
-              StatCell('${character.currency.cp}', 'CP'),
-              StatCell('${character.currency.sp}', 'SP'),
-              StatCell('${character.currency.ep}', 'EP'),
-              StatCell('${character.currency.gp}', 'GP'),
-              StatCell('${character.currency.pp}', 'PP'),
+              BigStatCell('${character.currency.cp}', 'CP'),
+              BigStatCell('${character.currency.sp}', 'SP'),
+              BigStatCell('${character.currency.ep}', 'EP'),
+              BigStatCell('${character.currency.gp}', 'GP'),
+              BigStatCell('${character.currency.pp}', 'PP'),
             ],
           ),
         ),
@@ -5226,6 +5268,54 @@ class _ProficienciesSection extends StatelessWidget {
               ),
           ],
         ),
+        for (final req in rules.unresolvedToolChoices(character))
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Choose ${req.count} ${req.tool.name}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontStyle: FontStyle.italic,
+                    color: LedgerColors.inkDim,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    for (final variant in req.tool.variants)
+                      FilterChip(
+                        label: Text(variant),
+                        selected: character.toolProficiencyChoices.contains(
+                          variant,
+                        ),
+                        onSelected: (v) {
+                          final picked = req.tool.variants
+                              .where(
+                                character.toolProficiencyChoices.contains,
+                              )
+                              .length;
+                          if (v && picked >= req.count) return;
+                          character.toolProficiencyChoices = v
+                              ? [
+                                  ...character.toolProficiencyChoices,
+                                  variant,
+                                ]
+                              : character.toolProficiencyChoices
+                                    .where((x) => x != variant)
+                                    .toList();
+                          onChanged();
+                        },
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
       ],
     );
   }

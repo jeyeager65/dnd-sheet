@@ -73,21 +73,41 @@ String? classWeaponCondition(Character c) => RegExp(
   caseSensitive: false,
 ).firstMatch(_classData(c)?.traits['Weapon Proficiencies'] ?? '')?.group(0);
 
-/// Tool proficiencies: the resolved background/class choices (or, with
-/// none recorded, the background's and class's own tool text), plus
-/// extras.
+/// Tool proficiencies: any FIXED tool text the background/class grants
+/// outright (e.g. "Thieves' Tools"), plus the character's resolved
+/// "Choose N `<Tool>`" picks (toolProficiencyChoices - variant chip
+/// selections and/or the free-text fallback), plus extras. A "Choose N"
+/// requirement's raw SRD text (e.g. "_Choose one kind of_ Gaming Set
+/// (see Equipment)") never appears here by itself - until it's resolved
+/// it's surfaced instead via [unresolvedToolChoices], since showing the
+/// unparsed requirement text would read as though it were an actual
+/// granted proficiency.
 List<String> toolProficiencies(Character c) {
   final background = c.backgroundKey != null
       ? srdCatalog.backgroundsByKey[c.backgroundKey]
       : null;
-  final base = c.toolProficiencyChoices.isNotEmpty
-      ? c.toolProficiencyChoices
-      : [
-          _classData(c)?.traits['Tool Proficiencies'],
-          background?.toolProficiency,
-        ].nonNulls.where((s) => s.isNotEmpty && s != 'None').toList();
-  return [...base, ...c.extraToolProficiencies];
+  final fixed = [
+    _classData(c)?.traits['Tool Proficiencies'],
+    background?.toolProficiency,
+  ].nonNulls
+      .where((s) => s.isNotEmpty && s != 'None' && parseToolChoice(s) == null)
+      .toList();
+  return [...fixed, ...c.toolProficiencyChoices, ...c.extraToolProficiencies];
 }
+
+/// [c]'s "Choose N `<Tool>`" requirements (from its background and/or
+/// class) that don't yet have all N variants recorded in
+/// toolProficiencyChoices - what the Proficiencies section's own variant
+/// picker offers, the same requirements the character form's chip picker
+/// resolves at creation/edit time, surfaced again here for a character
+/// whose pick was never made (or only partially made).
+List<ToolChoiceRequirement> unresolvedToolChoices(Character c) =>
+    toolChoiceRequirementsFor(c).where((req) {
+      final picked = req.tool.variants
+          .where(c.toolProficiencyChoices.contains)
+          .length;
+      return picked < req.count;
+    }).toList();
 
 /// Re-reads every weapon's proficiency after the character's proficiencies
 /// changed (a new class, a Protector pick, a hand-added proficiency). A

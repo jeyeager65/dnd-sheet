@@ -521,7 +521,8 @@ class _HomebrewRulesEditorState extends State<HomebrewRulesEditor> {
     display: (c) => switch (c) {
       '' => 'No',
       'any' => 'Yes - any feat',
-      _ => 'Yes - an $c',
+      _ when 'AEIOU'.contains(c[0]) => 'Yes - an $c',
+      _ => 'Yes - a $c',
     },
   );
 

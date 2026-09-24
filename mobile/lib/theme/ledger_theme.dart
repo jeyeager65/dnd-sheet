@@ -143,8 +143,17 @@ class LedgerTheme {
           borderSide: BorderSide(color: LedgerColors.accent, width: 2),
         ),
         labelStyle: GoogleFonts.sourceSans3(
-          fontSize: 11,
-          letterSpacing: 0.6,
+          fontSize: 16,
+          color: LedgerColors.inkDim,
+        ),
+        // A dropdown always has a value, so its label is always in the
+        // floating (shrunk) state - unlike a blank text field, which
+        // shows labelStyle at full size until you type into it. Without
+        // this, the floated label derives its size from labelStyle via
+        // Flutter's default shrink, which read as illegibly tiny.
+        floatingLabelStyle: GoogleFonts.sourceSans3(
+          fontSize: 14,
+          letterSpacing: 0.4,
           color: LedgerColors.inkDim,
         ),
       ),
