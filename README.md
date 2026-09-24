@@ -175,6 +175,10 @@ node scripts/parse-spells.js    # or whichever parse-*.js script you changed
 # then copy the updated file(s) from data/ to ../mobile/assets/srd/
 ```
 
+`weapon-properties.json` and the `reference/` tables were fetched once
+from the Open5e API by `srd-data-pull/scripts/pull.js`, and aren't
+regenerated from the markdown. The app doesn't contact Open5e.
+
 `sheet-text.json` isn't generated. It's short, hand-written summaries of
 SRD features for the PDF sheet.
 
@@ -184,9 +188,27 @@ SRD features for the PDF sheet.
 Document 5.2.1 ("SRD 5.2.1") by Wizards of the Coast LLC, available at
 <https://www.dndbeyond.com/srd>. The SRD 5.2.1 is licensed under the
 Creative Commons Attribution 4.0 International License, available at
-<https://creativecommons.org/licenses/by/4.0/legalcode>. It has been
-converted to JSON and lightly restructured for this app. The short
-feature summaries in `sheet-text.json` are condensed from it.
+<https://creativecommons.org/licenses/by/4.0/legalcode>.
+
+This work also includes material from the System Reference Document 5.1
+("SRD 5.1") by Wizards of the Coast LLC, available at
+<https://dnd.wizards.com/resources/systems-reference-document>. The SRD
+5.1 is licensed under the Creative Commons Attribution 4.0 International
+License, available at
+<https://creativecommons.org/licenses/by/4.0/legalcode>.
+
+The app shows both attributions under **About**, along with the
+licenses of the packages it uses.
+
+**Where the data comes from.** The SRD text has been converted to JSON
+and restructured for this app. The short feature summaries in
+`sheet-text.json` are condensed from it.
+
+| Data | Source | License |
+|---|---|---|
+| Nearly all game content: classes, species, backgrounds, feats, spells, equipment, magic items, conditions, rules chapters | [dnd-5e-srd-markdown](https://github.com/downfallx/dnd-5e-srd-markdown) by downfallx, a Markdown conversion of SRD 5.2.1 (copied into `srd-data-pull/source/srd-markdown/`) | CC BY 4.0 |
+| Weapon properties and masteries (`weapon-properties.json`) | [Open5e](https://open5e.com) API, SRD 5.2.1 document | CC BY 4.0 (SRD 5.2.1) |
+| Ability, skill, size, alignment, damage type and spell school tables (`reference/*.json`) | [Open5e](https://open5e.com) API, SRD 5.1 ("core") document | CC BY 4.0 (SRD 5.1) |
 
 **Non-SRD content isn't included.** The app ships only SRD content: no
 text or mechanics from the Player's Handbook or other books beyond the
@@ -203,9 +225,6 @@ Coast publishes the 2024 character sheet as a free download. The app
 downloads it from D&D Beyond the first time you export a PDF and caches
 it on your device. It isn't included in this repository or in the builds.
 
-The same attribution is shown in the app under **About**, along with the
-licenses of the packages it uses.
-
 **Not affiliated.** This is unofficial fan-made software. It isn't
 affiliated with, endorsed, sponsored or approved by Wizards of the Coast.
 Dungeons & Dragons and D&D are trademarks of Wizards of the Coast LLC.
@@ -214,10 +233,15 @@ Dungeons & Dragons and D&D are trademarks of Wizards of the Coast LLC.
 [Syncfusion Flutter PDF](https://pub.dev/packages/syncfusion_flutter_pdf),
 which is licensed separately under Syncfusion's commercial or free
 Community License. Check its terms if you redistribute builds. Other
-dependencies are listed in [`mobile/pubspec.yaml`](mobile/pubspec.yaml).
+dependencies are listed in [`mobile/pubspec.yaml`](mobile/pubspec.yaml),
+and their licenses are shown in the app under **About > View licenses**.
 
 ## License
 
-The license for this project's own code hasn't been chosen yet. Until one
-is added, all rights are reserved. The SRD content is under CC BY 4.0,
-as described above.
+This project's source code is licensed under the [MIT License](LICENSE).
+
+The game content isn't covered by the MIT License. That's everything in
+`mobile/assets/srd/`, `srd-data-pull/source/` and `srd-data-pull/data/`.
+It's derived from the SRD and stays under
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/legalcode), with
+the attribution above.
