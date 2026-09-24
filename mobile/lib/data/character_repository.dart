@@ -8,7 +8,9 @@ import 'package:uuid/uuid.dart';
 import '../domain/rules.dart' as rules;
 import '../models/character.dart';
 import '../models/homebrew.dart';
-import 'homebrew_repository.dart';
+import 'export_bundle.dart';
+import 'homebrew_catalog.dart';
+import 'sheet_text_repository.dart';
 import 'sample_data.dart';
 
 const _uuid = Uuid();
@@ -181,51 +183,15 @@ class CharacterRepository extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// The kind+name pairs of homebrew content [chars] actually depend on to
-  /// keep working after export/import: their feats' names, and their
-  /// *attuned* inventory items' names (the two sources
-  /// rules.matchingEffects reads) - not the player's entire unrelated
-  /// homebrew catalog.
-  Set<(String, String)> _homebrewDependenciesOf(List<Character> chars) {
-    final deps = <(String, String)>{};
-    for (final c in chars) {
-      for (final f in c.feats) {
-        deps.add(('feat', f.name.toLowerCase()));
-      }
-      for (final i in c.inventory) {
-        if (i.attuned) deps.add(('magicItem', i.name.toLowerCase()));
-      }
-    }
-    return deps;
-  }
+  /// The export file (see export_bundle.dart) for every snapshot in
+  /// [familyId]'s family - the counterpart to importFromJson.
+  String exportFamily(String familyId) => buildExportBundle(
+    characters.where((c) => c.familyId == familyId).toList(),
+  );
 
-  /// Pretty-printed `{characters, homebrew}` JSON for [chars], bundling
-  /// whichever homebrew entries they actually depend on - without this,
-  /// a homebrew feat/magic item's `Effect`s (matched live by name against
-  /// homebrewRepo, never stored on the character itself) would silently
-  /// stop applying on import, since nothing here travels with the
-  /// character JSON alone.
-  String _exportBundle(List<Character> chars) {
-    final deps = _homebrewDependenciesOf(chars);
-    final homebrew = homebrewRepo.entries.where(
-      (e) => deps.contains((e.kind, e.name.toLowerCase())),
-    );
-    return const JsonEncoder.withIndent('  ').convert({
-      'characters': chars.map((c) => c.toJson()).toList(),
-      'homebrew': homebrew.map((e) => e.toJson()).toList(),
-    });
-  }
-
-  /// JSON for every snapshot in [familyId]'s family - the counterpart to
-  /// importFromJson.
-  String exportFamily(String familyId) {
-    final family = characters.where((c) => c.familyId == familyId).toList();
-    return _exportBundle(family);
-  }
-
-  /// JSON for every character - a full backup, e.g. before reinstalling
-  /// the app or moving to a new phone.
-  String exportAll() => _exportBundle(characters);
+  /// The export file for every character, with every sheet-text edit - a
+  /// full backup, e.g. before reinstalling or moving to a new phone.
+  String exportAll() => buildExportBundle(characters, allSheetText: true);
 
   /// Every character (by name) that currently references [entry] via a
   /// granted feat or an attuned inventory item - used to warn before a
@@ -250,56 +216,37 @@ class CharacterRepository extends ChangeNotifier {
     return names;
   }
 
-  /// Parses [raw] - either the current `{characters: [...], homebrew:
-  /// [...]}` shape, or the legacy bare array/object of characters only
-  /// (from before homebrew bundling existed, or a hand-built file) - and
-  /// adds the characters as new ones, always with freshly generated ids,
-  /// never overwriting anything already saved, so importing is safe to
-  /// run more than once and can never silently clobber existing data.
-  /// familyId references within the imported batch are remapped to the
-  /// new ids too, so snapshot relationships ("Level 5, current" / "Level
-  /// 8, planned") survive the round trip; a familyId pointing outside the
-  /// batch (not possible from a real export, but possible from a
-  /// hand-edited file) falls back to the character's own new id, making
-  /// it its own standalone family rather than risking a collision with an
-  /// unrelated local family that happens to reuse that id string. Any
-  /// bundled homebrew entries are merged into homebrewRepo first (see
-  /// HomebrewRepository.importEntry), so the characters' Effects still
-  /// apply once they land.
+  /// Imports an export file (see export_bundle.dart), adding its characters
+  /// as new ones - always with fresh ids, never overwriting anything already
+  /// saved, so it's safe to run more than once. familyId links within the
+  /// file are remapped to the new ids, so a character's previous levels
+  /// stay attached. Bundled homebrew is merged first - an entry the device
+  /// already has by the same kind and name wins, and the characters are
+  /// pointed at it - and sheet-text edits are added where the device has
+  /// none of its own. Throws a FormatException for anything but this
+  /// app's current export format.
   Future<List<Character>> importFromJson(String raw) async {
-    final decoded = jsonDecode(raw);
-    final List<dynamic> rawList;
-    final List<dynamic> homebrewMaps;
-    if (decoded is Map && decoded.containsKey('characters')) {
-      rawList = decoded['characters'] as List;
-      homebrewMaps = decoded['homebrew'] as List? ?? const [];
-    } else {
-      rawList = decoded is List ? decoded : [decoded];
-      homebrewMaps = const [];
+    final bundle = parseExportBundle(raw);
+    final remap = mergeHomebrew(bundle.homebrew);
+    registerHomebrewInCatalog();
+    for (final entry in bundle.sheetText.entries) {
+      final key = remapSheetTextKey(entry.key, remap);
+      if (sheetTextRepo[key] == null) sheetTextRepo.set(key, entry.value);
     }
 
-    for (final hb in homebrewMaps) {
-      homebrewRepo.importEntry(
-        HomebrewEntry.fromJson(hb as Map<String, dynamic>),
-      );
-    }
-
-    final maps = [
-      for (final item in rawList) Map<String, dynamic>.from(item as Map),
-    ];
-
+    final maps = bundle.characters;
     final idMap = <String, String>{
       for (final json in maps) json['id'] as String: _uuid.v4(),
     };
 
     final imported = <Character>[];
     for (final json in maps) {
+      remapCharacterJson(json, remap);
       final oldId = json['id'] as String;
       final oldFamilyId = json['familyId'] as String? ?? oldId;
       json['id'] = idMap[oldId];
       json['familyId'] = idMap[oldFamilyId] ?? idMap[oldId]!;
       final character = Character.fromJson(json);
-      rules.adoptHpTracking(character);
       rules.recalculateClassResources(character);
       rules.syncGrantedSpells(character);
       imported.add(character);

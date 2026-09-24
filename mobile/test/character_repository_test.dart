@@ -222,16 +222,18 @@ void main() {
   });
 
   test(
-    'importFromJson accepts a single character object, not just a JSON array',
+    "importFromJson rejects anything that isn't a current export file",
     () async {
       final single = charactersRepo.byId('jarson').toJson();
-      final imported = await charactersRepo.importFromJson(jsonEncode(single));
-
-      expect(imported, hasLength(1));
-      expect(imported.first.id, isNot('jarson'));
-      expect(imported.first.familyId, imported.first.id); // its own family
-      expect(imported.first.isCurrent, isTrue);
-      expect(imported.first.name, 'Jarson');
+      await expectLater(
+        charactersRepo.importFromJson(jsonEncode(single)),
+        throwsFormatException,
+      );
+      await expectLater(
+        charactersRepo.importFromJson(jsonEncode([single])),
+        throwsFormatException,
+      );
+      expect(charactersRepo.characters, hasLength(1));
     },
   );
 
@@ -496,17 +498,6 @@ void main() {
       (e) => e.name == 'Test Homebrew Feat',
     );
     expect(stillLocal.effects.single.formula, '99');
-  });
-
-  test('the legacy bare-array export shape (no homebrew key) still imports characters correctly', () async {
-    final jarson = charactersRepo.byId('jarson');
-    final legacyJson = jsonEncode([jarson.toJson()]);
-
-    final imported = await charactersRepo.importFromJson(legacyJson);
-
-    expect(imported, hasLength(1));
-    expect(imported.first.name, 'Jarson');
-    expect(imported.first.id, isNot('jarson'));
   });
 
   test("EquippedArmor.category round-trips through Character.toJson/fromJson, and legacy armor with no category loads as null", () {
