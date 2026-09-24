@@ -703,9 +703,17 @@ class _ReferenceListViewState extends State<ReferenceListView> {
   final _searchController = TextEditingController();
   String _query = '';
 
+  // One controller for the whole (potentially long) entries list, held
+  // here rather than via ExpandableGroup - that wraps its rows in a
+  // Column, which would force ListView to build and mount every row
+  // (including the ones offscreen) instead of the lazy, viewport-culled
+  // building a flat list of ExpandableRow siblings gets.
+  final _group = ExpandableGroupController();
+
   @override
   void dispose() {
     _searchController.dispose();
+    _group.dispose();
     super.dispose();
   }
 
@@ -750,6 +758,8 @@ class _ReferenceListViewState extends State<ReferenceListView> {
                   children: [
                     for (final entry in filtered)
                       ExpandableRow(
+                        group: _group,
+                        groupId: entry,
                         title: entry.name,
                         tag: entry.tag,
                         body: MarkdownText(

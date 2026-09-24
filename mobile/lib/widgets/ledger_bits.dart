@@ -3,26 +3,47 @@ import 'package:flutter/material.dart';
 import '../theme/ledger_theme.dart';
 
 /// Small shared pieces that don't warrant their own file: a section label
-/// (the "§ Resources" style heading), a tally-mark square (proficiency /
-/// use-remaining indicator), and a plain non-expandable fact row (saving
-/// throws, skills, inventory) - things read once, not tapped into.
+/// ("RESOURCES" style heading, underlined to separate it from what's
+/// above), a tally-mark square (proficiency / use-remaining indicator),
+/// and a plain non-expandable fact row (saving throws, skills, inventory)
+/// - things read once, not tapped into.
 
 class SectionLabel extends StatelessWidget {
-  const SectionLabel(this.text, {super.key});
+  const SectionLabel(this.text, {super.key, this.trailing});
   final String text;
+
+  /// An action for this section (e.g. "+ Add Weapon"), laid out at the
+  /// row's far end so the underline below still spans the full width -
+  /// callers should pass it here rather than wrapping SectionLabel in
+  /// their own spaceBetween Row.
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 18, bottom: 8),
-      child: Text(
-        '§ ${text.toUpperCase()}',
-        style: const TextStyle(
-          fontSize: 12,
-          letterSpacing: 1.2,
-          fontWeight: FontWeight.w600,
-          color: LedgerColors.accent,
+    return Container(
+      margin: const EdgeInsets.only(top: 22, bottom: 10),
+      padding: const EdgeInsets.only(bottom: 6),
+      decoration: const BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: LedgerColors.accentSoft, width: 2),
         ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Text(
+              text.toUpperCase(),
+              style: const TextStyle(
+                fontSize: 14,
+                letterSpacing: 1.2,
+                fontWeight: FontWeight.w600,
+                color: LedgerColors.accent,
+              ),
+            ),
+          ),
+          ?trailing,
+        ],
       ),
     );
   }

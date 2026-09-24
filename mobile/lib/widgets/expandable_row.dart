@@ -2,6 +2,51 @@ import 'package:flutter/material.dart';
 
 import '../theme/ledger_theme.dart';
 
+/// Coordinates a set of sibling [ExpandableRow]s so opening one collapses
+/// whichever other one in the group was open - one instance per group,
+/// created by [ExpandableGroup] (not constructed directly by callers,
+/// since a plain local variable wouldn't survive a rebuild - see its doc
+/// comment).
+class ExpandableGroupController extends ChangeNotifier {
+  Object? _openId;
+  bool isOpen(Object id) => _openId == id;
+
+  void toggle(Object id) {
+    _openId = _openId == id ? null : id;
+    notifyListeners();
+  }
+}
+
+/// Wraps a set of [ExpandableRow]s that should behave as an accordion (at
+/// most one open at a time) - one per section (Resources, Weapons, Mounts,
+/// ...), not shared across sections. A [StatefulWidget] rather than a
+/// plain controller handed out by the caller's build method, so the
+/// controller survives the section's parent (typically a stateless tab
+/// widget) rebuilding for unrelated reasons - the same way ExpandableRow's
+/// own open/closed state already does, via normal element reuse.
+class ExpandableGroup extends StatefulWidget {
+  const ExpandableGroup({super.key, required this.builder});
+
+  final Widget Function(BuildContext context, ExpandableGroupController group)
+  builder;
+
+  @override
+  State<ExpandableGroup> createState() => _ExpandableGroupState();
+}
+
+class _ExpandableGroupState extends State<ExpandableGroup> {
+  final _group = ExpandableGroupController();
+
+  @override
+  void dispose() {
+    _group.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.builder(context, _group);
+}
+
 /// A ledger entry that collapses to one line and expands on tap - the same
 /// pattern used for weapons, resources, features, and feats on the Combat
 /// and Features tabs. Kept generic (header/value/body slots) rather than
@@ -17,7 +62,12 @@ class ExpandableRow extends StatefulWidget {
     this.subtitle,
     required this.body,
     this.leading,
-  });
+    this.group,
+    this.groupId,
+  }) : assert(
+         group == null || groupId != null,
+         'groupId is required when group is set',
+       );
 
   final String title;
   final String? tag;
@@ -37,12 +87,58 @@ class ExpandableRow extends StatefulWidget {
   final Widget body;
   final Widget? leading;
 
+  /// When set (with [groupId]), this row's open/closed state is driven by
+  /// [ExpandableGroupController] instead of its own local state, so
+  /// opening it collapses whichever sibling in the same group was open -
+  /// see [ExpandableGroup]. Left null, a row opens/closes independently,
+  /// same as before groups existed.
+  final ExpandableGroupController? group;
+
+  /// This row's identity within [group] - e.g. the item's name or id.
+  /// Must be stable across rebuilds (the same object, or an equal one)
+  /// for the same item, and distinct from every other row in the group.
+  final Object? groupId;
+
   @override
   State<ExpandableRow> createState() => _ExpandableRowState();
 }
 
 class _ExpandableRowState extends State<ExpandableRow> {
   bool _open = false;
+
+  bool get _isOpen =>
+      widget.group != null ? widget.group!.isOpen(widget.groupId!) : _open;
+
+  void _toggle() {
+    if (widget.group != null) {
+      widget.group!.toggle(widget.groupId!);
+    } else {
+      setState(() => _open = !_open);
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    widget.group?.addListener(_onGroupChanged);
+  }
+
+  @override
+  void didUpdateWidget(covariant ExpandableRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.group != widget.group) {
+      oldWidget.group?.removeListener(_onGroupChanged);
+      widget.group?.addListener(_onGroupChanged);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.group?.removeListener(_onGroupChanged);
+    super.dispose();
+  }
+
+  void _onGroupChanged() => setState(() {});
 
   @override
   Widget build(BuildContext context) {
@@ -54,11 +150,18 @@ class _ExpandableRowState extends State<ExpandableRow> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           InkWell(
-            onTap: () => setState(() => _open = !_open),
+            onTap: _toggle,
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 10),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                // A two-line title+subtitle block aligns from the top,
+                // like the chevron does - a single-line title centers
+                // against taller leading/trailing content instead (e.g.
+                // a resource's spend/restore buttons), rather than
+                // hugging the top of the row.
+                crossAxisAlignment: widget.subtitle != null
+                    ? CrossAxisAlignment.start
+                    : CrossAxisAlignment.center,
                 children: [
                   if (widget.leading != null) ...[
                     widget.leading!,
@@ -102,7 +205,10 @@ class _ExpandableRowState extends State<ExpandableRow> {
                     widget.trailing!
                   else if (widget.value != null)
                     Padding(
-                      padding: const EdgeInsets.only(left: 8, top: 1),
+                      padding: EdgeInsets.only(
+                        left: 8,
+                        top: widget.subtitle != null ? 1 : 0,
+                      ),
                       child: Text(
                         widget.value!,
                         style: LedgerTheme.dataStyle(
@@ -112,14 +218,17 @@ class _ExpandableRowState extends State<ExpandableRow> {
                       ),
                     ),
                   AnimatedRotation(
-                    turns: _open ? 0.25 : 0,
+                    turns: _isOpen ? 0.25 : 0,
                     duration: const Duration(milliseconds: 150),
                     child: Padding(
-                      padding: const EdgeInsets.only(left: 6, top: 2),
+                      padding: EdgeInsets.only(
+                        left: 6,
+                        top: widget.subtitle != null ? 2 : 0,
+                      ),
                       child: Icon(
                         Icons.chevron_right,
                         size: 18,
-                        color: _open
+                        color: _isOpen
                             ? LedgerColors.accent
                             : LedgerColors.inkDim,
                       ),
@@ -142,7 +251,7 @@ class _ExpandableRowState extends State<ExpandableRow> {
                 child: widget.body,
               ),
             ),
-            crossFadeState: _open
+            crossFadeState: _isOpen
                 ? CrossFadeState.showSecond
                 : CrossFadeState.showFirst,
             duration: const Duration(milliseconds: 150),

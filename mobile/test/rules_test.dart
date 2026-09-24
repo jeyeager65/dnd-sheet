@@ -871,7 +871,7 @@ void main() {
 
     final short = rules.restPreview(jarson, longRest: false);
     expect(short, [
-      'Second Wind: ${secondWind.max - 1} â†’ ${secondWind.max} of '
+      'Second Wind: ${secondWind.max - 1} → ${secondWind.max} of '
           '${secondWind.max} left',
     ]);
 
@@ -879,11 +879,11 @@ void main() {
     expect(
       long,
       contains(
-        'HP: ${jarson.maxHp - 10} â†’ ${jarson.maxHp} of '
+        'HP: ${jarson.maxHp - 10} → ${jarson.maxHp} of '
         '${jarson.maxHp}',
       ),
     );
-    expect(long.any((l) => l.startsWith('Action Surge: 0 â†’ 1')), isTrue);
+    expect(long.any((l) => l.startsWith('Action Surge: 0 → 1')), isTrue);
     expect(long.any((l) => l.startsWith('Second Wind')), isTrue);
 
     // Just a preview - nothing was actually recovered.

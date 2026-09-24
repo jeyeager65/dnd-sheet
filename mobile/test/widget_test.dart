@@ -99,7 +99,7 @@ void main() {
     expect(find.text('Take a Long Rest?'), findsOneWidget);
     expect(
       find.text(
-        'â€¢ HP: ${jarson.maxHp - 10} â†’ ${jarson.maxHp} of ${jarson.maxHp}',
+        '• HP: ${jarson.maxHp - 10} → ${jarson.maxHp} of ${jarson.maxHp}',
       ),
       findsOneWidget,
     );
@@ -377,11 +377,11 @@ void main() {
       expect(find.text('Reference'), findsOneWidget);
 
       // Categories are grouped under section headers (SectionLabel
-      // uppercases and prefixes with "§ "), not one flat list.
-      expect(find.text('§ CHARACTER OPTIONS'), findsOneWidget);
-      expect(find.text('§ EQUIPMENT'), findsOneWidget);
-      expect(find.text('§ RULES'), findsOneWidget);
-      expect(find.text('§ TABLES'), findsOneWidget);
+      // uppercases the text), not one flat list.
+      expect(find.text('CHARACTER OPTIONS'), findsOneWidget);
+      expect(find.text('EQUIPMENT'), findsOneWidget);
+      expect(find.text('RULES'), findsOneWidget);
+      expect(find.text('TABLES'), findsOneWidget);
 
       // A "chapters" category (a handful of long sections) opens a table
       // of contents, not the search-box item list "items" categories get.
@@ -972,7 +972,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Bottomless Tankard'), findsOneWidget);
-      expect(find.text('§ MAGIC ITEMS'), findsOneWidget);
+      expect(find.text('MAGIC ITEMS'), findsOneWidget);
     },
   );
 

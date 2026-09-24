@@ -1276,7 +1276,7 @@ void applyLongRest(Character c) {
 }
 
 /// What a Short or Long Rest would change for [c], one line per change
-/// ("HP 12 â†’ 45", "Second Wind 0 â†’ 2 of 2 left") - empty if nothing
+/// ("HP 12 → 45", "Second Wind 0 → 2 of 2 left") - empty if nothing
 /// would. Worked out by resting a copy, so the preview always matches
 /// [applyShortRest]/[applyLongRest] exactly.
 List<String> restPreview(Character c, {required bool longRest}) {
@@ -1287,7 +1287,7 @@ List<String> restPreview(Character c, {required bool longRest}) {
 
   final changes = <String>[];
   void change(String label, Object before, Object now, [String suffix = '']) {
-    if (before != now) changes.add('$label: $before â†’ $now$suffix');
+    if (before != now) changes.add('$label: $before → $now$suffix');
   }
 
   change('HP', c.currentHp, after.currentHp, ' of ${c.maxHp}');
