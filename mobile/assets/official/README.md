@@ -19,8 +19,8 @@ That's what this folder is for.
    transcribing content you already legally own, same as writing it on a
    paper character sheet.
 2. Once you're happy with your homebrew catalog, tap **Export** on the
-   My Homebrew screen. That shares a JSON file (a plain array of entries,
-   the same shape `HomebrewRepository.exportAll()` produces).
+   My Homebrew screen. That saves (or, on a phone, shares) a JSON file -
+   the shape described under "File shape" below.
 3. Save that file as `assets/official/content.json` - right here, next
    to this README.
 4. Add `assets/official/content.json` to your own `.gitignore` (it
@@ -45,20 +45,33 @@ That's what this folder is for.
 
 ## File shape
 
-A JSON array of `HomebrewEntry` objects - see `lib/models/homebrew.dart`.
-Example shape (not real feat content - just illustrating the fields):
+The same file My Homebrew's **Export** button produces - a small header
+and the entries (see `lib/data/export_bundle.dart` and
+`lib/models/homebrew.dart`; empty fields are left out). Example shape (not
+real feat content - just illustrating the fields):
 
 ```json
-[
-  {
-    "id": "homebrew_example-id",
-    "kind": "feat",
-    "name": "Some General Feat",
-    "desc": "Your own transcription of its rules text.",
-    "source": "official",
-    "effects": [
-      { "target": "damageRoll", "formula": "Proficiency Bonus", "condition": "heavyWeapon" }
-    ]
-  }
-]
+{
+  "format": "dnd-sheet-homebrew",
+  "version": 1,
+  "exportedAt": "2026-09-23T20:00:00.000",
+  "homebrew": [
+    {
+      "id": "homebrew_example-id",
+      "kind": "feat",
+      "name": "Some General Feat",
+      "source": "official",
+      "desc": "Your own transcription of its rules text.",
+      "shortDesc": "A one-line summary for the PDF sheet.",
+      "category": "General Feat",
+      "effects": [
+        { "target": "damageRoll", "formula": "Proficiency Bonus", "condition": "heavyWeapon" }
+      ]
+    }
+  ]
+}
 ```
+
+Species, classes, subclasses, backgrounds, spells, and items also carry a
+`data` object with their rules fields - fill them in through My Homebrew's
+editor rather than by hand. Any other file shape is ignored at startup.

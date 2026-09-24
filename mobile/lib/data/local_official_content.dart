@@ -1,24 +1,17 @@
-import 'dart:convert';
-
 import 'package:flutter/services.dart' show rootBundle;
 
 import '../models/homebrew.dart';
+import 'export_bundle.dart';
 import 'homebrew_repository.dart';
 
-/// Parses the JSON shape assets/official/content.json holds - a plain
-/// array of HomebrewEntry.toJson() objects, the same shape
-/// HomebrewRepository.exportAll() produces. Pure/synchronous (no asset
-/// I/O) so it's testable without a Flutter binding. Malformed input
-/// yields an empty list rather than throwing - a broken local file should
-/// never crash startup.
+/// Parses assets/official/content.json - a My Homebrew export file (see
+/// export_bundle.dart's buildHomebrewBundle). Pure/synchronous (no asset
+/// I/O) so it's testable without a Flutter binding. Anything else yields
+/// an empty list rather than throwing - a broken local file should never
+/// crash startup.
 List<HomebrewEntry> parseLocalOfficialContent(String raw) {
   try {
-    final decoded = jsonDecode(raw);
-    if (decoded is! List) return const [];
-    return [
-      for (final item in decoded)
-        if (item is Map<String, dynamic>) HomebrewEntry.fromJson(item),
-    ];
+    return parseHomebrewBundle(raw);
   } catch (_) {
     return const [];
   }

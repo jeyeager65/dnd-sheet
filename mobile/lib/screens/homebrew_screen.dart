@@ -1,6 +1,10 @@
+import 'dart:convert';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 import '../data/character_repository.dart';
+import '../data/export_bundle.dart';
 import '../data/homebrew_repository.dart';
 import '../data/srd_catalog.dart';
 import '../domain/rules.dart' as rules;
@@ -160,6 +164,39 @@ class _HomebrewListScreenState extends State<HomebrewListScreen> {
     setState(() {});
   }
 
+  /// Merges a My Homebrew export file - entries this device already has
+  /// (same kind and name) are left as they are, never overwritten.
+  Future<void> _import() async {
+    final picked = await FilePicker.pickFile(
+      type: FileType.custom,
+      allowedExtensions: ['json'],
+    );
+    if (picked == null || !mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final entries = parseHomebrewBundle(
+        utf8.decode(await picked.readAsBytes()),
+      );
+      final before = homebrewRepo.entries.length;
+      mergeHomebrew(entries);
+      final added = homebrewRepo.entries.length - before;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            'Imported $added new '
+            '${added == 1 ? 'entry' : 'entries'}'
+            '${entries.length > added ? ' (${entries.length - added} already here)' : ''}.',
+          ),
+        ),
+      );
+      setState(() {});
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text("Couldn't import that file: $e")),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final byKind = <String, List<HomebrewEntry>>{};
@@ -177,7 +214,7 @@ class _HomebrewListScreenState extends State<HomebrewListScreen> {
                 ? null
                 : () => shareJson(
                     context,
-                    homebrewRepo.exportAll(),
+                    buildHomebrewBundle(homebrewRepo.entries),
                     'my_homebrew.json',
                   ),
             tooltip:
@@ -185,6 +222,11 @@ class _HomebrewListScreenState extends State<HomebrewListScreen> {
                 'content across reinstalls (see assets/official/README.md '
                 'to have it restored automatically in your own builds)',
             icon: const Icon(Icons.file_download_outlined),
+          ),
+          IconButton(
+            onPressed: _import,
+            tooltip: 'Import homebrew from an export file',
+            icon: const Icon(Icons.file_upload_outlined),
           ),
           TextButton(onPressed: _add, child: const Text('+ Add')),
           const SizedBox(width: 6),

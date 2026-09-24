@@ -113,17 +113,19 @@ class HomebrewEntry {
     data: data ?? this.data,
   );
 
+  /// Empty/default fields are left out - [fromJson] restores their
+  /// defaults - so an export file only shows what an entry actually has.
   Map<String, dynamic> toJson() => {
     'id': id,
     'kind': kind,
     'name': name,
-    'desc': desc,
     'source': source,
-    'effects': effects.map((e) => e.toJson()).toList(),
-    'category': category,
-    'prerequisite': prerequisite,
-    'shortDesc': shortDesc,
-    'data': data,
+    if (desc.isNotEmpty) 'desc': desc,
+    if (shortDesc.isNotEmpty) 'shortDesc': shortDesc,
+    'category': ?category,
+    'prerequisite': ?prerequisite,
+    if (effects.isNotEmpty) 'effects': effects.map((e) => e.toJson()).toList(),
+    if (data.isNotEmpty) 'data': data,
   };
 
   factory HomebrewEntry.fromJson(Map<String, dynamic> j) => HomebrewEntry(

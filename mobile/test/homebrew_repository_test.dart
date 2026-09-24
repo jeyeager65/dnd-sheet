@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:dnd_sheet/data/export_bundle.dart';
 import 'package:dnd_sheet/data/homebrew_repository.dart';
 import 'package:dnd_sheet/data/local_official_content.dart';
 import 'package:dnd_sheet/models/effect.dart';
@@ -50,7 +51,7 @@ void main() {
     expect(entry.id, startsWith('homebrew_'));
   });
 
-  test('exportAll round-trips the whole catalog, including effects/category/prerequisite, through importEntry', () {
+  test('the homebrew export round-trips the whole catalog, including effects/category/prerequisite/data', () {
     homebrewRepo.create('feat', 'Test Official Feat');
     homebrewRepo.update(
       HomebrewEntry(
@@ -67,9 +68,15 @@ void main() {
         ],
         category: 'General Feat',
         prerequisite: 'Level 4+',
+        data: const {
+          'grantedSpells': [
+            {'name': 'Shield'},
+          ],
+        },
       ),
     );
-    final json = homebrewRepo.exportAll();
+    final json = buildHomebrewBundle(homebrewRepo.entries);
+    expect((jsonDecode(json) as Map)['format'], homebrewExportFormat);
 
     homebrewRepo.entries.clear();
     for (final entry in parseLocalOfficialContent(json)) {
@@ -83,6 +90,7 @@ void main() {
     expect(restored.effects.single.condition, 'heavyWeapon');
     expect(restored.category, 'General Feat');
     expect(restored.prerequisite, 'Level 4+');
+    expect(restored.data['grantedSpells'], hasLength(1));
   });
 
   test('HomebrewEntry.fromJson defaults category and prerequisite to null for pre-existing data that never had those fields', () {
@@ -95,20 +103,35 @@ void main() {
     expect(entry.prerequisite, isNull);
   });
 
-  test('exportAll produces an empty JSON array when the catalog is empty', () {
-    expect(homebrewRepo.exportAll(), jsonEncode(const []));
+  test('an empty catalog exports an empty list, and entry JSON leaves out empty fields', () {
+    expect(parseHomebrewBundle(buildHomebrewBundle(const [])), isEmpty);
+    final bare = homebrewRepo.create('gear', 'Rope of Plenty').toJson();
+    expect(bare.keys.toSet(), {'id', 'kind', 'name', 'source'});
   });
 
-  test('parseLocalOfficialContent returns entries for a valid array, and [] for anything malformed', () {
+  test('parseLocalOfficialContent reads a homebrew export file, and returns [] for anything else', () {
     final valid = parseLocalOfficialContent(
-      jsonEncode([
-        {'id': 'homebrew_a', 'kind': 'feat', 'name': 'Test Feat'},
-      ]),
+      jsonEncode({
+        'format': homebrewExportFormat,
+        'version': homebrewExportVersion,
+        'homebrew': [
+          {'id': 'homebrew_a', 'kind': 'feat', 'name': 'Test Feat'},
+        ],
+      }),
     );
     expect(valid, hasLength(1));
     expect(valid.first.name, 'Test Feat');
 
     expect(parseLocalOfficialContent('not json at all'), isEmpty);
+    // A bare array (the old shape) is no longer read.
+    expect(
+      parseLocalOfficialContent(
+        jsonEncode([
+          {'id': 'homebrew_a', 'kind': 'feat', 'name': 'Test Feat'},
+        ]),
+      ),
+      isEmpty,
+    );
     expect(parseLocalOfficialContent(jsonEncode({'not': 'a list'})), isEmpty);
     expect(parseLocalOfficialContent(jsonEncode([1, 2, 3])), isEmpty);
     expect(parseLocalOfficialContent(''), isEmpty);

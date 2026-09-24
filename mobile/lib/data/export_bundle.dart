@@ -25,6 +25,51 @@ import 'sheet_text_repository.dart';
 const exportFormat = 'dnd-sheet-characters';
 const exportVersion = 1;
 
+// My Homebrew's own export file (also what assets/official/content.json
+// holds - see assets/official/README.md):
+//
+//   {
+//     "format": "dnd-sheet-homebrew",
+//     "version": 1,
+//     "exportedAt": "...",
+//     "homebrew": [ ...HomebrewEntry.toJson()... ]
+//   }
+const homebrewExportFormat = 'dnd-sheet-homebrew';
+const homebrewExportVersion = 1;
+
+/// The My Homebrew export file for [entries], sorted by kind then name.
+String buildHomebrewBundle(List<HomebrewEntry> entries) {
+  final sorted = [...entries]
+    ..sort(
+      (a, b) => a.kind != b.kind
+          ? a.kind.compareTo(b.kind)
+          : a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+    );
+  return const JsonEncoder.withIndent('  ').convert({
+    'format': homebrewExportFormat,
+    'version': homebrewExportVersion,
+    'exportedAt': DateTime.now().toIso8601String(),
+    'homebrew': [for (final e in sorted) e.toJson()],
+  });
+}
+
+/// Reads a My Homebrew export file - throwing a FormatException for
+/// anything else.
+List<HomebrewEntry> parseHomebrewBundle(String raw) {
+  final decoded = jsonDecode(raw);
+  if (decoded is! Map ||
+      decoded['format'] != homebrewExportFormat ||
+      decoded['version'] != homebrewExportVersion) {
+    throw const FormatException(
+      "This isn't a homebrew export from this version of the app.",
+    );
+  }
+  return [
+    for (final e in decoded['homebrew'] as List? ?? const [])
+      HomebrewEntry.fromJson((e as Map).cast<String, dynamic>()),
+  ];
+}
+
 /// Builds the export file for [chars]. [allSheetText] includes every
 /// sheet-text edit (a full backup) instead of just the ones [chars] use.
 String buildExportBundle(List<Character> chars, {bool allSheetText = false}) {

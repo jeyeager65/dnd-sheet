@@ -85,17 +85,6 @@ class HomebrewRepository {
     afterChange?.call();
   }
 
-  /// The whole catalog as pretty-printed JSON - the counterpart to
-  /// importEntry, and to loadLocalOfficialContent's file shape
-  /// (data/local_official_content.dart). Meant for saving your own
-  /// homebrew/official content outside the app - e.g. into a gitignored
-  /// local asset file (see assets/official/README.md) so your own future
-  /// builds restore it automatically, without ever bundling that content
-  /// in the app's shared source.
-  String exportAll() =>
-      const JsonEncoder.withIndent('  ')
-          .convert(entries.map((e) => e.toJson()).toList());
-
   /// Merges an imported homebrew entry into the local catalog - reuses an
   /// existing entry of the same kind+name (case-insensitive), same dedup
   /// rule as create(). Never overwrites a local entry with the imported
