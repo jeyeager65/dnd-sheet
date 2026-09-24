@@ -1,6 +1,5 @@
 // Hand-targeted extraction of the 15 official 2024 conditions from the full
-// SRD 5.2.1 markdown text (rules-glossary.md), since Open5e has no
-// srd-2024-tagged condition data yet (see pull.js notes).
+// SRD 5.2.1 markdown text (rules-glossary.md).
 import { readFile, writeFile } from "node:fs/promises";
 
 const text = await readFile(new URL("../source/srd-markdown/rules-glossary.md", import.meta.url), "utf8");
@@ -25,7 +24,6 @@ for (let i = 0; i < lines.length; i++) {
     name,
     desc,
     document: "srd-2024",
-    source: "hand-extracted from SRD 5.2.1 rules-glossary.md (Open5e has no 2024-tagged conditions data)",
   });
 }
 

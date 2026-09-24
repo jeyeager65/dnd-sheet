@@ -580,11 +580,7 @@ List<RefEntry> _spellSchoolEntries() => [
 
 List<RefEntry> _sizeEntries() => [
   for (final s in srdCatalog.sizes)
-    RefEntry(
-      name: s.name,
-      desc:
-          '${s.spaceDiameter} ft. space · suggested Hit Die ${s.hitDie} for an improvised size-based roll',
-    ),
+    RefEntry(name: s.name, desc: 'Space: ${s.space} · ${s.squares} on a grid'),
 ];
 
 List<RefEntry> _weaponPropertyEntries() => [

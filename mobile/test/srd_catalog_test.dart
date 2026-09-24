@@ -130,14 +130,12 @@ void main() {
     expect(fireball.classes, containsAll(['Sorcerer', 'Wizard']));
   });
 
-  test('loads the reference glossary (abilities, alignments, damage types, spell schools, sizes) with 2024 text only', () {
+  test('loads the reference glossary (abilities, alignments, damage types, spell schools, sizes) from the SRD 5.2.1 tables', () {
     expect(srdCatalog.abilityGlossary.length, 6);
     final cha = srdCatalog.abilityGlossary.firstWhere(
       (a) => a.name == 'Charisma',
     );
-    // The 2024 desc is short ("Confidence, poise, and charm") - the file
-    // also bundles much longer 2014/a5e text under the same key, which
-    // should never leak through.
+    expect(cha.key, 'cha');
     expect(cha.desc, 'Confidence, poise, and charm');
 
     expect(srdCatalog.alignments.length, 9);
@@ -152,12 +150,12 @@ void main() {
     final abjuration = srdCatalog.spellSchools.firstWhere(
       (s) => s.name == 'Abjuration',
     );
-    expect(abjuration.desc, contains('protective'));
+    expect(abjuration.desc, 'Prevents or reverses harmful effects');
 
     expect(srdCatalog.sizes.length, 6);
     final medium = srdCatalog.sizes.firstWhere((s) => s.name == 'Medium');
-    expect(medium.spaceDiameter, 5);
-    expect(medium.hitDie, 'd8');
+    expect(medium.space, '5 by 5 feet');
+    expect(medium.squares, '1 square');
   });
 
   test('skillsByName carries the full 2024 skill description, not just name/ability', () {

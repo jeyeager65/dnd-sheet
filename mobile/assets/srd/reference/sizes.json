@@ -1,140 +1,38 @@
 [
   {
-    "key": "gargantuan",
-    "document": {
-      "name": "5e Core Concepts",
-      "key": "core",
-      "type": "MISC",
-      "display_name": "5e Core",
-      "publisher": {
-        "name": "Open5e",
-        "key": "open5e"
-      },
-      "gamesystem": {
-        "name": "5th Edition 2014",
-        "key": "5e-2014"
-      },
-      "permalink": "https://dnd.wizards.com/resources/systems-reference-document"
-    },
-    "distance_unit": "feet",
-    "name": "Gargantuan",
-    "rank": 6,
-    "space_diameter": 20,
-    "suggested_hit_dice": "d20"
-  },
-  {
-    "key": "huge",
-    "document": {
-      "name": "5e Core Concepts",
-      "key": "core",
-      "type": "MISC",
-      "display_name": "5e Core",
-      "publisher": {
-        "name": "Open5e",
-        "key": "open5e"
-      },
-      "gamesystem": {
-        "name": "5th Edition 2014",
-        "key": "5e-2014"
-      },
-      "permalink": "https://dnd.wizards.com/resources/systems-reference-document"
-    },
-    "distance_unit": "feet",
-    "name": "Huge",
-    "rank": 5,
-    "space_diameter": 15,
-    "suggested_hit_dice": "d12"
-  },
-  {
-    "key": "large",
-    "document": {
-      "name": "5e Core Concepts",
-      "key": "core",
-      "type": "MISC",
-      "display_name": "5e Core",
-      "publisher": {
-        "name": "Open5e",
-        "key": "open5e"
-      },
-      "gamesystem": {
-        "name": "5th Edition 2014",
-        "key": "5e-2014"
-      },
-      "permalink": "https://dnd.wizards.com/resources/systems-reference-document"
-    },
-    "distance_unit": "feet",
-    "name": "Large",
-    "rank": 4,
-    "space_diameter": 10,
-    "suggested_hit_dice": "d10"
-  },
-  {
-    "key": "medium",
-    "document": {
-      "name": "5e Core Concepts",
-      "key": "core",
-      "type": "MISC",
-      "display_name": "5e Core",
-      "publisher": {
-        "name": "Open5e",
-        "key": "open5e"
-      },
-      "gamesystem": {
-        "name": "5th Edition 2014",
-        "key": "5e-2014"
-      },
-      "permalink": "https://dnd.wizards.com/resources/systems-reference-document"
-    },
-    "distance_unit": "feet",
-    "name": "Medium",
-    "rank": 3,
-    "space_diameter": 5,
-    "suggested_hit_dice": "d8"
+    "key": "tiny",
+    "name": "Tiny",
+    "space": "2½ by 2½ feet",
+    "squares": "4 per square"
   },
   {
     "key": "small",
-    "document": {
-      "name": "5e Core Concepts",
-      "key": "core",
-      "type": "MISC",
-      "display_name": "5e Core",
-      "publisher": {
-        "name": "Open5e",
-        "key": "open5e"
-      },
-      "gamesystem": {
-        "name": "5th Edition 2014",
-        "key": "5e-2014"
-      },
-      "permalink": "https://dnd.wizards.com/resources/systems-reference-document"
-    },
-    "distance_unit": "feet",
     "name": "Small",
-    "rank": 2,
-    "space_diameter": 5,
-    "suggested_hit_dice": "d6"
+    "space": "5 by 5 feet",
+    "squares": "1 square"
   },
   {
-    "key": "tiny",
-    "document": {
-      "name": "5e Core Concepts",
-      "key": "core",
-      "type": "MISC",
-      "display_name": "5e Core",
-      "publisher": {
-        "name": "Open5e",
-        "key": "open5e"
-      },
-      "gamesystem": {
-        "name": "5th Edition 2014",
-        "key": "5e-2014"
-      },
-      "permalink": "https://dnd.wizards.com/resources/systems-reference-document"
-    },
-    "distance_unit": "feet",
-    "name": "Tiny",
-    "rank": 1,
-    "space_diameter": 2,
-    "suggested_hit_dice": "d4"
+    "key": "medium",
+    "name": "Medium",
+    "space": "5 by 5 feet",
+    "squares": "1 square"
+  },
+  {
+    "key": "large",
+    "name": "Large",
+    "space": "10 by 10 feet",
+    "squares": "4 squares (2 by 2)"
+  },
+  {
+    "key": "huge",
+    "name": "Huge",
+    "space": "15 by 15 feet",
+    "squares": "9 squares (3 by 3)"
+  },
+  {
+    "key": "gargantuan",
+    "name": "Gargantuan",
+    "space": "20 by 20 feet",
+    "squares": "16 squares (4 by 4)"
   }
 ]

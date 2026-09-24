@@ -490,20 +490,6 @@ class SrdSkillRef {
   final String desc;
 }
 
-/// Picks the SRD 2024 entry out of a reference file's multi-gamesystem
-/// `descriptions` array (each bundled reference file also carries 2014 and
-/// third-party "a5e" text for other Open5e consumers - this app only ever
-/// wants the 2024 one). Returns '' if the 2024 entry is missing rather
-/// than falling back to a different ruleset's text.
-String _srd2024Desc(List<dynamic>? descriptions) {
-  if (descriptions == null) return '';
-  for (final d in descriptions) {
-    final map = d as Map<String, dynamic>;
-    if (map['gamesystem'] == '5e-2024') return map['desc'] as String? ?? '';
-  }
-  return '';
-}
-
 /// A resolved reference-glossary entry - one Strength/Charisma/...,
 /// Lawful Good/Chaotic Evil/..., Acid/Fire/..., or Abjuration/Evocation/...
 /// Every one of these reference lists (abilities, alignments, damage
@@ -527,12 +513,16 @@ class SrdGlossaryEntry {
 class SrdSizeRef {
   const SrdSizeRef({
     required this.name,
-    required this.spaceDiameter,
-    required this.hitDie,
+    required this.space,
+    required this.squares,
   });
   final String name;
-  final int spaceDiameter; // feet
-  final String hitDie; // e.g. "d8", used for some improvised-size rules
+
+  /// "5 by 5 feet", "2Â½ by 2Â½ feet".
+  final String space;
+
+  /// On a grid map: "1 square", "4 per square", "9 squares (3 by 3)".
+  final String squares;
 }
 
 /// One term from the SRD's Rules Glossary chapter (rules-markdown's
@@ -608,9 +598,8 @@ class SrdCatalog {
   final Map<String, String> conditionDescriptions = {};
 
   /// Reference glossary lists - abilities (6), alignments (9), damage
-  /// types (13), and spell schools (8). Each entry carries the 2024
-  /// rules-glossary description, not the 2014/third-party text the
-  /// source file also bundles - see _srd2024Desc.
+  /// types (13), and spell schools (8), each with its SRD 5.2.1 text
+  /// (srd-data-pull/scripts/parse-reference.js).
   final List<SrdGlossaryEntry> abilityGlossary = [];
   final List<SrdGlossaryEntry> alignments = [];
   final List<SrdGlossaryEntry> damageTypes = [];
@@ -660,18 +649,10 @@ class SrdCatalog {
       _loadMagicItems(),
       _loadRefList('assets/srd/languages.json', languages),
       _loadConditions(),
-      _loadGlossary(
-        'assets/srd/reference/abilities.json',
-        abilityGlossary,
-        nameField: 'name',
-      ),
-      _loadGlossary(
-        'assets/srd/reference/alignments.json',
-        alignments,
-        shortNameField: 'short_name',
-      ),
+      _loadGlossary('assets/srd/reference/abilities.json', abilityGlossary),
+      _loadGlossary('assets/srd/reference/alignments.json', alignments),
       _loadGlossary('assets/srd/reference/damagetypes.json', damageTypes),
-      _loadSpellSchools(),
+      _loadGlossary('assets/srd/reference/spellschools.json', spellSchools),
       _loadSizes(),
       _loadRulesGlossary(),
       _loadChapter(
@@ -780,52 +761,23 @@ class SrdCatalog {
     });
   }
 
-  /// Loads one of the reference glossary files (abilities, alignments,
-  /// damage types) - all three share the same {key, descriptions: [...]}
-  /// shape, differing only in whether they have a top-level `name` (vs.
-  /// deriving a display name from the key) or a `short_name`.
+  /// Loads one of the reference glossary files - abilities, alignments,
+  /// damage types, spell schools - each a list of {key, name, desc}, and
+  /// an alignment's shortName ("LG").
   Future<void> _loadGlossary(
     String asset,
-    List<SrdGlossaryEntry> target, {
-    String? nameField,
-    String? shortNameField,
-  }) async {
+    List<SrdGlossaryEntry> target,
+  ) async {
     final raw = await rootBundle.loadString(asset);
     final list = jsonDecode(raw) as List;
     for (final item in list) {
       final map = item as Map<String, dynamic>;
-      final key = map['key'] as String;
-      final name = nameField != null && map[nameField] != null
-          ? map[nameField] as String
-          : key
-                .split('-')
-                .map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1))
-                .join(' ');
       target.add(
-        SrdGlossaryEntry(
-          key: key,
-          name: name,
-          desc: _srd2024Desc(map['descriptions'] as List?),
-          shortName: shortNameField != null
-              ? map[shortNameField] as String?
-              : null,
-        ),
-      );
-    }
-  }
-
-  Future<void> _loadSpellSchools() async {
-    final raw = await rootBundle.loadString(
-      'assets/srd/reference/spellschools.json',
-    );
-    final list = jsonDecode(raw) as List;
-    for (final item in list) {
-      final map = item as Map<String, dynamic>;
-      spellSchools.add(
         SrdGlossaryEntry(
           key: map['key'] as String,
           name: map['name'] as String,
           desc: map['desc'] as String? ?? '',
+          shortName: map['shortName'] as String?,
         ),
       );
     }
@@ -839,8 +791,8 @@ class SrdCatalog {
       sizes.add(
         SrdSizeRef(
           name: map['name'] as String,
-          spaceDiameter: map['space_diameter'] as int,
-          hitDie: map['suggested_hit_dice'] as String,
+          space: map['space'] as String,
+          squares: map['squares'] as String,
         ),
       );
     }
@@ -961,7 +913,7 @@ class SrdCatalog {
       final skill = SrdSkillRef(
         name: map['name'] as String,
         ability: map['ability'] as String,
-        desc: _srd2024Desc(map['descriptions'] as List?),
+        desc: map['desc'] as String? ?? '',
       );
       skillsByName[skill.name] = skill;
     }

@@ -1,7 +1,6 @@
-// Hand-targeted extraction of the 2024 language lists from the official SRD
-// 5.2.1 markdown (character-creation.md), since Open5e's "core" (2014)
-// language data is missing "Common Sign Language" (a 2024 addition) and
-// uses the old Standard/Exotic split instead of 2024's Standard/Rare split.
+// Hand-targeted extraction of the 2024 language lists (Standard and Rare,
+// including Common Sign Language) from the official SRD 5.2.1 markdown
+// (character-creation.md).
 import { readFile, writeFile } from "node:fs/promises";
 
 const text = await readFile(new URL("../source/srd-markdown/character-creation.md", import.meta.url), "utf8");
@@ -39,8 +38,6 @@ const languages = [
       ? "Includes the Aquan, Auran, Ignan, and Terran dialects. Creatures that know one of these dialects can communicate with those that know a different one."
       : "",
   document: "srd-2024",
-  source:
-    "hand-extracted from SRD 5.2.1 character-creation.md (Open5e's 'core' language data is 2014-era and missing the 2024 addition of Common Sign Language)",
 }));
 
 console.log(`Extracted ${languages.length} languages:`, languages.map((l) => l.name).join(", "));

@@ -175,10 +175,6 @@ node scripts/parse-spells.js    # or whichever parse-*.js script you changed
 # then copy the updated file(s) from data/ to ../mobile/assets/srd/
 ```
 
-`weapon-properties.json` and the `reference/` tables were fetched once
-from the Open5e API by `srd-data-pull/scripts/pull.js`, and aren't
-regenerated from the markdown. The app doesn't contact Open5e.
-
 `sheet-text.json` isn't generated. It's short, hand-written summaries of
 SRD features for the PDF sheet.
 
@@ -190,25 +186,16 @@ Document 5.2.1 ("SRD 5.2.1") by Wizards of the Coast LLC, available at
 Creative Commons Attribution 4.0 International License, available at
 <https://creativecommons.org/licenses/by/4.0/legalcode>.
 
-This work also includes material from the System Reference Document 5.1
-("SRD 5.1") by Wizards of the Coast LLC, available at
-<https://dnd.wizards.com/resources/systems-reference-document>. The SRD
-5.1 is licensed under the Creative Commons Attribution 4.0 International
-License, available at
-<https://creativecommons.org/licenses/by/4.0/legalcode>.
+The app shows this attribution under **About**, along with the licenses
+of the packages it uses.
 
-The app shows both attributions under **About**, along with the
-licenses of the packages it uses.
-
-**Where the data comes from.** The SRD text has been converted to JSON
-and restructured for this app. The short feature summaries in
-`sheet-text.json` are condensed from it.
-
-| Data | Source | License |
-|---|---|---|
-| Nearly all game content: classes, species, backgrounds, feats, spells, equipment, magic items, conditions, rules chapters | [dnd-5e-srd-markdown](https://github.com/downfallx/dnd-5e-srd-markdown) by downfallx, a Markdown conversion of SRD 5.2.1 (copied into `srd-data-pull/source/srd-markdown/`) | CC BY 4.0 |
-| Weapon properties and masteries (`weapon-properties.json`) | [Open5e](https://open5e.com) API, SRD 5.2.1 document | CC BY 4.0 (SRD 5.2.1) |
-| Ability, skill, size, alignment, damage type and spell school tables (`reference/*.json`) | [Open5e](https://open5e.com) API, SRD 5.1 ("core") document | CC BY 4.0 (SRD 5.1) |
+**Where the data comes from.** All game content comes from
+[dnd-5e-srd-markdown](https://github.com/downfallx/dnd-5e-srd-markdown)
+by downfallx, a Markdown conversion of SRD 5.2.1 that is itself licensed
+under CC BY 4.0. It's copied into `srd-data-pull/source/srd-markdown/`,
+and the scripts in `srd-data-pull/scripts/` convert it to the JSON the
+app uses. That JSON is restructured from the SRD text, and the short
+feature summaries in `sheet-text.json` are condensed from it.
 
 **Non-SRD content isn't included.** The app ships only SRD content: no
 text or mechanics from the Player's Handbook or other books beyond the
@@ -231,9 +218,13 @@ Dungeons & Dragons and D&D are trademarks of Wizards of the Coast LLC.
 
 **Third-party libraries.** PDF export uses
 [Syncfusion Flutter PDF](https://pub.dev/packages/syncfusion_flutter_pdf),
-which is licensed separately under Syncfusion's commercial or free
-Community License. Check its terms if you redistribute builds. Other
-dependencies are listed in [`mobile/pubspec.yaml`](mobile/pubspec.yaml),
+which isn't open source and isn't covered by this project's MIT License.
+This project's builds are made under a Syncfusion Essential Studio
+Community License. If you build or redistribute the app yourself, you
+need your own
+[Syncfusion license](https://www.syncfusion.com/products/communitylicense),
+either the free Community License if you qualify or a commercial one.
+Other dependencies are listed in [`mobile/pubspec.yaml`](mobile/pubspec.yaml),
 and their licenses are shown in the app under **About > View licenses**.
 
 ## License
