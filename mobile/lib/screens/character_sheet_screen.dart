@@ -4867,9 +4867,8 @@ class _ProficienciesSection extends StatelessWidget {
         builder: (_) => CatalogPickerScreen(
           title: 'Weapon Proficiency',
           options: [
-            const SrdRefItem(key: 'simple', name: 'Simple weapons'),
-            const SrdRefItem(key: 'martial', name: 'Martial weapons'),
-            ...srdCatalog.weaponOptions,
+            for (final w in srdCatalog.weaponOptions)
+              if (!character.extraWeaponProficiencies.contains(w.name)) w,
           ],
           homebrewKind: 'weapon',
         ),
@@ -4911,9 +4910,9 @@ class _ProficienciesSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final fromClass = rules.classArmorTraining(character);
     final training = rules.armorTraining(character);
-    final classWeapons = srdCatalog
-        .byKey(character.classKey ?? '')
-        ?.traits['Weapon Proficiencies'];
+    final classCategories = rules.classWeaponCategories(character);
+    final classCondition = rules.classWeaponCondition(character);
+    const categories = ['Simple weapons', 'Martial weapons'];
     final baseTools = rules
         .toolProficiencies(character)
         .where((t) => !character.extraToolProficiencies.contains(t))
@@ -4959,22 +4958,53 @@ class _ProficienciesSection extends StatelessWidget {
             ),
           ],
         ),
-        if (classWeapons != null && classWeapons.isNotEmpty)
-          Text(classWeapons, style: const TextStyle(fontSize: 13)),
+        Wrap(
+          spacing: 6,
+          children: [
+            for (final category in categories)
+              FilterChip(
+                label: Text(category.replaceFirst(' weapons', '')),
+                selected:
+                    classCategories.contains(category) ||
+                    character.extraWeaponProficiencies.contains(category),
+                // Class-granted categories can't be switched off here.
+                onSelected: classCategories.contains(category)
+                    ? null
+                    : (v) {
+                        character.extraWeaponProficiencies = v
+                            ? [...character.extraWeaponProficiencies, category]
+                            : character.extraWeaponProficiencies
+                                  .where((w) => w != category)
+                                  .toList();
+                        _changed();
+                      },
+              ),
+          ],
+        ),
+        if (classCondition != null &&
+            !character.extraWeaponProficiencies.contains('Martial weapons'))
+          Padding(
+            padding: const EdgeInsets.only(top: 2, bottom: 4),
+            child: Text(
+              'Plus $classCondition (from your class).',
+              style: const TextStyle(fontSize: 12, color: LedgerColors.inkDim),
+            ),
+          ),
         Wrap(
           spacing: 6,
           children: [
             for (final w in character.extraWeaponProficiencies)
-              InputChip(
-                label: Text(w),
-                onDeleted: () {
-                  character.extraWeaponProficiencies = character
-                      .extraWeaponProficiencies
-                      .where((x) => x != w)
-                      .toList();
-                  _changed();
-                },
-              ),
+              if (!categories.contains(w))
+                InputChip(
+                  label: Text(w),
+                  onDeleted: () {
+                    character.extraWeaponProficiencies = character
+                        .extraWeaponProficiencies
+                        .where((x) => x != w)
+                        .toList();
+                    _changed();
+                  },
+                ),
           ],
         ),
         Row(

@@ -641,6 +641,26 @@ void main() {
     });
   });
 
+  test('class weapon proficiencies split into Simple and Martial, with '
+      'conditional Martial grants kept separate', () {
+    final fighter = _make(cls: 'Fighter');
+    expect(rules.classWeaponCategories(fighter), {
+      'Simple weapons',
+      'Martial weapons',
+    });
+    expect(rules.classWeaponCondition(fighter), isNull);
+
+    final rogue = _make(cls: 'Rogue', increases: const {'dex': 2, 'con': 1});
+    expect(rules.classWeaponCategories(rogue), {'Simple weapons'});
+    expect(
+      rules.classWeaponCondition(rogue),
+      'Martial weapons that have the Finesse or Light property',
+    );
+
+    final wizard = _make(cls: 'Wizard', increases: const {'int': 2, 'con': 1});
+    expect(rules.classWeaponCategories(wizard), {'Simple weapons'});
+  });
+
   group('Find Steed', () {
     test('casting summons the Otherworldly Steed for the slot level and '
         'creature type, and recasting replaces it', () {

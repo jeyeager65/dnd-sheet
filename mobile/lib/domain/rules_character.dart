@@ -52,6 +52,27 @@ String weaponProficiencyText(Character c) => [
   ...c.extraWeaponProficiencies,
 ].join('; ');
 
+/// The weapon categories [c]'s class grants outright - "Simple weapons"
+/// and/or "Martial weapons" - read from its Weapon Proficiencies text. A
+/// conditional grant (Monk, Rogue) isn't all Martial weapons; see
+/// [classWeaponCondition].
+Set<String> classWeaponCategories(Character c) {
+  final text = (_classData(c)?.traits['Weapon Proficiencies'] ?? '')
+      .toLowerCase();
+  return {
+    if (text.contains('simple')) 'Simple weapons',
+    if (text.contains('martial') && classWeaponCondition(c) == null)
+      'Martial weapons',
+  };
+}
+
+/// The class's conditional Martial grant ("Martial weapons that have the
+/// Light property"), or null.
+String? classWeaponCondition(Character c) => RegExp(
+  r'Martial weapons that have the .+? property',
+  caseSensitive: false,
+).firstMatch(_classData(c)?.traits['Weapon Proficiencies'] ?? '')?.group(0);
+
 /// Tool proficiencies: the resolved background/class choices (or, with
 /// none recorded, the background's and class's own tool text), plus
 /// extras.
