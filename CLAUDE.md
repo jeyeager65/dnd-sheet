@@ -37,7 +37,7 @@ node scripts/parse-spells.js    # or whichever parse-*.js matches what changed
 ```
 `mobile/assets/srd/sheet-text.json` is hand-written (short feature summaries for the PDF), not generated.
 
-CI (`.github/workflows/build.yml`) runs `flutter analyze` + `flutter test` on every push/PR to `master`, then builds Android arm64 and Windows. Pushing a tag `vX.Y.Z` (must match `mobile/pubspec.yaml`'s `version:`) also cuts a GitHub Release. The version number lives in exactly one place: `version:` in `mobile/pubspec.yaml`.
+CI (`.github/workflows/build.yml`) runs `flutter analyze` + `flutter test` on every push/PR to `main`, then builds Android arm64 and Windows. Pushing a tag `vX.Y.Z` (must match `mobile/pubspec.yaml`'s `version:`) also cuts a GitHub Release. The version number lives in exactly one place: `version:` in `mobile/pubspec.yaml`.
 
 ## Architecture
 

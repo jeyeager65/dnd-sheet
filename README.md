@@ -130,7 +130,7 @@ need a real signing key.
 ## Building with GitHub Actions
 
 [`.github/workflows/build.yml`](.github/workflows/build.yml) runs on
-every push and pull request to `master`, and can also be started by hand
+every push and pull request to `main`, and can also be started by hand
 from the Actions tab.
 
 1. **Test:** `flutter analyze` and `flutter test`.
