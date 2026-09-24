@@ -8,7 +8,6 @@ import '../data/srd_catalog.dart';
 import '../domain/rules.dart' as rules;
 import '../models/character.dart';
 import '../theme/ledger_theme.dart';
-import '../widgets/layout.dart';
 import 'catalog_picker_screen.dart';
 
 enum CharacterFormMode { create, edit }
@@ -894,319 +893,302 @@ class _CharacterFormScreenState extends State<CharacterFormScreen> {
       appBar: AppBar(
         title: Text(isEdit ? 'Edit ${c?.name ?? ''}' : 'New Character'),
       ),
-      body: ReadableWidth(
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (isEdit && c != null) ...[
-                    _EditableField(
-                      label: 'Character Name',
-                      controller: _nameController,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (isEdit && c != null) ...[
+                _EditableField(
+                  label: 'Character Name',
+                  controller: _nameController,
+                ),
+                _EditableField(
+                  label: 'Level (1–20)',
+                  controller: _levelController,
+                  numeric: true,
+                ),
+                const Padding(
+                  padding: EdgeInsets.only(bottom: 14, top: 2),
+                  child: Text(
+                    'Changing this recalculates Max HP, Hit Dice, and class/species resource uses, grants any newly-reached class or subclass features, and surfaces a Pending Choice for any Ability Score Improvement or subclass level crossed.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: LedgerColors.inkDim,
+                      fontStyle: FontStyle.italic,
                     ),
-                    _EditableField(
-                      label: 'Level (1–20)',
-                      controller: _levelController,
-                      numeric: true,
+                  ),
+                ),
+                _PickerField(
+                  label: 'Species',
+                  value: _newSpecies?.name ?? c.speciesLabel,
+                  placeholder: 'Choose a species…',
+                  onTap: _pickNewSpecies,
+                ),
+                _PickerField(
+                  label: 'Class',
+                  value: _newClass?.name ?? c.classLabel,
+                  placeholder: 'Choose a class…',
+                  onTap: _pickNewClass,
+                ),
+                if (_newClass != null && _newClass!.key != c.classKey)
+                  const _Note(
+                    'Changing class rebuilds features, saving throws, Hit '
+                    'Die, resources, spell slots, and Max HP for this '
+                    'level, and asks for the new class\'s choices again. '
+                    'Feats, skills, and gear stay.',
+                  ),
+                _PickerField(
+                  label: 'Background',
+                  value: _newBackground?.name ?? c.backgroundLabel,
+                  placeholder: 'Choose a background…',
+                  onTap: _pickNewBackground,
+                ),
+                if (_newBackground != null &&
+                    _newBackground!.key != c.backgroundKey) ...[
+                  const _Note(
+                    "The old background's skills, feat, and ability "
+                    'increases come off; the new one\'s go on.',
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 14),
+                    child: BackgroundAbilityPicker(
+                      options: rules.backgroundAbilityOptions(
+                        _newBackground!.key,
+                      ),
+                      onChanged: (m) => setState(() => _newBgIncreases = m),
                     ),
-                    const Padding(
-                      padding: EdgeInsets.only(bottom: 14, top: 2),
-                      child: Text(
-                        'Changing this recalculates Max HP, Hit Dice, and class/species resource uses, grants any newly-reached class or subclass features, and surfaces a Pending Choice for any Ability Score Improvement or subclass level crossed.',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: LedgerColors.inkDim,
-                          fontStyle: FontStyle.italic,
+                  ),
+                ],
+                _buildEditStats(c),
+                _buildToolChoiceSection(),
+                const SizedBox(height: 10),
+                OutlinedButton(
+                  onPressed: () {
+                    rules.recalculateHp(c);
+                    rules.recalculateClassResources(c);
+                    rules.recalculateSpellSlots(c);
+                    charactersRepo.save(c);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Recalculated Max HP, Hit Dice, and resources for the current level.',
                         ),
                       ),
+                    );
+                  },
+                  child: const Text('Recalculate Derived Stats'),
+                ),
+                const Padding(
+                  padding: EdgeInsets.only(top: 4, bottom: 14),
+                  child: Text(
+                    'If HP, Hit Dice, or resources look wrong for your actual level (e.g. after a hand-built starting level or a missed level-up), this fixes them - without changing level, inventory, or feats. Not something you need often, which is why it lives here instead of on the sheet.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: LedgerColors.inkDim,
+                      fontStyle: FontStyle.italic,
                     ),
-                    _PickerField(
-                      label: 'Species',
-                      value: _newSpecies?.name ?? c.speciesLabel,
-                      placeholder: 'Choose a species…',
-                      onTap: _pickNewSpecies,
-                    ),
-                    _PickerField(
-                      label: 'Class',
-                      value: _newClass?.name ?? c.classLabel,
-                      placeholder: 'Choose a class…',
-                      onTap: _pickNewClass,
-                    ),
-                    if (_newClass != null && _newClass!.key != c.classKey)
-                      const _Note(
-                        'Changing class rebuilds features, saving throws, Hit '
-                        'Die, resources, spell slots, and Max HP for this '
-                        'level, and asks for the new class\'s choices again. '
-                        'Feats, skills, and gear stay.',
-                      ),
-                    _PickerField(
-                      label: 'Background',
-                      value: _newBackground?.name ?? c.backgroundLabel,
-                      placeholder: 'Choose a background…',
-                      onTap: _pickNewBackground,
-                    ),
-                    if (_newBackground != null &&
-                        _newBackground!.key != c.backgroundKey) ...[
-                      const _Note(
-                        "The old background's skills, feat, and ability "
-                        'increases come off; the new one\'s go on.',
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 14),
-                        child: BackgroundAbilityPicker(
+                  ),
+                ),
+              ] else ...[
+                _EditableField(
+                  label: 'Character Name',
+                  controller: _newNameController,
+                ),
+                _PickerField(
+                  label: 'Species',
+                  value: _selectedSpecies?.name,
+                  placeholder: 'Choose a species…',
+                  onTap: _pickSpecies,
+                ),
+                _PickerField(
+                  label: 'Background',
+                  value: _selectedBackground?.name,
+                  placeholder: 'Choose a background…',
+                  onTap: _pickBackground,
+                ),
+                if (_selectedBackground != null &&
+                    rules
+                        .backgroundAbilityOptions(_selectedBackground!.key)
+                        .isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'BACKGROUND ABILITY SCORES',
+                          style: _fieldLabelStyle,
+                        ),
+                        const SizedBox(height: 4),
+                        BackgroundAbilityPicker(
+                          key: ValueKey(_selectedBackground!.key),
                           options: rules.backgroundAbilityOptions(
-                            _newBackground!.key,
+                            _selectedBackground!.key,
                           ),
-                          onChanged: (m) => setState(() => _newBgIncreases = m),
+                          onChanged: (m) => setState(() => _bgIncreases = m),
+                        ),
+                      ],
+                    ),
+                  ),
+                _PickerField(
+                  label: 'Class',
+                  value: _selectedClass?.name,
+                  placeholder: 'Choose a class…',
+                  onTap: _pickClass,
+                ),
+                const Padding(
+                  padding: EdgeInsets.only(top: 4, bottom: 10),
+                  child: Text(
+                    'Background grants its skills, feat, and ability increases (added to the scores below when the character is created). Class and species features, resources, and spells are filled in; choices they offer (Expertise, a lineage\'s ability, ...) show up as Pending Choices on the Features tab.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: LedgerColors.inkDim,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ),
+                _buildSpeciesChoiceSection(),
+                if (_selectedClass != null) _buildSkillChoice(),
+                _buildEquipmentChoice(
+                  'CLASS STARTING EQUIPMENT',
+                  classEquipmentOptions(_selectedClass?.key),
+                  _classEquipment,
+                  (v) => setState(() => _classEquipment = v),
+                ),
+                _buildEquipmentChoice(
+                  'BACKGROUND STARTING EQUIPMENT',
+                  backgroundEquipmentOptions(_selectedBackground?.key),
+                  _backgroundEquipment,
+                  (v) => setState(() => _backgroundEquipment = v),
+                ),
+                _buildToolChoiceSection(),
+                Text('ABILITY SCORES', style: _fieldLabelStyle),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    for (final key in _abilityKeys)
+                      SizedBox(
+                        width: 96,
+                        child: _EditableField(
+                          label: _abilityLabels[key]!,
+                          controller: _abilityControllers[key]!,
+                          numeric: true,
                         ),
                       ),
-                    ],
-                    _buildEditStats(c),
-                    _buildToolChoiceSection(),
-                    const SizedBox(height: 10),
-                    OutlinedButton(
-                      onPressed: () {
-                        rules.recalculateHp(c);
-                        rules.recalculateClassResources(c);
-                        rules.recalculateSpellSlots(c);
-                        charactersRepo.save(c);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Recalculated Max HP, Hit Dice, and resources for the current level.',
-                            ),
-                          ),
-                        );
-                      },
-                      child: const Text('Recalculate Derived Stats'),
-                    ),
-                    const Padding(
-                      padding: EdgeInsets.only(top: 4, bottom: 14),
-                      child: Text(
-                        'If HP, Hit Dice, or resources look wrong for your actual level (e.g. after a hand-built starting level or a missed level-up), this fixes them - without changing level, inventory, or feats. Not something you need often, which is why it lives here instead of on the sheet.',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: LedgerColors.inkDim,
-                          fontStyle: FontStyle.italic,
-                        ),
+                  ],
+                ),
+              ],
+              _EditableField(
+                label: 'Player Name (optional)',
+                controller: _playerNameController,
+              ),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('ALIGNMENT (OPTIONAL)', style: _fieldLabelStyle),
+                    const SizedBox(height: 4),
+                    Container(
+                      decoration: const BoxDecoration(
+                        color: LedgerColors.paper2,
+                        border: _fieldBorder,
                       ),
-                    ),
-                  ] else ...[
-                    _EditableField(
-                      label: 'Character Name',
-                      controller: _newNameController,
-                    ),
-                    _PickerField(
-                      label: 'Species',
-                      value: _selectedSpecies?.name,
-                      placeholder: 'Choose a species…',
-                      onTap: _pickSpecies,
-                    ),
-                    _PickerField(
-                      label: 'Background',
-                      value: _selectedBackground?.name,
-                      placeholder: 'Choose a background…',
-                      onTap: _pickBackground,
-                    ),
-                    if (_selectedBackground != null &&
-                        rules
-                            .backgroundAbilityOptions(_selectedBackground!.key)
-                            .isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 14),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'BACKGROUND ABILITY SCORES',
-                              style: _fieldLabelStyle,
-                            ),
-                            const SizedBox(height: 4),
-                            BackgroundAbilityPicker(
-                              key: ValueKey(_selectedBackground!.key),
-                              options: rules.backgroundAbilityOptions(
-                                _selectedBackground!.key,
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButtonFormField<String?>(
+                          initialValue: _selectedAlignment,
+                          isExpanded: true,
+                          style: const TextStyle(color: LedgerColors.ink),
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            isDense: true,
+                            contentPadding: EdgeInsets.symmetric(vertical: 10),
+                          ),
+                          items: [
+                            const DropdownMenuItem(
+                              value: null,
+                              child: Text(
+                                'None',
+                                style: TextStyle(color: LedgerColors.inkDim),
                               ),
-                              onChanged: (m) =>
-                                  setState(() => _bgIncreases = m),
                             ),
+                            for (final a in srdCatalog.alignments)
+                              DropdownMenuItem(
+                                value: a.name,
+                                child: Text(a.name),
+                              ),
+                          ],
+                          onChanged: (v) =>
+                              setState(() => _selectedAlignment = v),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('LANGUAGES (OPTIONAL)', style: _fieldLabelStyle),
+                    const SizedBox(height: 4),
+                    if (_languages.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: [
+                            for (final language in _languages)
+                              InputChip(
+                                label: Text(language),
+                                onDeleted: () => _removeLanguage(language),
+                              ),
                           ],
                         ),
                       ),
-                    _PickerField(
-                      label: 'Class',
-                      value: _selectedClass?.name,
-                      placeholder: 'Choose a class…',
-                      onTap: _pickClass,
-                    ),
-                    const Padding(
-                      padding: EdgeInsets.only(top: 4, bottom: 10),
-                      child: Text(
-                        'Background grants its skills, feat, and ability increases (added to the scores below when the character is created). Class and species features, resources, and spells are filled in; choices they offer (Expertise, a lineage\'s ability, ...) show up as Pending Choices on the Features tab.',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: LedgerColors.inkDim,
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                    ),
-                    _buildSpeciesChoiceSection(),
-                    if (_selectedClass != null) _buildSkillChoice(),
-                    _buildEquipmentChoice(
-                      'CLASS STARTING EQUIPMENT',
-                      classEquipmentOptions(_selectedClass?.key),
-                      _classEquipment,
-                      (v) => setState(() => _classEquipment = v),
-                    ),
-                    _buildEquipmentChoice(
-                      'BACKGROUND STARTING EQUIPMENT',
-                      backgroundEquipmentOptions(_selectedBackground?.key),
-                      _backgroundEquipment,
-                      (v) => setState(() => _backgroundEquipment = v),
-                    ),
-                    _buildToolChoiceSection(),
-                    Text('ABILITY SCORES', style: _fieldLabelStyle),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
-                      children: [
-                        for (final key in _abilityKeys)
-                          SizedBox(
-                            width: 96,
-                            child: _EditableField(
-                              label: _abilityLabels[key]!,
-                              controller: _abilityControllers[key]!,
-                              numeric: true,
-                            ),
-                          ),
-                      ],
+                    OutlinedButton.icon(
+                      onPressed: _pickLanguage,
+                      icon: const Icon(Icons.add, size: 18),
+                      label: const Text('Add Language'),
                     ),
                   ],
-                  _EditableField(
-                    label: 'Player Name (optional)',
-                    controller: _playerNameController,
+                ),
+              ),
+              _EditableField(
+                label: 'Appearance (optional)',
+                controller: _appearanceController,
+                multiline: true,
+              ),
+              _EditableField(
+                label: 'Backstory & Personality (optional)',
+                controller: _notesController,
+                multiline: true,
+              ),
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  OutlinedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Cancel'),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 14),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'ALIGNMENT (OPTIONAL)',
-                          style: _fieldLabelStyle,
-                        ),
-                        const SizedBox(height: 4),
-                        Container(
-                          decoration: const BoxDecoration(
-                            color: LedgerColors.paper2,
-                            border: _fieldBorder,
-                          ),
-                          padding: const EdgeInsets.symmetric(horizontal: 10),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButtonFormField<String?>(
-                              initialValue: _selectedAlignment,
-                              isExpanded: true,
-                              style: const TextStyle(color: LedgerColors.ink),
-                              decoration: const InputDecoration(
-                                border: InputBorder.none,
-                                isDense: true,
-                                contentPadding: EdgeInsets.symmetric(
-                                  vertical: 10,
-                                ),
-                              ),
-                              items: [
-                                const DropdownMenuItem(
-                                  value: null,
-                                  child: Text(
-                                    'None',
-                                    style: TextStyle(
-                                      color: LedgerColors.inkDim,
-                                    ),
-                                  ),
-                                ),
-                                for (final a in srdCatalog.alignments)
-                                  DropdownMenuItem(
-                                    value: a.name,
-                                    child: Text(a.name),
-                                  ),
-                              ],
-                              onChanged: (v) =>
-                                  setState(() => _selectedAlignment = v),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                  ElevatedButton(
+                    onPressed: isEdit
+                        ? (_editBackgroundReady ? _save : null)
+                        : _createCharacter,
+                    child: Text(isEdit ? 'Save Changes' : 'Create Character'),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 14),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'LANGUAGES (OPTIONAL)',
-                          style: _fieldLabelStyle,
-                        ),
-                        const SizedBox(height: 4),
-                        if (_languages.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 6),
-                            child: Wrap(
-                              spacing: 6,
-                              runSpacing: 6,
-                              children: [
-                                for (final language in _languages)
-                                  InputChip(
-                                    label: Text(language),
-                                    onDeleted: () => _removeLanguage(language),
-                                  ),
-                              ],
-                            ),
-                          ),
-                        OutlinedButton.icon(
-                          onPressed: _pickLanguage,
-                          icon: const Icon(Icons.add, size: 18),
-                          label: const Text('Add Language'),
-                        ),
-                      ],
-                    ),
-                  ),
-                  _EditableField(
-                    label: 'Appearance (optional)',
-                    controller: _appearanceController,
-                    multiline: true,
-                  ),
-                  _EditableField(
-                    label: 'Backstory & Personality (optional)',
-                    controller: _notesController,
-                    multiline: true,
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      OutlinedButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: const Text('Cancel'),
-                      ),
-                      ElevatedButton(
-                        onPressed: isEdit
-                            ? (_editBackgroundReady ? _save : null)
-                            : _createCharacter,
-                        child: Text(
-                          isEdit ? 'Save Changes' : 'Create Character',
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
                 ],
               ),
-            ),
+              const SizedBox(height: 12),
+            ],
           ),
         ),
       ),

@@ -136,11 +136,9 @@ class _ReferenceScreenState extends State<ReferenceScreen> {
             ),
             const VerticalDivider(width: 1),
             Expanded(
-              child: ReadableWidth(
-                child: ReferenceListView(
-                  key: ValueKey(_selected),
-                  entries: entries,
-                ),
+              child: ReferenceListView(
+                key: ValueKey(_selected),
+                entries: entries,
               ),
             ),
           ],
@@ -690,9 +688,7 @@ class ReferenceListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(title: Text(title)),
-    body: SafeArea(
-      child: ReadableWidth(child: ReferenceListView(entries: entries)),
-    ),
+    body: SafeArea(child: ReferenceListView(entries: entries)),
   );
 }
 

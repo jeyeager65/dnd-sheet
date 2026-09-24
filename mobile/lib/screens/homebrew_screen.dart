@@ -11,7 +11,6 @@ import '../domain/rules.dart' as rules;
 import '../models/effect.dart';
 import '../models/homebrew.dart';
 import '../theme/ledger_theme.dart';
-import '../widgets/layout.dart';
 import '../widgets/ledger_bits.dart';
 import 'homebrew_rules_editor.dart';
 import 'share_json.dart';
@@ -233,69 +232,64 @@ class _HomebrewListScreenState extends State<HomebrewListScreen> {
           const SizedBox(width: 6),
         ],
       ),
-      body: ReadableWidth(
-        child: SafeArea(
-          child: byKind.isEmpty
-              ? const Padding(
-                  padding: EdgeInsets.all(18),
-                  child: Text(
-                    'No homebrew content yet. Tap "+ Add" above to create '
-                    'one, or type a name into any "Add" picker on a '
-                    'character sheet.',
-                    style: TextStyle(color: LedgerColors.inkDim),
-                  ),
-                )
-              : ListView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 8,
-                  ),
-                  children: [
-                    for (final kind in kinds) ...[
-                      SectionLabel(_kindLabel(kind)),
-                      for (final entry
-                          in byKind[kind]!
-                            ..sort((a, b) => a.name.compareTo(b.name)))
-                        ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: Text(
-                            entry.name,
-                            style: const TextStyle(
-                              color: LedgerColors.ink,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          subtitle: Text(
-                            _entrySubtitle(entry),
-                            style: const TextStyle(
-                              color: LedgerColors.inkDim,
-                              fontSize: 12,
-                            ),
-                          ),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                onPressed: () => _delete(entry),
-                                icon: const Icon(
-                                  Icons.delete_outline,
-                                  size: 20,
-                                ),
-                                color: LedgerColors.inkDim,
-                              ),
-                              const Icon(
-                                Icons.chevron_right,
-                                color: LedgerColors.inkDim,
-                              ),
-                            ],
-                          ),
-                          onTap: () => _edit(entry),
-                        ),
-                      const Divider(height: 1),
-                    ],
-                  ],
+      body: SafeArea(
+        child: byKind.isEmpty
+            ? const Padding(
+                padding: EdgeInsets.all(18),
+                child: Text(
+                  'No homebrew content yet. Tap "+ Add" above to create '
+                  'one, or type a name into any "Add" picker on a '
+                  'character sheet.',
+                  style: TextStyle(color: LedgerColors.inkDim),
                 ),
-        ),
+              )
+            : ListView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 8,
+                ),
+                children: [
+                  for (final kind in kinds) ...[
+                    SectionLabel(_kindLabel(kind)),
+                    for (final entry
+                        in byKind[kind]!
+                          ..sort((a, b) => a.name.compareTo(b.name)))
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(
+                          entry.name,
+                          style: const TextStyle(
+                            color: LedgerColors.ink,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        subtitle: Text(
+                          _entrySubtitle(entry),
+                          style: const TextStyle(
+                            color: LedgerColors.inkDim,
+                            fontSize: 12,
+                          ),
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              onPressed: () => _delete(entry),
+                              icon: const Icon(Icons.delete_outline, size: 20),
+                              color: LedgerColors.inkDim,
+                            ),
+                            const Icon(
+                              Icons.chevron_right,
+                              color: LedgerColors.inkDim,
+                            ),
+                          ],
+                        ),
+                        onTap: () => _edit(entry),
+                      ),
+                    const Divider(height: 1),
+                  ],
+                ],
+              ),
       ),
     );
   }
@@ -798,176 +792,174 @@ class _HomebrewEditScreenState extends State<HomebrewEditScreen> {
           const SizedBox(width: 6),
         ],
       ),
-      body: ReadableWidth(
-        child: SafeArea(
-          child: ListView(
-            padding: const EdgeInsets.all(18),
-            children: [
-              if (warning != null) ...[
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: LedgerColors.accent.withValues(alpha: 0.15),
-                    border: Border.all(color: LedgerColors.accent),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Icon(
-                        Icons.warning_amber_outlined,
-                        color: LedgerColors.accent,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          warning,
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                      ),
-                    ],
-                  ),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(18),
+          children: [
+            if (warning != null) ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: LedgerColors.accent.withValues(alpha: 0.15),
+                  border: Border.all(color: LedgerColors.accent),
                 ),
-                const SizedBox(height: 16),
-              ],
-              const SectionLabel('Source'),
-              // Wrap, not Row: the two chips don't fit side by side on a
-              // narrow phone.
-              Wrap(
-                spacing: 8,
-                runSpacing: 6,
-                children: [
-                  ChoiceChip(
-                    label: const Text('Homebrew'),
-                    selected: _source == 'homebrew',
-                    onSelected: (_) => setState(() => _source = 'homebrew'),
-                  ),
-                  ChoiceChip(
-                    label: const Text('Official (non-SRD)'),
-                    selected: _source == 'official',
-                    onSelected: (_) => setState(() => _source = 'official'),
-                  ),
-                ],
-              ),
-              if (_isFeat) ...[
-                const SectionLabel('Category'),
-                const Text(
-                  'Which feat-choice pickers this offers itself in (a '
-                  '"Choose a Fighting Style" or "Choose an Epic Boon" '
-                  'Pending Choice, say) - matches how a real SRD feat\'s own '
-                  'category works. Leave uncategorized and it only shows up '
-                  'in the unrestricted "+ Add Feat" list.',
-                  style: TextStyle(fontSize: 12, color: LedgerColors.inkDim),
-                ),
-                const SizedBox(height: 6),
-                DropdownButtonFormField<String?>(
-                  initialValue: _category,
-                  isExpanded: true,
-                  decoration: const InputDecoration(isDense: true),
-                  items: [
-                    const DropdownMenuItem(
-                      value: null,
-                      child: Text('Uncategorized'),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(
+                      Icons.warning_amber_outlined,
+                      color: LedgerColors.accent,
+                      size: 20,
                     ),
-                    for (final category in homebrewFeatCategories)
-                      DropdownMenuItem(value: category, child: Text(category)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        warning,
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ),
                   ],
-                  onChanged: (v) => setState(() => _category = v),
                 ),
-                const SectionLabel('Prerequisite'),
-                TextField(
-                  controller: _prerequisiteController,
-                  decoration: const InputDecoration(
-                    hintText:
-                        'Optional, e.g. "Level 4+" - display-only, not '
-                        'enforced.',
-                  ),
+              ),
+              const SizedBox(height: 16),
+            ],
+            const SectionLabel('Source'),
+            // Wrap, not Row: the two chips don't fit side by side on a
+            // narrow phone.
+            Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              children: [
+                ChoiceChip(
+                  label: const Text('Homebrew'),
+                  selected: _source == 'homebrew',
+                  onSelected: (_) => setState(() => _source = 'homebrew'),
+                ),
+                ChoiceChip(
+                  label: const Text('Official (non-SRD)'),
+                  selected: _source == 'official',
+                  onSelected: (_) => setState(() => _source = 'official'),
                 ),
               ],
-              const SectionLabel('Description'),
+            ),
+            if (_isFeat) ...[
+              const SectionLabel('Category'),
+              const Text(
+                'Which feat-choice pickers this offers itself in (a '
+                '"Choose a Fighting Style" or "Choose an Epic Boon" '
+                'Pending Choice, say) - matches how a real SRD feat\'s own '
+                'category works. Leave uncategorized and it only shows up '
+                'in the unrestricted "+ Add Feat" list.',
+                style: TextStyle(fontSize: 12, color: LedgerColors.inkDim),
+              ),
+              const SizedBox(height: 6),
+              DropdownButtonFormField<String?>(
+                initialValue: _category,
+                isExpanded: true,
+                decoration: const InputDecoration(isDense: true),
+                items: [
+                  const DropdownMenuItem(
+                    value: null,
+                    child: Text('Uncategorized'),
+                  ),
+                  for (final category in homebrewFeatCategories)
+                    DropdownMenuItem(value: category, child: Text(category)),
+                ],
+                onChanged: (v) => setState(() => _category = v),
+              ),
+              const SectionLabel('Prerequisite'),
               TextField(
-                controller: _descController,
-                maxLines: null,
-                minLines: 3,
+                controller: _prerequisiteController,
                 decoration: const InputDecoration(
                   hintText:
-                      'Rules text / flavor - shown wherever this '
-                      'entry appears on the sheet.',
+                      'Optional, e.g. "Level 4+" - display-only, not '
+                      'enforced.',
                 ),
               ),
-              HomebrewRulesEditor(
-                kind: widget.entry.kind,
-                entryId: widget.entry.id,
-                data: _data,
-                onChanged: (d) => _data = d,
-              ),
-              if (_isFeat) ...[
-                const SectionLabel('Sheet Text'),
-                TextField(
-                  controller: _shortDescController,
-                  maxLines: null,
-                  minLines: 2,
-                  decoration: const InputDecoration(
-                    hintText:
-                        'A one- or two-line summary for the exported PDF '
-                        "sheet's Feats box. Leave blank to use the full "
-                        'description.',
-                  ),
-                ),
-              ],
-              if (_supportsEffects) ...[
-                const SectionLabel('Effects'),
-                Text(
-                  widget.entry.kind == 'magicItem'
-                      ? 'Effects only apply while this item is marked '
-                            'Attuned in inventory.'
-                      : 'Numeric bonuses this grants when the feat is on '
-                            'the sheet.',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: LedgerColors.inkDim,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Every effect changes something about the wearer/holder '
-                  'themselves - "Damage You Deal" only ever adds to damage '
-                  'this character deals, and "Resistance/Reduction to '
-                  'Damage You Take" only ever changes damage this character '
-                  'receives (applied via the Combat tab\'s Take Damage '
-                  'dialog). There\'s no way to affect a different creature.',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: LedgerColors.inkDim,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'For a bonus that changes at an HP threshold, add one '
-                  'effect per tier with just that tier\'s extra amount, not '
-                  'the running total - e.g. +1 while below max HP and +1 '
-                  'more while Bloodied, for a total of +2 when Bloodied.',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: LedgerColors.inkDim,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                for (final (index, effect) in _effects.indexed)
-                  _EffectRow(
-                    effect: effect,
-                    onChanged: (updated) => _updateEffect(index, updated),
-                    onRemove: () => _removeEffect(index),
-                  ),
-                TextButton(
-                  onPressed: _addEffect,
-                  child: const Text('+ Add Effect'),
-                ),
-              ],
             ],
-          ),
+            const SectionLabel('Description'),
+            TextField(
+              controller: _descController,
+              maxLines: null,
+              minLines: 3,
+              decoration: const InputDecoration(
+                hintText:
+                    'Rules text / flavor - shown wherever this '
+                    'entry appears on the sheet.',
+              ),
+            ),
+            HomebrewRulesEditor(
+              kind: widget.entry.kind,
+              entryId: widget.entry.id,
+              data: _data,
+              onChanged: (d) => _data = d,
+            ),
+            if (_isFeat) ...[
+              const SectionLabel('Sheet Text'),
+              TextField(
+                controller: _shortDescController,
+                maxLines: null,
+                minLines: 2,
+                decoration: const InputDecoration(
+                  hintText:
+                      'A one- or two-line summary for the exported PDF '
+                      "sheet's Feats box. Leave blank to use the full "
+                      'description.',
+                ),
+              ),
+            ],
+            if (_supportsEffects) ...[
+              const SectionLabel('Effects'),
+              Text(
+                widget.entry.kind == 'magicItem'
+                    ? 'Effects only apply while this item is marked '
+                          'Attuned in inventory.'
+                    : 'Numeric bonuses this grants when the feat is on '
+                          'the sheet.',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: LedgerColors.inkDim,
+                ),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Every effect changes something about the wearer/holder '
+                'themselves - "Damage You Deal" only ever adds to damage '
+                'this character deals, and "Resistance/Reduction to '
+                'Damage You Take" only ever changes damage this character '
+                'receives (applied via the Combat tab\'s Take Damage '
+                'dialog). There\'s no way to affect a different creature.',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: LedgerColors.inkDim,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'For a bonus that changes at an HP threshold, add one '
+                'effect per tier with just that tier\'s extra amount, not '
+                'the running total - e.g. +1 while below max HP and +1 '
+                'more while Bloodied, for a total of +2 when Bloodied.',
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: LedgerColors.inkDim,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+              const SizedBox(height: 12),
+              for (final (index, effect) in _effects.indexed)
+                _EffectRow(
+                  effect: effect,
+                  onChanged: (updated) => _updateEffect(index, updated),
+                  onRemove: () => _removeEffect(index),
+                ),
+              TextButton(
+                onPressed: _addEffect,
+                child: const Text('+ Add Effect'),
+              ),
+            ],
+          ],
         ),
       ),
     );

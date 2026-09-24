@@ -275,15 +275,7 @@ class _CharacterSheetScreenState extends State<CharacterSheetScreen> {
                   style: const TextStyle(fontSize: 12, color: LedgerColors.ink),
                 ),
               ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 6,
-                ),
-                child: tabs[_tab],
-              ),
-            ),
+            Expanded(child: tabs[_tab]),
           ],
         );
 
@@ -346,18 +338,20 @@ class _CharacterSheetScreenState extends State<CharacterSheetScreen> {
                 ? Row(
                     children: [
                       NavigationRail(
-                        selectedIndex: _tab,
-                        onDestinationSelected: (i) => setState(() => _tab = i),
-                        labelType: NavigationRailLabelType.all,
-                        leading: Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: TextButton.icon(
-                            onPressed: () => Navigator.of(context).maybePop(),
-                            icon: const Icon(Icons.arrow_back, size: 18),
-                            label: const Text('My Characters'),
-                          ),
-                        ),
+                        extended: true,
+                        minExtendedWidth: 200,
+                        // Item 0 is My Characters (leaves the sheet); the
+                        // tabs follow it.
+                        selectedIndex: _tab + 1,
+                        onDestinationSelected: (i) => i == 0
+                            ? Navigator.of(context).maybePop()
+                            : setState(() => _tab = i - 1),
                         destinations: [
+                          const NavigationRailDestination(
+                            icon: Icon(Icons.groups_outlined),
+                            label: Text('My Characters'),
+                            padding: EdgeInsets.only(bottom: 16),
+                          ),
                           for (final (icon, label) in tabItems)
                             NavigationRailDestination(
                               icon: Icon(icon),
@@ -366,7 +360,7 @@ class _CharacterSheetScreenState extends State<CharacterSheetScreen> {
                         ],
                       ),
                       const VerticalDivider(width: 1),
-                      Expanded(child: ReadableWidth(child: content)),
+                      Expanded(child: content),
                     ],
                   )
                 : content,
@@ -388,6 +382,10 @@ class _CharacterSheetScreenState extends State<CharacterSheetScreen> {
     );
   }
 }
+
+/// Each tab's list padding - inside the scroll view, so the desktop
+/// scrollbar sits in the margin instead of over the content.
+const _tabPadding = EdgeInsets.symmetric(horizontal: 18, vertical: 6);
 
 class _OverviewTab extends StatelessWidget {
   const _OverviewTab({required this.character, required this.onChanged});
@@ -510,6 +508,7 @@ class _OverviewTab extends StatelessWidget {
     final table = _choiceTable;
 
     return ListView(
+      padding: _tabPadding,
       children: [
         GestureDetector(
           onTap: table != null ? () => _pickSpeciesChoice(context) : null,
@@ -908,6 +907,7 @@ class _CombatTab extends StatelessWidget {
     final prof = rules.proficiencyBonusForLevel(character.level);
 
     return ListView(
+      padding: _tabPadding,
       children: [
         Row(
           children: [
@@ -3216,6 +3216,7 @@ class _FeaturesTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
+      padding: _tabPadding,
       children: [
         const SectionLabel('Pending Choices'),
         if (character.pendingChoices.isEmpty)
@@ -3801,6 +3802,7 @@ class _ItemsTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final armor = character.equippedArmor;
     return ListView(
+      padding: _tabPadding,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -4107,6 +4109,7 @@ class _SpellsTab extends StatelessWidget {
     final sc = character.spellcasting;
     if (sc == null) {
       return ListView(
+        padding: _tabPadding,
         children: [
           const SectionLabel('Spellcasting'),
           const Padding(
@@ -4149,6 +4152,7 @@ class _SpellsTab extends StatelessWidget {
     }
 
     return ListView(
+      padding: _tabPadding,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
