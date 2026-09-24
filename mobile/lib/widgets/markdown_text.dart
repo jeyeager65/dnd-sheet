@@ -34,9 +34,13 @@ class MarkdownText extends StatelessWidget {
         }
       }
     }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: blocks,
+    // Rules text can be selected and copied - drag with a mouse on the
+    // desktop build, long-press on a phone.
+    return SelectionArea(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: blocks,
+      ),
     );
   }
 

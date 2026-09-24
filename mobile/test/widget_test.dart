@@ -1234,7 +1234,7 @@ void main() {
   testWidgets(
     'New Character asks for a species with an embedded choice table (Dragonborn Draconic Ancestry) up front, and refuses to create without an answer',
     (WidgetTester tester) async {
-      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.physicalSize = const Size(1080, 3400);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);

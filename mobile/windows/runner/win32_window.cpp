@@ -197,6 +197,14 @@ Win32Window::MessageHandler(HWND hwnd,
 
       return 0;
     }
+    case WM_GETMINMAXINFO: {
+      // Don't let the window shrink below what the layout can fit.
+      auto* info = reinterpret_cast<MINMAXINFO*>(lparam);
+      const double scale = FlutterDesktopGetDpiForHWND(hwnd) / 96.0;
+      info->ptMinTrackSize.x = Scale(420, scale);
+      info->ptMinTrackSize.y = Scale(600, scale);
+      return 0;
+    }
     case WM_SIZE: {
       RECT rect = GetClientArea();
       if (child_content_ != nullptr) {

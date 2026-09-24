@@ -37,6 +37,18 @@ class DndSheetApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: LedgerTheme.data,
       home: const CharacterListScreen(),
+      // On a wide window (the desktop build) every screen keeps a readable
+      // width, centered, instead of stretching edge to edge. A phone is
+      // narrower than the cap, so nothing changes there.
+      builder: (context, child) => ColoredBox(
+        color: LedgerColors.paper,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 720),
+            child: child,
+          ),
+        ),
+      ),
     );
   }
 }
