@@ -897,6 +897,51 @@ class _CombatTab extends StatelessWidget {
     onChanged();
   }
 
+  /// Confirms a Short or Long Rest, listing what it would recover first.
+  Future<void> _rest(BuildContext context, {required bool longRest}) async {
+    final name = longRest ? 'Long Rest' : 'Short Rest';
+    final changes = rules.restPreview(character, longRest: longRest);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Take a $name?'),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (changes.isEmpty)
+                const Text(
+                  'Nothing to recover - everything a rest restores is '
+                  'already full.',
+                  style: TextStyle(color: LedgerColors.inkDim),
+                )
+              else
+                for (final line in changes)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: Text('â€¢ $line'),
+                  ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text('Take $name'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    longRest ? rules.applyLongRest(character) : rules.applyShortRest(character);
+    onChanged();
+  }
+
   void _removeWeapon(String name) {
     character.weapons = character.weapons.where((w) => w.name != name).toList();
     onChanged();
@@ -913,20 +958,14 @@ class _CombatTab extends StatelessWidget {
           children: [
             Expanded(
               child: OutlinedButton(
-                onPressed: () {
-                  rules.applyShortRest(character);
-                  onChanged();
-                },
+                onPressed: () => _rest(context, longRest: false),
                 child: const Text('Short Rest'),
               ),
             ),
             const SizedBox(width: 10),
             Expanded(
               child: OutlinedButton(
-                onPressed: () {
-                  rules.applyLongRest(character);
-                  onChanged();
-                },
+                onPressed: () => _rest(context, longRest: true),
                 child: const Text('Long Rest'),
               ),
             ),

@@ -64,6 +64,37 @@ void main() {
     expect(find.text('Greatsword'), findsOneWidget);
   });
 
+  testWidgets('a rest asks first, listing what it would recover', (
+    WidgetTester tester,
+  ) async {
+    final jarson = charactersRepo.characters.first;
+    jarson.currentHp = jarson.maxHp - 10;
+    await tester.pumpWidget(const DndSheetApp());
+    await tester.tap(find.text('Jarson').first);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Long Rest'));
+    await tester.pumpAndSettle();
+    expect(find.text('Take a Long Rest?'), findsOneWidget);
+    expect(
+      find.text(
+        'â€¢ HP: ${jarson.maxHp - 10} â†’ ${jarson.maxHp} of ${jarson.maxHp}',
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(jarson.currentHp, jarson.maxHp - 10);
+
+    await tester.tap(find.text('Long Rest'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Take Long Rest'));
+    await tester.pumpAndSettle();
+    expect(find.text('Take a Long Rest?'), findsNothing);
+    expect(jarson.currentHp, jarson.maxHp);
+  });
+
   testWidgets('the sheet AppBar offers an Export PDF action', (
     WidgetTester tester,
   ) async {

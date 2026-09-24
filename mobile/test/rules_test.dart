@@ -790,6 +790,50 @@ void main() {
     expect(jarson.currentHp, jarson.maxHp - 5);
   });
 
+  test('restPreview lists what each rest would recover, without changing '
+      'the character', () {
+    final jarson = buildSampleJarson();
+    for (final r in jarson.resources) {
+      r.used = 0;
+    }
+    jarson.currentHp = jarson.maxHp;
+    jarson.tempHp = 0;
+    jarson.hitDiceSpent = 0;
+    jarson.exhaustionLevel = 0;
+    expect(rules.restPreview(jarson, longRest: true), isEmpty);
+
+    final secondWind = jarson.resources.firstWhere(
+      (r) => r.name == 'Second Wind',
+    );
+    final actionSurge = jarson.resources.firstWhere(
+      (r) => r.name == 'Action Surge',
+    );
+    secondWind.used = 1;
+    actionSurge.used = 1;
+    jarson.currentHp = jarson.maxHp - 10;
+
+    final short = rules.restPreview(jarson, longRest: false);
+    expect(short, [
+      'Second Wind: ${secondWind.max - 1} â†’ ${secondWind.max} of '
+          '${secondWind.max} left',
+    ]);
+
+    final long = rules.restPreview(jarson, longRest: true);
+    expect(
+      long,
+      contains(
+        'HP: ${jarson.maxHp - 10} â†’ ${jarson.maxHp} of '
+        '${jarson.maxHp}',
+      ),
+    );
+    expect(long.any((l) => l.startsWith('Action Surge: 0 â†’ 1')), isTrue);
+    expect(long.any((l) => l.startsWith('Second Wind')), isTrue);
+
+    // Just a preview - nothing was actually recovered.
+    expect(secondWind.used, 1);
+    expect(jarson.currentHp, jarson.maxHp - 10);
+  });
+
   test('applyLongRest clears Temporary HP', () {
     final jarson = buildSampleJarson();
     rules.setTempHp(jarson, 8);

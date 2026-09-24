@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:uuid/uuid.dart';
 
 import '../data/homebrew_catalog.dart';
@@ -1097,6 +1099,76 @@ void applyLongRest(Character c) {
   c.exhaustionLevel = (c.exhaustionLevel - 1).clamp(0, 6);
   c.deathSaveSuccesses = 0;
   c.deathSaveFailures = 0;
+}
+
+/// What a Short or Long Rest would change for [c], one line per change
+/// ("HP 12 â†’ 45", "Second Wind 0 â†’ 2 of 2 left") - empty if nothing
+/// would. Worked out by resting a copy, so the preview always matches
+/// [applyShortRest]/[applyLongRest] exactly.
+List<String> restPreview(Character c, {required bool longRest}) {
+  final after = Character.fromJson(
+    jsonDecode(jsonEncode(c.toJson())) as Map<String, dynamic>,
+  );
+  longRest ? applyLongRest(after) : applyShortRest(after);
+
+  final changes = <String>[];
+  void change(String label, Object before, Object now, [String suffix = '']) {
+    if (before != now) changes.add('$label: $before â†’ $now$suffix');
+  }
+
+  change('HP', c.currentHp, after.currentHp, ' of ${c.maxHp}');
+  change('Temporary HP', c.tempHp, after.tempHp);
+  change(
+    'Hit Dice',
+    c.hitDiceTotal - c.hitDiceSpent,
+    after.hitDiceTotal - after.hitDiceSpent,
+    ' of ${c.hitDiceTotal} left',
+  );
+  change('Exhaustion', c.exhaustionLevel, after.exhaustionLevel);
+  if (c.deathSaveSuccesses + c.deathSaveFailures > 0 &&
+      after.deathSaveSuccesses + after.deathSaveFailures == 0) {
+    changes.add('Death saves cleared');
+  }
+  for (var i = 0; i < c.resources.length; i++) {
+    final r = c.resources[i];
+    change(
+      r.name,
+      r.max - r.used,
+      r.max - after.resources[i].used,
+      ' of ${r.max} left',
+    );
+  }
+  final slots = c.spellcasting?.slots ?? const <int, SpellSlot>{};
+  final slotsAfter = after.spellcasting?.slots ?? const <int, SpellSlot>{};
+  for (final level in slots.keys.toList()..sort()) {
+    final s = slots[level]!;
+    change(
+      'Level $level spell slots',
+      s.max - s.used,
+      s.max - slotsAfter[level]!.used,
+      ' of ${s.max} left',
+    );
+  }
+  final spells = c.spellcasting?.spells ?? const <KnownSpell>[];
+  final spellsAfter = after.spellcasting?.spells ?? const <KnownSpell>[];
+  for (var i = 0; i < spells.length; i++) {
+    final s = spells[i];
+    if (s.freeCasts <= 0) continue; // none, or at will
+    change(
+      '${knownSpellRef(s)?.name ?? s.spellKey} free casts',
+      s.freeCasts - s.freeCastsUsed,
+      s.freeCasts - spellsAfter[i].freeCastsUsed,
+      ' of ${s.freeCasts} left',
+    );
+  }
+  final concentrating = c.spellcasting?.concentratingOn;
+  if (concentrating != null && after.spellcasting?.concentratingOn == null) {
+    changes.add(
+      'Ends Concentration on '
+      '${spellRefFor(concentrating)?.name ?? concentrating}',
+    );
+  }
+  return changes;
 }
 
 /// Average result of rolling a die like "d10" - offered as the default
