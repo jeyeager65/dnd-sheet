@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// The "Ledger" visual identity: a dark leather-bound ledger cover, parchment
-/// ink, and a teal accent - chosen over Forge/Field Manual mockups earlier.
-/// Kept as named constants (not just baked into ThemeData) because several
-/// custom widgets (ExpandableRow, StatGrid, Tally) need direct access to
-/// these colors beyond what Theme.of(context) exposes.
-class LedgerColors {
-  LedgerColors._();
+/// The app's visual identity: a dark leather-bound ledger-book cover,
+/// parchment ink, and a teal accent - chosen over Forge/Field Manual
+/// mockups earlier. Kept as named constants (not just baked into
+/// ThemeData) because several custom widgets (ExpandableRow, StatGrid,
+/// Tally) need direct access to these colors beyond what
+/// Theme.of(context) exposes.
+class AppColors {
+  AppColors._();
 
   static const paper = Color(0xFF1B1E29);
   static const paper2 = Color(0xFF252A38);
@@ -20,8 +21,8 @@ class LedgerColors {
   static const onAccent = Color(0xFFF0ECDD);
 }
 
-class LedgerTheme {
-  LedgerTheme._();
+class AppTheme {
+  AppTheme._();
 
   /// The character's name on the sheet header uses this - a sturdy upright
   /// slab serif, picked after two rejected alternatives (a typewriter face,
@@ -29,7 +30,7 @@ class LedgerTheme {
   static TextStyle nameStyle({double fontSize = 22}) => GoogleFonts.bitter(
     fontWeight: FontWeight.w800,
     fontSize: fontSize,
-    color: LedgerColors.ink,
+    color: AppColors.ink,
     letterSpacing: 0.3,
   );
 
@@ -42,7 +43,7 @@ class LedgerTheme {
   }) => GoogleFonts.jetBrainsMono(
     fontSize: fontSize,
     fontWeight: weight,
-    color: color ?? LedgerColors.ink,
+    color: color ?? AppColors.ink,
     fontFeatures: const [FontFeature.tabularFigures()],
   );
 
@@ -50,58 +51,58 @@ class LedgerTheme {
     final base = ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      scaffoldBackgroundColor: LedgerColors.paper,
+      scaffoldBackgroundColor: AppColors.paper,
       fontFamily: GoogleFonts.sourceSans3().fontFamily,
       colorScheme: const ColorScheme.dark(
-        surface: LedgerColors.paper,
-        primary: LedgerColors.accent,
-        onPrimary: LedgerColors.onAccent,
-        secondary: LedgerColors.accentSoft,
-        error: LedgerColors.danger,
+        surface: AppColors.paper,
+        primary: AppColors.accent,
+        onPrimary: AppColors.onAccent,
+        secondary: AppColors.accentSoft,
+        error: AppColors.danger,
       ),
     );
 
     return base.copyWith(
       textTheme: GoogleFonts.sourceSans3TextTheme(base.textTheme)
-          .apply(bodyColor: LedgerColors.ink, displayColor: LedgerColors.ink),
+          .apply(bodyColor: AppColors.ink, displayColor: AppColors.ink),
       appBarTheme: AppBarTheme(
-        backgroundColor: LedgerColors.paper,
-        foregroundColor: LedgerColors.ink,
+        backgroundColor: AppColors.paper,
+        foregroundColor: AppColors.ink,
         elevation: 0,
         centerTitle: false,
         titleTextStyle: nameStyle(fontSize: 19),
         shape: const Border(
-          bottom: BorderSide(color: LedgerColors.rule, width: 3),
+          bottom: BorderSide(color: AppColors.rule, width: 3),
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: LedgerColors.paper2,
-        indicatorColor: LedgerColors.accent,
+        backgroundColor: AppColors.paper2,
+        indicatorColor: AppColors.accent,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final selected = states.contains(WidgetState.selected);
           return GoogleFonts.sourceSans3(
             fontSize: 11,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.4,
-            color: selected ? LedgerColors.onAccent : LedgerColors.inkDim,
+            color: selected ? AppColors.onAccent : AppColors.inkDim,
           );
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           final selected = states.contains(WidgetState.selected);
           return IconThemeData(
-            color: selected ? LedgerColors.onAccent : LedgerColors.inkDim,
+            color: selected ? AppColors.onAccent : AppColors.inkDim,
           );
         }),
       ),
       dividerTheme: const DividerThemeData(
-        color: LedgerColors.rule,
+        color: AppColors.rule,
         thickness: 1,
         space: 1,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: LedgerColors.accent,
-          foregroundColor: LedgerColors.onAccent,
+          backgroundColor: AppColors.accent,
+          foregroundColor: AppColors.onAccent,
           textStyle: GoogleFonts.sourceSans3(
             fontWeight: FontWeight.w700,
             fontSize: 14,
@@ -112,8 +113,8 @@ class LedgerTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: LedgerColors.accent,
-          side: const BorderSide(color: LedgerColors.accentSoft),
+          foregroundColor: AppColors.accent,
+          side: const BorderSide(color: AppColors.accentSoft),
           textStyle: GoogleFonts.sourceSans3(
             fontWeight: FontWeight.w600,
             fontSize: 13,
@@ -123,7 +124,7 @@ class LedgerTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: LedgerColors.accent,
+          foregroundColor: AppColors.accent,
           textStyle: GoogleFonts.sourceSans3(
             fontWeight: FontWeight.w600,
             fontSize: 13,
@@ -132,19 +133,19 @@ class LedgerTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: LedgerColors.paper2,
+        fillColor: AppColors.paper2,
         border: const UnderlineInputBorder(
-          borderSide: BorderSide(color: LedgerColors.inkDim, width: 2),
+          borderSide: BorderSide(color: AppColors.inkDim, width: 2),
         ),
         enabledBorder: const UnderlineInputBorder(
-          borderSide: BorderSide(color: LedgerColors.rule),
+          borderSide: BorderSide(color: AppColors.rule),
         ),
         focusedBorder: const UnderlineInputBorder(
-          borderSide: BorderSide(color: LedgerColors.accent, width: 2),
+          borderSide: BorderSide(color: AppColors.accent, width: 2),
         ),
         labelStyle: GoogleFonts.sourceSans3(
           fontSize: 16,
-          color: LedgerColors.inkDim,
+          color: AppColors.inkDim,
         ),
         // A dropdown always has a value, so its label is always in the
         // floating (shrunk) state - unlike a blank text field, which
@@ -154,7 +155,7 @@ class LedgerTheme {
         floatingLabelStyle: GoogleFonts.sourceSans3(
           fontSize: 14,
           letterSpacing: 0.4,
-          color: LedgerColors.inkDim,
+          color: AppColors.inkDim,
         ),
       ),
     );

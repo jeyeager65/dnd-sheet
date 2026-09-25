@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../theme/ledger_theme.dart';
+import '../theme/app_theme.dart';
 
 /// Coordinates a set of sibling [ExpandableRow]s so opening one collapses
 /// whichever other one in the group was open - one instance per group,
@@ -144,7 +144,7 @@ class _ExpandableRowState extends State<ExpandableRow> {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: LedgerColors.rule)),
+        border: Border(bottom: BorderSide(color: AppColors.rule)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -178,7 +178,7 @@ class _ExpandableRowState extends State<ExpandableRow> {
                               widget.title,
                               style: const TextStyle(
                                 fontWeight: FontWeight.w600,
-                                color: LedgerColors.ink,
+                                color: AppColors.ink,
                               ),
                             ),
                             if (widget.tag != null) ...[
@@ -187,7 +187,7 @@ class _ExpandableRowState extends State<ExpandableRow> {
                                 widget.tag!,
                                 style: const TextStyle(
                                   fontSize: 12,
-                                  color: LedgerColors.inkDim,
+                                  color: AppColors.inkDim,
                                 ),
                               ),
                             ],
@@ -211,9 +211,9 @@ class _ExpandableRowState extends State<ExpandableRow> {
                       ),
                       child: Text(
                         widget.value!,
-                        style: LedgerTheme.dataStyle(
+                        style: AppTheme.dataStyle(
                           fontSize: 13,
-                          color: LedgerColors.inkDim,
+                          color: AppColors.inkDim,
                         ),
                       ),
                     ),
@@ -228,9 +228,7 @@ class _ExpandableRowState extends State<ExpandableRow> {
                       child: Icon(
                         Icons.chevron_right,
                         size: 18,
-                        color: _isOpen
-                            ? LedgerColors.accent
-                            : LedgerColors.inkDim,
+                        color: _isOpen ? AppColors.accent : AppColors.inkDim,
                       ),
                     ),
                   ),
@@ -245,7 +243,7 @@ class _ExpandableRowState extends State<ExpandableRow> {
               child: DefaultTextStyle(
                 style: const TextStyle(
                   fontSize: 13,
-                  color: LedgerColors.inkDim,
+                  color: AppColors.inkDim,
                   height: 1.4,
                 ),
                 child: widget.body,

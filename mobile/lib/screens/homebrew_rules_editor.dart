@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import '../data/homebrew_catalog.dart';
 import '../data/homebrew_repository.dart';
 import '../data/srd_catalog.dart';
-import '../theme/ledger_theme.dart';
-import '../widgets/ledger_bits.dart';
+import '../theme/app_theme.dart';
+import '../widgets/common_bits.dart';
 import '../widgets/weapon_stats_fields.dart';
 
 /// The rules fields for a homebrew entry, by kind - what makes a homebrew
@@ -201,7 +201,7 @@ class _HomebrewRulesEditorState extends State<HomebrewRulesEditor> {
         children: [
           Text(
             max == null ? label : '$label (choose $max)',
-            style: const TextStyle(fontSize: 12, color: LedgerColors.inkDim),
+            style: const TextStyle(fontSize: 12, color: AppColors.inkDim),
           ),
           Wrap(
             spacing: 4,
@@ -268,7 +268,7 @@ class _HomebrewRulesEditorState extends State<HomebrewRulesEditor> {
             margin: const EdgeInsets.only(bottom: 10),
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              border: Border.all(color: LedgerColors.rule),
+              border: Border.all(color: AppColors.rule),
             ),
             child: Column(
               children: [
@@ -304,7 +304,7 @@ class _HomebrewRulesEditorState extends State<HomebrewRulesEditor> {
                     IconButton(
                       onPressed: () => _set(key, [...items]..removeAt(i)),
                       icon: const Icon(Icons.delete_outline, size: 18),
-                      color: LedgerColors.inkDim,
+                      color: AppColors.inkDim,
                     ),
                   ],
                 ),
@@ -364,7 +364,7 @@ class _HomebrewRulesEditorState extends State<HomebrewRulesEditor> {
         if (rows.isEmpty)
           const Text(
             'Always prepared once granted; free casts need no slot.',
-            style: TextStyle(fontSize: 12, color: LedgerColors.inkDim),
+            style: TextStyle(fontSize: 12, color: AppColors.inkDim),
           ),
         for (final (i, row) in rows.indexed)
           Container(
@@ -372,7 +372,7 @@ class _HomebrewRulesEditorState extends State<HomebrewRulesEditor> {
             margin: const EdgeInsets.only(bottom: 8),
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              border: Border.all(color: LedgerColors.rule),
+              border: Border.all(color: AppColors.rule),
             ),
             child: Column(
               children: [
@@ -413,7 +413,7 @@ class _HomebrewRulesEditorState extends State<HomebrewRulesEditor> {
                       onPressed: () =>
                           _set('grantedSpells', [...rows]..removeAt(i)),
                       icon: const Icon(Icons.delete_outline, size: 18),
-                      color: LedgerColors.inkDim,
+                      color: AppColors.inkDim,
                     ),
                   ],
                 ),
@@ -981,7 +981,7 @@ class _HomebrewRulesEditorState extends State<HomebrewRulesEditor> {
               IconButton(
                 onPressed: () => _set('spells', [...spells]..removeAt(i)),
                 icon: const Icon(Icons.delete_outline, size: 18),
-                color: LedgerColors.inkDim,
+                color: AppColors.inkDim,
               ),
             ],
           ),

@@ -9,10 +9,10 @@ import '../domain/character_sheet_pdf.dart';
 import '../domain/rules.dart' as rules;
 import '../models/character.dart';
 import '../models/homebrew.dart';
-import '../theme/ledger_theme.dart';
+import '../theme/app_theme.dart';
 import '../widgets/expandable_row.dart';
 import '../widgets/layout.dart';
-import '../widgets/ledger_bits.dart';
+import '../widgets/common_bits.dart';
 import '../widgets/markdown_text.dart';
 import '../widgets/stat_grid.dart';
 import '../widgets/weapon_stats_fields.dart';
@@ -269,10 +269,10 @@ class _CharacterSheetScreenState extends State<CharacterSheetScreen> {
                   horizontal: 18,
                   vertical: 8,
                 ),
-                color: LedgerColors.accent.withValues(alpha: 0.18),
+                color: AppColors.accent.withValues(alpha: 0.18),
                 child: Text(
                   '${character.snapshotStatusLabel} — not the current in-play sheet.',
-                  style: const TextStyle(fontSize: 12, color: LedgerColors.ink),
+                  style: const TextStyle(fontSize: 12, color: AppColors.ink),
                 ),
               ),
             Expanded(child: tabs[_tab]),
@@ -286,16 +286,13 @@ class _CharacterSheetScreenState extends State<CharacterSheetScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  character.name,
-                  style: LedgerTheme.nameStyle(fontSize: 18),
-                ),
+                Text(character.name, style: AppTheme.nameStyle(fontSize: 18)),
                 Text(
                   'Lv.${character.level} ${character.classLabel}',
                   style: const TextStyle(
                     fontSize: 11,
                     letterSpacing: 0.4,
-                    color: LedgerColors.inkDim,
+                    color: AppColors.inkDim,
                   ),
                 ),
               ],
@@ -556,10 +553,7 @@ class _OverviewTabState extends State<_OverviewTab> {
               child: Text(
                 '${key.toUpperCase()} $value from $source '
                 '(your own score: ${character.abilityScores.of(key)}).',
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: LedgerColors.inkDim,
-                ),
+                style: const TextStyle(fontSize: 12, color: AppColors.inkDim),
               ),
             ),
         const SectionLabel('Species'),
@@ -659,7 +653,7 @@ class _OverviewTabState extends State<_OverviewTab> {
         for (final ability in const ['str', 'dex', 'con', 'int', 'wis', 'cha'])
           Container(
             decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: LedgerColors.rule)),
+              border: Border(bottom: BorderSide(color: AppColors.rule)),
             ),
             child: Row(
               children: [
@@ -674,7 +668,7 @@ class _OverviewTabState extends State<_OverviewTab> {
                   rules.formatModifier(
                     rules.savingThrowModifier(character, ability),
                   ),
-                  style: LedgerTheme.dataStyle(
+                  style: AppTheme.dataStyle(
                     fontSize: 14,
                     weight: FontWeight.w600,
                   ),
@@ -697,7 +691,7 @@ class _OverviewTabState extends State<_OverviewTab> {
               final skill = _skillEntryFor(ref);
               return Container(
                 decoration: const BoxDecoration(
-                  border: Border(bottom: BorderSide(color: LedgerColors.rule)),
+                  border: Border(bottom: BorderSide(color: AppColors.rule)),
                 ),
                 child: Row(
                   children: [
@@ -726,7 +720,7 @@ class _OverviewTabState extends State<_OverviewTab> {
                       rules.formatModifier(
                         rules.skillModifier(character, skill),
                       ),
-                      style: LedgerTheme.dataStyle(
+                      style: AppTheme.dataStyle(
                         fontSize: 14,
                         weight: FontWeight.w600,
                       ),
@@ -740,7 +734,7 @@ class _OverviewTabState extends State<_OverviewTab> {
           padding: EdgeInsets.only(top: 4, bottom: 16),
           child: Text(
             'Second checkbox is Expertise (double proficiency bonus).',
-            style: TextStyle(fontSize: 11, color: LedgerColors.inkDim),
+            style: TextStyle(fontSize: 11, color: AppColors.inkDim),
           ),
         ),
         const SectionLabel('Proficiencies'),
@@ -977,7 +971,7 @@ class _CombatTab extends StatelessWidget {
                 const Text(
                   'Nothing to recover - everything a rest restores is '
                   'already full.',
-                  style: TextStyle(color: LedgerColors.inkDim),
+                  style: TextStyle(color: AppColors.inkDim),
                 )
               else
                 for (final line in changes)
@@ -1044,7 +1038,7 @@ class _CombatTab extends StatelessWidget {
         if (character.tempHp > 0) ...[
           Text(
             '+${character.tempHp} temp',
-            style: const TextStyle(color: LedgerColors.inkDim, fontSize: 12),
+            style: const TextStyle(color: AppColors.inkDim, fontSize: 12),
           ),
           const SizedBox(height: 8),
         ],
@@ -1107,9 +1101,9 @@ class _CombatTab extends StatelessWidget {
                     title: 'Unarmed Strike',
                     subtitle: Text(
                       '${rules.formatModifier(unarmed.attack)} / ${unarmed.damage}',
-                      style: LedgerTheme.dataStyle(
+                      style: AppTheme.dataStyle(
                         fontSize: 13,
-                        color: LedgerColors.inkDim,
+                        color: AppColors.inkDim,
                       ),
                     ),
                     body: MarkdownText(
@@ -1149,7 +1143,7 @@ class _CombatTab extends StatelessWidget {
               '${rules.pdfAttackRowCount(character) - 6} past that '
               "(weapons first, then Breath Weapon, then damage cantrips) "
               "won't be printed.",
-              style: const TextStyle(fontSize: 12, color: LedgerColors.inkDim),
+              style: const TextStyle(fontSize: 12, color: AppColors.inkDim),
             ),
           ),
         SectionLabel(
@@ -1205,7 +1199,7 @@ class _CombatTab extends StatelessWidget {
                                 onChanged();
                               },
                               style: TextButton.styleFrom(
-                                foregroundColor: LedgerColors.danger,
+                                foregroundColor: AppColors.danger,
                               ),
                               child: const Text('Remove'),
                             ),
@@ -1261,7 +1255,7 @@ class _CombatTab extends StatelessWidget {
           children: [
             Text(
               '${character.hitDiceTotal - character.hitDiceSpent} / ${character.hitDiceTotal} ${character.hitDiceDie} remaining',
-              style: const TextStyle(color: LedgerColors.inkDim),
+              style: const TextStyle(color: AppColors.inkDim),
             ),
           ],
         ),
@@ -1284,7 +1278,7 @@ class _CombatTab extends StatelessWidget {
                   : null,
               icon: const Icon(Icons.undo, size: 18),
               tooltip: 'Undo a spent Hit Die (no HP change)',
-              color: LedgerColors.inkDim,
+              color: AppColors.inkDim,
             ),
           ],
         ),
@@ -1302,7 +1296,7 @@ class _CombatTab extends StatelessWidget {
                       fontSize: 11,
                       letterSpacing: 0.6,
                       fontWeight: FontWeight.w600,
-                      color: LedgerColors.inkDim,
+                      color: AppColors.inkDim,
                     ),
                   ),
                   Row(
@@ -1318,7 +1312,7 @@ class _CombatTab extends StatelessWidget {
                       ),
                       Text(
                         '${character.heroicInspiration}',
-                        style: LedgerTheme.dataStyle(
+                        style: AppTheme.dataStyle(
                           fontSize: 16,
                           weight: FontWeight.w700,
                         ),
@@ -1345,7 +1339,7 @@ class _CombatTab extends StatelessWidget {
                       fontSize: 11,
                       letterSpacing: 0.6,
                       fontWeight: FontWeight.w600,
-                      color: LedgerColors.inkDim,
+                      color: AppColors.inkDim,
                     ),
                   ),
                   _ExhaustionRow(character: character, onChanged: onChanged),
@@ -1511,7 +1505,7 @@ Future<Map<String, int>?> _showAsiDialog(BuildContext context) {
               children: [
                 const Text(
                   'Increase one ability by 2, or two abilities by 1 each (max 20).',
-                  style: TextStyle(color: LedgerColors.inkDim),
+                  style: TextStyle(color: AppColors.inkDim),
                 ),
                 const SizedBox(height: 12),
                 SegmentedButton<String>(
@@ -1552,10 +1546,7 @@ Future<Map<String, int>?> _showAsiDialog(BuildContext context) {
                   if (first == second)
                     const Text(
                       'Pick two different abilities.',
-                      style: TextStyle(
-                        color: LedgerColors.danger,
-                        fontSize: 12,
-                      ),
+                      style: TextStyle(color: AppColors.danger, fontSize: 12),
                     ),
                 ],
               ],
@@ -1657,7 +1648,7 @@ Future<void> _showMaxHpDialog(
                       const Spacer(),
                       Text(
                         '+${perLevel[l - 1]}',
-                        style: LedgerTheme.dataStyle(fontSize: 13),
+                        style: AppTheme.dataStyle(fontSize: 13),
                       ),
                     ],
                   ),
@@ -1732,7 +1723,7 @@ Future<void> _showTempHpDialog(
           if (character.tempHp > 0)
             Text(
               'Currently ${character.tempHp}.',
-              style: const TextStyle(color: LedgerColors.inkDim),
+              style: const TextStyle(color: AppColors.inkDim),
             ),
           const SizedBox(height: 8),
           const Text(
@@ -1740,7 +1731,7 @@ Future<void> _showTempHpDialog(
             "you have, it doesn't add to it. They're lost first when you "
             'take damage, and they last until depleted or you finish a '
             'Long Rest.',
-            style: TextStyle(color: LedgerColors.inkDim, fontSize: 12),
+            style: TextStyle(color: AppColors.inkDim, fontSize: 12),
           ),
           const SizedBox(height: 12),
           TextField(
@@ -1870,7 +1861,7 @@ Future<void> _showTakeDamageDialog(
                         step,
                         style: const TextStyle(
                           fontSize: 12,
-                          color: LedgerColors.inkDim,
+                          color: AppColors.inkDim,
                         ),
                       ),
                     ),
@@ -1989,7 +1980,7 @@ Future<void> _showAddResourceDialog(
               const Text(
                 'Always fully recovers on a Long Rest, same as every '
                 'other resource.',
-                style: TextStyle(fontSize: 11, color: LedgerColors.inkDim),
+                style: TextStyle(fontSize: 11, color: AppColors.inkDim),
               ),
               const SizedBox(height: 12),
               TextField(
@@ -2066,7 +2057,7 @@ Future<void> _showSpendHitDieDialog(
                       onPressed: roll > 1 ? () => setState(() => roll--) : null,
                       icon: const Icon(Icons.remove_circle_outline),
                     ),
-                    Text('$roll', style: LedgerTheme.dataStyle(fontSize: 20)),
+                    Text('$roll', style: AppTheme.dataStyle(fontSize: 20)),
                     IconButton(
                       onPressed: () => setState(() => roll++),
                       icon: const Icon(Icons.add_circle_outline),
@@ -2075,7 +2066,7 @@ Future<void> _showSpendHitDieDialog(
                 ),
                 Text(
                   'Heals ${(roll + conMod).clamp(0, 999999)} HP.',
-                  style: const TextStyle(color: LedgerColors.inkDim),
+                  style: const TextStyle(color: AppColors.inkDim),
                 ),
               ],
             ),
@@ -2114,7 +2105,7 @@ class _DeathSaves extends StatelessWidget {
             width: 78,
             child: Text(
               label,
-              style: const TextStyle(color: LedgerColors.inkDim, fontSize: 13),
+              style: const TextStyle(color: AppColors.inkDim, fontSize: 13),
             ),
           ),
           for (var n = 1; n <= 3; n++)
@@ -2123,7 +2114,7 @@ class _DeathSaves extends StatelessWidget {
               icon: Icon(
                 count >= n ? Icons.circle : Icons.circle_outlined,
                 size: 20,
-                color: count >= n ? color : LedgerColors.inkDim,
+                color: count >= n ? color : AppColors.inkDim,
               ),
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
@@ -2135,13 +2126,11 @@ class _DeathSaves extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        row('Successes', character.deathSaveSuccesses, LedgerColors.accent, (
-          n,
-        ) {
+        row('Successes', character.deathSaveSuccesses, AppColors.accent, (n) {
           character.deathSaveSuccesses = n;
           onChanged();
         }),
-        row('Failures', character.deathSaveFailures, LedgerColors.danger, (n) {
+        row('Failures', character.deathSaveFailures, AppColors.danger, (n) {
           character.deathSaveFailures = n;
           onChanged();
         }),
@@ -2167,11 +2156,11 @@ class _ExhaustionRow extends StatelessWidget {
                 }
               : null,
           icon: const Icon(Icons.remove_circle_outline, size: 18),
-          color: LedgerColors.inkDim,
+          color: AppColors.inkDim,
         ),
         Text(
           'Level ${character.exhaustionLevel} / 6',
-          style: LedgerTheme.dataStyle(fontSize: 14),
+          style: AppTheme.dataStyle(fontSize: 14),
         ),
         IconButton(
           onPressed: character.exhaustionLevel < 6
@@ -2181,7 +2170,7 @@ class _ExhaustionRow extends StatelessWidget {
                 }
               : null,
           icon: const Icon(Icons.add_circle_outline, size: 18),
-          color: LedgerColors.inkDim,
+          color: AppColors.inkDim,
         ),
       ],
     );
@@ -2307,18 +2296,16 @@ class _ConditionChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          border: Border.all(
-            color: active ? LedgerColors.accent : LedgerColors.rule,
-          ),
+          border: Border.all(color: active ? AppColors.accent : AppColors.rule),
           color: active
-              ? LedgerColors.accent.withValues(alpha: 0.18)
+              ? AppColors.accent.withValues(alpha: 0.18)
               : Colors.transparent,
         ),
         child: Text(
           label,
           style: TextStyle(
             fontSize: 12,
-            color: active ? LedgerColors.accent : LedgerColors.inkDim,
+            color: active ? AppColors.accent : AppColors.inkDim,
           ),
         ),
       ),
@@ -2346,16 +2333,16 @@ class _SpendRestore extends StatelessWidget {
         IconButton(
           onPressed: onSpend,
           icon: const Icon(Icons.remove_circle_outline, size: 18),
-          color: LedgerColors.inkDim,
+          color: AppColors.inkDim,
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(minWidth: 30, minHeight: 30),
           tooltip: 'Spend a use',
         ),
-        Text('$remaining/$max', style: LedgerTheme.dataStyle(fontSize: 13)),
+        Text('$remaining/$max', style: AppTheme.dataStyle(fontSize: 13)),
         IconButton(
           onPressed: onRestore,
           icon: const Icon(Icons.add_circle_outline, size: 18),
-          color: LedgerColors.inkDim,
+          color: AppColors.inkDim,
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(minWidth: 30, minHeight: 30),
           tooltip: 'Restore a use',
@@ -2407,7 +2394,7 @@ class _InnateAttackRow extends StatelessWidget {
       title: attack.name,
       subtitle: Text(
         detail,
-        style: LedgerTheme.dataStyle(fontSize: 13, color: LedgerColors.inkDim),
+        style: AppTheme.dataStyle(fontSize: 13, color: AppColors.inkDim),
       ),
       trailing: _SpendRestore(
         remaining: resource.max - resource.used,
@@ -2514,7 +2501,7 @@ class _WeaponRow extends StatelessWidget {
       title: weapon.name,
       subtitle: Text(
         '${rules.formatModifier(attack.bonus)} / ${damage.text}',
-        style: LedgerTheme.dataStyle(fontSize: 13, color: LedgerColors.inkDim),
+        style: AppTheme.dataStyle(fontSize: 13, color: AppColors.inkDim),
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2547,7 +2534,7 @@ class _WeaponRow extends StatelessWidget {
               padding: EdgeInsets.only(top: 4),
               child: Text(
                 'Not proficient - no Proficiency Bonus on the attack.',
-                style: TextStyle(fontSize: 12, color: LedgerColors.danger),
+                style: TextStyle(fontSize: 12, color: AppColors.danger),
               ),
             ),
           for (final (label, amount) in damageEffects) ...[
@@ -2568,7 +2555,7 @@ class _WeaponRow extends StatelessWidget {
                 IconButton(
                   onPressed: () => _removeSpecialFeature(index),
                   icon: const Icon(Icons.delete_outline, size: 16),
-                  color: LedgerColors.inkDim,
+                  color: AppColors.inkDim,
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(
                     minWidth: 26,
@@ -2584,7 +2571,7 @@ class _WeaponRow extends StatelessWidget {
               children: [
                 const Text(
                   'Consecutive hits on this target: ',
-                  style: TextStyle(fontSize: 12, color: LedgerColors.inkDim),
+                  style: TextStyle(fontSize: 12, color: AppColors.inkDim),
                 ),
                 IconButton(
                   onPressed: weapon.hitStreak > 0
@@ -2641,7 +2628,7 @@ class _WeaponRow extends StatelessWidget {
                 TextButton(
                   onPressed: onRemove,
                   style: TextButton.styleFrom(
-                    foregroundColor: LedgerColors.danger,
+                    foregroundColor: AppColors.danger,
                   ),
                   child: const Text('Remove'),
                 ),
@@ -3143,10 +3130,7 @@ class _MountRow extends StatelessWidget {
         padding: const EdgeInsets.only(top: 1),
         child: Text(
           'AC ${mount.armorClass} · ${mount.currentHp}/${mount.maxHp} HP',
-          style: LedgerTheme.dataStyle(
-            fontSize: 13,
-            color: LedgerColors.inkDim,
-          ),
+          style: AppTheme.dataStyle(fontSize: 13, color: AppColors.inkDim),
         ),
       ),
       body: Column(
@@ -3161,7 +3145,7 @@ class _MountRow extends StatelessWidget {
             const Text(
               'Disappeared at 0 HP - cast Find Steed again to bring it '
               'back.',
-              style: TextStyle(color: LedgerColors.inkDim),
+              style: TextStyle(color: AppColors.inkDim),
             ),
           ],
           if (mount.traits.isNotEmpty) ...[
@@ -3238,9 +3222,7 @@ class _MountRow extends StatelessWidget {
               const Spacer(),
               TextButton(
                 onPressed: onRemove,
-                style: TextButton.styleFrom(
-                  foregroundColor: LedgerColors.danger,
-                ),
+                style: TextButton.styleFrom(foregroundColor: AppColors.danger),
                 child: const Text('Remove'),
               ),
             ],
@@ -3460,14 +3442,14 @@ class _FeaturesTab extends StatelessWidget {
             padding: EdgeInsets.only(bottom: 4),
             child: Text(
               'Nothing open right now.',
-              style: TextStyle(color: LedgerColors.inkDim),
+              style: TextStyle(color: AppColors.inkDim),
             ),
           ),
         for (final choice in character.pendingChoices)
           Container(
             padding: const EdgeInsets.symmetric(vertical: 9),
             decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: LedgerColors.rule)),
+              border: Border(bottom: BorderSide(color: AppColors.rule)),
             ),
             child: Row(
               children: [
@@ -3484,7 +3466,7 @@ class _FeaturesTab extends StatelessWidget {
                 IconButton(
                   onPressed: () => _removePendingChoice(choice.id),
                   icon: const Icon(Icons.delete_outline, size: 18),
-                  color: LedgerColors.inkDim,
+                  color: AppColors.inkDim,
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(
                     minWidth: 30,
@@ -3504,7 +3486,7 @@ class _FeaturesTab extends StatelessWidget {
             padding: EdgeInsets.only(bottom: 4),
             child: Text(
               'None recorded.',
-              style: TextStyle(color: LedgerColors.inkDim),
+              style: TextStyle(color: AppColors.inkDim),
             ),
           ),
         ExpandableGroup(
@@ -3570,7 +3552,7 @@ class _FeaturesTab extends StatelessWidget {
                           TextButton(
                             onPressed: () => _removeFeat(f.name),
                             style: TextButton.styleFrom(
-                              foregroundColor: LedgerColors.danger,
+                              foregroundColor: AppColors.danger,
                             ),
                             child: const Text('Remove'),
                           ),
@@ -3617,7 +3599,7 @@ class _SheetTextBlock extends StatelessWidget {
               "What the exported PDF prints for this - keep it to a line or "
               "two, the sheet's boxes are small. Applies to every "
               'character with it.',
-              style: TextStyle(fontSize: 12, color: LedgerColors.inkDim),
+              style: TextStyle(fontSize: 12, color: AppColors.inkDim),
             ),
             const SizedBox(height: 10),
             TextField(
@@ -3665,7 +3647,7 @@ class _SheetTextBlock extends StatelessWidget {
           padding: const EdgeInsets.only(left: 8),
           decoration: const BoxDecoration(
             border: Border(
-              left: BorderSide(color: LedgerColors.accentSoft, width: 2),
+              left: BorderSide(color: AppColors.accentSoft, width: 2),
             ),
           ),
           child: Column(
@@ -3679,7 +3661,7 @@ class _SheetTextBlock extends StatelessWidget {
                       fontSize: 10,
                       letterSpacing: 1,
                       fontWeight: FontWeight.w600,
-                      color: LedgerColors.accent,
+                      color: AppColors.accent,
                     ),
                   ),
                   const Spacer(),
@@ -4065,7 +4047,7 @@ class _ItemsTab extends StatelessWidget {
             padding: EdgeInsets.only(bottom: 4),
             child: Text(
               'Unarmored - AC computes as 10 + Dex modifier.',
-              style: TextStyle(color: LedgerColors.inkDim),
+              style: TextStyle(color: AppColors.inkDim),
             ),
           ),
         if (armor != null)
@@ -4098,7 +4080,7 @@ class _ItemsTab extends StatelessWidget {
             padding: EdgeInsets.only(bottom: 4),
             child: Text(
               'Nothing else carried.',
-              style: TextStyle(color: LedgerColors.inkDim),
+              style: TextStyle(color: AppColors.inkDim),
             ),
           ),
         ExpandableGroup(
@@ -4131,7 +4113,7 @@ class _ItemsTab extends StatelessWidget {
                               _inventoryCaption(item)!,
                               style: const TextStyle(
                                 fontSize: 12,
-                                color: LedgerColors.inkDim,
+                                color: AppColors.inkDim,
                               ),
                             ),
                       body: Column(
@@ -4155,7 +4137,7 @@ class _ItemsTab extends StatelessWidget {
                               TextButton(
                                 onPressed: () => _removeItem(item.name),
                                 style: TextButton.styleFrom(
-                                  foregroundColor: LedgerColors.danger,
+                                  foregroundColor: AppColors.danger,
                                 ),
                                 child: const Text('Remove'),
                               ),
@@ -4366,7 +4348,7 @@ class _SpellsTab extends StatelessWidget {
             padding: EdgeInsets.only(bottom: 10),
             child: Text(
               'Not set up for this character. Only needed for a spellcasting class.',
-              style: TextStyle(color: LedgerColors.inkDim),
+              style: TextStyle(color: AppColors.inkDim),
             ),
           ),
           OutlinedButton(
@@ -4435,7 +4417,7 @@ class _SpellsTab extends StatelessWidget {
             padding: EdgeInsets.only(bottom: 4),
             child: Text(
               'All come back on a Short or Long Rest.',
-              style: TextStyle(color: LedgerColors.inkDim, fontSize: 12),
+              style: TextStyle(color: AppColors.inkDim, fontSize: 12),
             ),
           ),
         if (slotLevels.isEmpty)
@@ -4443,7 +4425,7 @@ class _SpellsTab extends StatelessWidget {
             padding: EdgeInsets.only(bottom: 8),
             child: Text(
               'No spell slots yet.',
-              style: TextStyle(color: LedgerColors.inkDim),
+              style: TextStyle(color: AppColors.inkDim),
             ),
           )
         else
@@ -4465,7 +4447,7 @@ class _SpellsTab extends StatelessWidget {
             padding: EdgeInsets.only(bottom: 8),
             child: Text(
               'None known.',
-              style: TextStyle(color: LedgerColors.inkDim),
+              style: TextStyle(color: AppColors.inkDim),
             ),
           ),
         ExpandableGroup(
@@ -4511,7 +4493,7 @@ class _SpellsTab extends StatelessWidget {
                         "(starred) don't count toward the limit.",
               style: TextStyle(
                 fontSize: 12,
-                color: overPrepared ? LedgerColors.danger : LedgerColors.inkDim,
+                color: overPrepared ? AppColors.danger : AppColors.inkDim,
               ),
             ),
           ),
@@ -4520,7 +4502,7 @@ class _SpellsTab extends StatelessWidget {
             padding: EdgeInsets.only(bottom: 4),
             child: Text(
               'None known.',
-              style: TextStyle(color: LedgerColors.inkDim),
+              style: TextStyle(color: AppColors.inkDim),
             ),
           ),
         ExpandableGroup(
@@ -4534,7 +4516,7 @@ class _SpellsTab extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: LedgerColors.inkDim,
+                      color: AppColors.inkDim,
                     ),
                   ),
                 ),
@@ -4597,11 +4579,11 @@ class _SlotRow extends StatelessWidget {
                         height: 16,
                         decoration: BoxDecoration(
                           border: Border.all(
-                            color: LedgerColors.accent,
+                            color: AppColors.accent,
                             width: 1.4,
                           ),
                           color: i < remaining
-                              ? LedgerColors.accent
+                              ? AppColors.accent
                               : Colors.transparent,
                         ),
                       ),
@@ -4612,7 +4594,7 @@ class _SlotRow extends StatelessWidget {
           ),
           Text(
             '$remaining/${slot.max}',
-            style: LedgerTheme.dataStyle(fontSize: 13),
+            style: AppTheme.dataStyle(fontSize: 13),
           ),
         ],
       ),
@@ -4638,15 +4620,15 @@ class _ConcentrationBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.only(left: 10),
       decoration: BoxDecoration(
-        border: Border.all(color: LedgerColors.accent),
-        color: LedgerColors.accent.withValues(alpha: 0.12),
+        border: Border.all(color: AppColors.accent),
+        color: AppColors.accent.withValues(alpha: 0.12),
       ),
       child: Row(
         children: [
           const Icon(
             Icons.center_focus_strong_outlined,
             size: 18,
-            color: LedgerColors.accent,
+            color: AppColors.accent,
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -4659,7 +4641,7 @@ class _ConcentrationBanner extends StatelessWidget {
                 ),
                 const Text(
                   'Taking damage: Con save, DC 10 or half the damage.',
-                  style: TextStyle(fontSize: 11, color: LedgerColors.inkDim),
+                  style: TextStyle(fontSize: 11, color: AppColors.inkDim),
                 ),
               ],
             ),
@@ -4762,7 +4744,7 @@ class _SpellRow extends StatelessWidget {
           : k.alwaysPrepared
           ? const Padding(
               padding: EdgeInsets.only(top: 1),
-              child: Icon(Icons.star, size: 14, color: LedgerColors.accent),
+              child: Icon(Icons.star, size: 14, color: AppColors.accent),
             )
           : InkWell(
               onTap: () {
@@ -4778,7 +4760,7 @@ class _SpellRow extends StatelessWidget {
           ? null
           : Text(
               summary,
-              style: const TextStyle(fontSize: 12, color: LedgerColors.inkDim),
+              style: const TextStyle(fontSize: 12, color: AppColors.inkDim),
             ),
       trailing: _canCast
           ? TextButton(
@@ -4824,7 +4806,7 @@ class _SpellRow extends StatelessWidget {
                 TextButton(
                   onPressed: onRemove,
                   style: TextButton.styleFrom(
-                    foregroundColor: LedgerColors.danger,
+                    foregroundColor: AppColors.danger,
                   ),
                   child: const Text('Remove'),
                 ),
@@ -4883,7 +4865,7 @@ Future<void> _showCastDialog(
                 if (levels.isEmpty && (freeLeft == null || freeLeft == 0))
                   Text(
                     'No level ${spell.level}+ slots left.',
-                    style: const TextStyle(color: LedgerColors.inkDim),
+                    style: const TextStyle(color: AppColors.inkDim),
                   ),
                 Wrap(
                   spacing: 8,
@@ -4920,7 +4902,7 @@ Future<void> _showCastDialog(
                   const SizedBox(height: 12),
                   const Text(
                     'Steed creature type',
-                    style: TextStyle(fontSize: 12, color: LedgerColors.inkDim),
+                    style: TextStyle(fontSize: 12, color: AppColors.inkDim),
                   ),
                   const SizedBox(height: 6),
                   Wrap(
@@ -4940,10 +4922,7 @@ Future<void> _showCastDialog(
                     padding: EdgeInsets.only(top: 10),
                     child: Text(
                       'Takes 10 minutes longer than its normal casting time.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: LedgerColors.inkDim,
-                      ),
+                      style: TextStyle(fontSize: 12, color: AppColors.inkDim),
                     ),
                   ),
                 if (choice != null &&
@@ -4967,7 +4946,7 @@ Future<void> _showCastDialog(
                           : 'Needs Concentration.',
                       style: const TextStyle(
                         fontSize: 12,
-                        color: LedgerColors.inkDim,
+                        color: AppColors.inkDim,
                       ),
                     ),
                   ),
@@ -5050,7 +5029,7 @@ Future<Map<String, int>?> _pickFeatAbilityIncrease(
           padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
           child: Text(
             '+${increase.amount}, to a maximum of ${increase.max}.',
-            style: const TextStyle(fontSize: 12, color: LedgerColors.inkDim),
+            style: const TextStyle(fontSize: 12, color: AppColors.inkDim),
           ),
         ),
         for (final key in increase.abilities)
@@ -5063,8 +5042,8 @@ Future<Map<String, int>?> _pickFeatAbilityIncrease(
               '${scores.of(key) >= increase.max ? ' (at maximum)' : ' → ${(scores.of(key) + increase.amount).clamp(0, increase.max)}'}',
               style: TextStyle(
                 color: scores.of(key) >= increase.max
-                    ? LedgerColors.inkDim
-                    : LedgerColors.ink,
+                    ? AppColors.inkDim
+                    : AppColors.ink,
               ),
             ),
           ),
@@ -5146,7 +5125,7 @@ class _ProficienciesSection extends StatelessWidget {
         .toolProficiencies(character)
         .where((t) => !character.extraToolProficiencies.contains(t))
         .toList();
-    const label = TextStyle(fontSize: 12, color: LedgerColors.inkDim);
+    const label = TextStyle(fontSize: 12, color: AppColors.inkDim);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -5216,7 +5195,7 @@ class _ProficienciesSection extends StatelessWidget {
             padding: const EdgeInsets.only(top: 2, bottom: 4),
             child: Text(
               'Plus $classCondition (from your class).',
-              style: const TextStyle(fontSize: 12, color: LedgerColors.inkDim),
+              style: const TextStyle(fontSize: 12, color: AppColors.inkDim),
             ),
           ),
         Wrap(
@@ -5273,7 +5252,7 @@ class _ProficienciesSection extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 12,
                     fontStyle: FontStyle.italic,
-                    color: LedgerColors.inkDim,
+                    color: AppColors.inkDim,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -5318,13 +5297,13 @@ class _Chip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(border: Border.all(color: LedgerColors.accent)),
+      decoration: BoxDecoration(border: Border.all(color: AppColors.accent)),
       child: Text(
         label,
-        style: LedgerTheme.dataStyle(
+        style: AppTheme.dataStyle(
           fontSize: 10,
           weight: FontWeight.w600,
-          color: LedgerColors.accent,
+          color: AppColors.accent,
         ),
       ),
     );
@@ -5340,15 +5319,13 @@ class _NoteLine extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.only(left: 8),
       decoration: const BoxDecoration(
-        border: Border(
-          left: BorderSide(color: LedgerColors.accentSoft, width: 2),
-        ),
+        border: Border(left: BorderSide(color: AppColors.accentSoft, width: 2)),
       ),
       child: Text(
         text,
         style: const TextStyle(
           fontStyle: FontStyle.italic,
-          color: LedgerColors.inkDim,
+          color: AppColors.inkDim,
         ),
       ),
     );

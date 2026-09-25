@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../theme/ledger_theme.dart';
+import '../theme/app_theme.dart';
 
 /// Renders the SRD's lightweight Markdown subset as styled text -
 /// Flutter's plain Text widget shows the raw asterisks/underscores/
@@ -88,9 +88,7 @@ class MarkdownText extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.only(left: 12),
           decoration: const BoxDecoration(
-            border: Border(
-              left: BorderSide(color: LedgerColors.accent, width: 3),
-            ),
+            border: Border(left: BorderSide(color: AppColors.accent, width: 3)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

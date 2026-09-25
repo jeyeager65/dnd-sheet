@@ -10,8 +10,8 @@ import '../data/srd_catalog.dart';
 import '../domain/rules.dart' as rules;
 import '../models/effect.dart';
 import '../models/homebrew.dart';
-import '../theme/ledger_theme.dart';
-import '../widgets/ledger_bits.dart';
+import '../theme/app_theme.dart';
+import '../widgets/common_bits.dart';
 import 'homebrew_rules_editor.dart';
 import 'share_json.dart';
 
@@ -145,7 +145,7 @@ class _HomebrewListScreenState extends State<HomebrewListScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(foregroundColor: LedgerColors.danger),
+            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
             child: const Text('Delete'),
           ),
         ],
@@ -240,7 +240,7 @@ class _HomebrewListScreenState extends State<HomebrewListScreen> {
                   'No homebrew content yet. Tap "+ Add" above to create '
                   'one, or type a name into any "Add" picker on a '
                   'character sheet.',
-                  style: TextStyle(color: LedgerColors.inkDim),
+                  style: TextStyle(color: AppColors.inkDim),
                 ),
               )
             : ListView(
@@ -259,14 +259,14 @@ class _HomebrewListScreenState extends State<HomebrewListScreen> {
                         title: Text(
                           entry.name,
                           style: const TextStyle(
-                            color: LedgerColors.ink,
+                            color: AppColors.ink,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                         subtitle: Text(
                           _entrySubtitle(entry),
                           style: const TextStyle(
-                            color: LedgerColors.inkDim,
+                            color: AppColors.inkDim,
                             fontSize: 12,
                           ),
                         ),
@@ -276,11 +276,11 @@ class _HomebrewListScreenState extends State<HomebrewListScreen> {
                             IconButton(
                               onPressed: () => _delete(entry),
                               icon: const Icon(Icons.delete_outline, size: 20),
-                              color: LedgerColors.inkDim,
+                              color: AppColors.inkDim,
                             ),
                             const Icon(
                               Icons.chevron_right,
-                              color: LedgerColors.inkDim,
+                              color: AppColors.inkDim,
                             ),
                           ],
                         ),
@@ -433,7 +433,7 @@ DropdownMenuItem<T> _menuHeading<T>(String label) => DropdownMenuItem<T>(
     style: const TextStyle(
       fontSize: 11,
       letterSpacing: 1,
-      color: LedgerColors.accent,
+      color: AppColors.accent,
     ),
   ),
 );
@@ -631,7 +631,7 @@ class _FormulaEditor extends StatelessWidget {
             padding: EdgeInsets.only(bottom: 6),
             child: Text(
               'No terms yet - always evaluates to 0.',
-              style: TextStyle(fontSize: 12, color: LedgerColors.inkDim),
+              style: TextStyle(fontSize: 12, color: AppColors.inkDim),
             ),
           )
         else
@@ -643,7 +643,7 @@ class _FormulaEditor extends StatelessWidget {
                 InputChip(
                   label: Text(term.displayLabel),
                   backgroundColor: term.customText != null
-                      ? LedgerColors.accent.withValues(alpha: 0.15)
+                      ? AppColors.accent.withValues(alpha: 0.15)
                       : null,
                   onPressed: () => _editTerm(context, terms, index),
                   onDeleted: () => _removeTerm(terms, index),
@@ -709,7 +709,7 @@ class _FormulaTermDialogState extends State<_FormulaTermDialog> {
               'Original text "${widget.initial!.customText}" doesn\'t '
               "match a recognized formula piece, so it currently "
               'evaluates to 0. Pick a type below to fix it.',
-              style: const TextStyle(fontSize: 12, color: LedgerColors.accent),
+              style: const TextStyle(fontSize: 12, color: AppColors.accent),
             ),
             const SizedBox(height: 12),
           ],
@@ -909,15 +909,15 @@ class _HomebrewEditScreenState extends State<HomebrewEditScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: LedgerColors.accent.withValues(alpha: 0.15),
-                  border: Border.all(color: LedgerColors.accent),
+                  color: AppColors.accent.withValues(alpha: 0.15),
+                  border: Border.all(color: AppColors.accent),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Icon(
                       Icons.warning_amber_outlined,
-                      color: LedgerColors.accent,
+                      color: AppColors.accent,
                       size: 20,
                     ),
                     const SizedBox(width: 8),
@@ -959,7 +959,7 @@ class _HomebrewEditScreenState extends State<HomebrewEditScreen> {
                 'Pending Choice, say) - matches how a real SRD feat\'s own '
                 'category works. Leave uncategorized and it only shows up '
                 'in the unrestricted "+ Add Feat" list.',
-                style: TextStyle(fontSize: 12, color: LedgerColors.inkDim),
+                style: TextStyle(fontSize: 12, color: AppColors.inkDim),
               ),
               const SizedBox(height: 6),
               DropdownButtonFormField<String?>(
@@ -1025,10 +1025,7 @@ class _HomebrewEditScreenState extends State<HomebrewEditScreen> {
                           'Attuned in inventory.'
                     : 'Numeric bonuses this grants when the feat is on '
                           'the sheet.',
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: LedgerColors.inkDim,
-                ),
+                style: const TextStyle(fontSize: 12, color: AppColors.inkDim),
               ),
               const SizedBox(height: 4),
               const Text(
@@ -1040,7 +1037,7 @@ class _HomebrewEditScreenState extends State<HomebrewEditScreen> {
                 'dialog). There\'s no way to affect a different creature.',
                 style: TextStyle(
                   fontSize: 11,
-                  color: LedgerColors.inkDim,
+                  color: AppColors.inkDim,
                   fontStyle: FontStyle.italic,
                 ),
               ),
@@ -1052,7 +1049,7 @@ class _HomebrewEditScreenState extends State<HomebrewEditScreen> {
                 'more while Bloodied, for a total of +2 when Bloodied.',
                 style: const TextStyle(
                   fontSize: 11,
-                  color: LedgerColors.inkDim,
+                  color: AppColors.inkDim,
                   fontStyle: FontStyle.italic,
                 ),
               ),
@@ -1126,7 +1123,7 @@ class _EffectRow extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(border: Border.all(color: LedgerColors.rule)),
+      decoration: BoxDecoration(border: Border.all(color: AppColors.rule)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1171,7 +1168,7 @@ class _EffectRow extends StatelessWidget {
                                   hint,
                                   style: const TextStyle(
                                     fontSize: 11,
-                                    color: LedgerColors.inkDim,
+                                    color: AppColors.inkDim,
                                   ),
                                 ),
                               ],
@@ -1188,7 +1185,7 @@ class _EffectRow extends StatelessWidget {
               IconButton(
                 onPressed: onRemove,
                 icon: const Icon(Icons.delete_outline, size: 20),
-                color: LedgerColors.inkDim,
+                color: AppColors.inkDim,
               ),
             ],
           ),
@@ -1274,7 +1271,7 @@ class _EffectRow extends StatelessWidget {
             const SizedBox(height: 8),
             const Text(
               'Formula',
-              style: TextStyle(fontSize: 12, color: LedgerColors.inkDim),
+              style: TextStyle(fontSize: 12, color: AppColors.inkDim),
             ),
             const SizedBox(height: 4),
             _FormulaEditor(

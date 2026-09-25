@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../domain/rules.dart' as rules;
 import '../models/character.dart';
-import '../theme/ledger_theme.dart';
+import '../theme/app_theme.dart';
 import '../widgets/markdown_text.dart';
 
 /// Lets the player pick from a feature's options (rules.FeatureOptionSet):
@@ -55,10 +55,7 @@ Future<List<String>?> showOptionPicker(
                   max == 1
                       ? 'Choose one.'
                       : 'Choose $max (${selected.length} chosen).',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: LedgerColors.inkDim,
-                  ),
+                  style: const TextStyle(fontSize: 12, color: AppColors.inkDim),
                 ),
                 if (options.length > 8)
                   TextField(
@@ -75,7 +72,7 @@ Future<List<String>?> showOptionPicker(
                       ? const Center(
                           child: Text(
                             'Nothing to choose from yet.',
-                            style: TextStyle(color: LedgerColors.inkDim),
+                            style: TextStyle(color: AppColors.inkDim),
                           ),
                         )
                       : ListView(

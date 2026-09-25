@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../data/srd_catalog.dart';
-import '../theme/ledger_theme.dart';
+import '../theme/app_theme.dart';
 import '../widgets/expandable_row.dart';
 import '../widgets/layout.dart';
-import '../widgets/ledger_bits.dart';
+import '../widgets/common_bits.dart';
 import '../widgets/markdown_text.dart';
 import 'homebrew_screen.dart';
 
@@ -86,7 +86,7 @@ class _ReferenceScreenState extends State<ReferenceScreen> {
     Widget tile(String title, {String? subtitle}) => ListTile(
       dense: true,
       selected: _selected == title,
-      selectedTileColor: LedgerColors.accent.withValues(alpha: 0.15),
+      selectedTileColor: AppColors.accent.withValues(alpha: 0.15),
       title: Text(title),
       subtitle: subtitle == null ? null : Text(subtitle),
       onTap: () => setState(() => _selected = title),
@@ -337,17 +337,17 @@ class _ReferenceScreenState extends State<ReferenceScreen> {
               title: const Text(
                 'My Homebrew',
                 style: TextStyle(
-                  color: LedgerColors.ink,
+                  color: AppColors.ink,
                   fontWeight: FontWeight.w600,
                 ),
               ),
               subtitle: const Text(
                 'Browse and edit your own content',
-                style: TextStyle(color: LedgerColors.inkDim, fontSize: 12),
+                style: TextStyle(color: AppColors.inkDim, fontSize: 12),
               ),
               trailing: const Icon(
                 Icons.chevron_right,
-                color: LedgerColors.inkDim,
+                color: AppColors.inkDim,
               ),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const HomebrewListScreen()),
@@ -362,20 +362,20 @@ class _ReferenceScreenState extends State<ReferenceScreen> {
                   title: Text(
                     category.title,
                     style: const TextStyle(
-                      color: LedgerColors.ink,
+                      color: AppColors.ink,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   subtitle: Text(
                     category.subtitle,
                     style: const TextStyle(
-                      color: LedgerColors.inkDim,
+                      color: AppColors.inkDim,
                       fontSize: 12,
                     ),
                   ),
                   trailing: const Icon(
                     Icons.chevron_right,
-                    color: LedgerColors.inkDim,
+                    color: AppColors.inkDim,
                   ),
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(
@@ -732,14 +732,10 @@ class _ReferenceListViewState extends State<ReferenceListView> {
           child: TextField(
             controller: _searchController,
             onChanged: (v) => setState(() => _query = v),
-            style: const TextStyle(color: LedgerColors.ink),
+            style: const TextStyle(color: AppColors.ink),
             decoration: const InputDecoration(
               hintText: 'Search…',
-              prefixIcon: Icon(
-                Icons.search,
-                color: LedgerColors.inkDim,
-                size: 20,
-              ),
+              prefixIcon: Icon(Icons.search, color: AppColors.inkDim, size: 20),
               isDense: true,
             ),
           ),
@@ -750,7 +746,7 @@ class _ReferenceListViewState extends State<ReferenceListView> {
                   padding: EdgeInsets.all(18),
                   child: Text(
                     'Nothing matches that search.',
-                    style: TextStyle(color: LedgerColors.inkDim),
+                    style: TextStyle(color: AppColors.inkDim),
                   ),
                 )
               : ListView(
@@ -807,13 +803,13 @@ class ReferenceChapterScreen extends StatelessWidget {
               title: Text(
                 section.name,
                 style: const TextStyle(
-                  color: LedgerColors.ink,
+                  color: AppColors.ink,
                   fontWeight: FontWeight.w600,
                 ),
               ),
               trailing: const Icon(
                 Icons.chevron_right,
-                color: LedgerColors.inkDim,
+                color: AppColors.inkDim,
               ),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(

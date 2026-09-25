@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../theme/ledger_theme.dart';
+import '../theme/app_theme.dart';
 
 /// The boxed "totals" row from the ledger mockup - reused for ability
 /// scores, combat stats, and currency alike, since a real ledger would
@@ -35,7 +35,7 @@ class BigStatGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: LedgerColors.ink, width: 2),
+        border: Border.all(color: AppColors.ink, width: 2),
       ),
       child: Row(
         children: [
@@ -46,7 +46,7 @@ class BigStatGrid extends StatelessWidget {
                   border: Border(
                     right: i == cells.length - 1
                         ? BorderSide.none
-                        : const BorderSide(color: LedgerColors.rule),
+                        : const BorderSide(color: AppColors.rule),
                   ),
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
@@ -59,7 +59,7 @@ class BigStatGrid extends StatelessWidget {
                         fontSize: 13,
                         letterSpacing: 0.5,
                         fontWeight: FontWeight.w600,
-                        color: LedgerColors.inkDim,
+                        color: AppColors.inkDim,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -71,10 +71,10 @@ class BigStatGrid extends StatelessWidget {
                       child: Text(
                         cells[i].value,
                         maxLines: 1,
-                        style: LedgerTheme.dataStyle(
+                        style: AppTheme.dataStyle(
                           fontSize: 24,
                           weight: FontWeight.w800,
-                          color: LedgerColors.accent,
+                          color: AppColors.accent,
                         ),
                       ),
                     ),
@@ -82,9 +82,9 @@ class BigStatGrid extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         cells[i].secondary!,
-                        style: LedgerTheme.dataStyle(
+                        style: AppTheme.dataStyle(
                           fontSize: 15,
-                          color: LedgerColors.inkDim,
+                          color: AppColors.inkDim,
                         ),
                       ),
                     ],
@@ -107,7 +107,7 @@ class StatGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: LedgerColors.ink, width: 2),
+        border: Border.all(color: AppColors.ink, width: 2),
       ),
       child: Row(
         children: [
@@ -118,7 +118,7 @@ class StatGrid extends StatelessWidget {
                   border: Border(
                     right: i == cells.length - 1
                         ? BorderSide.none
-                        : const BorderSide(color: LedgerColors.rule),
+                        : const BorderSide(color: AppColors.rule),
                   ),
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
@@ -126,7 +126,7 @@ class StatGrid extends StatelessWidget {
                   children: [
                     Text(
                       cells[i].value,
-                      style: LedgerTheme.dataStyle(
+                      style: AppTheme.dataStyle(
                         fontSize: 15,
                         weight: FontWeight.w700,
                       ),
@@ -138,7 +138,7 @@ class StatGrid extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 10,
                         letterSpacing: 0.5,
-                        color: LedgerColors.inkDim,
+                        color: AppColors.inkDim,
                       ),
                     ),
                   ],

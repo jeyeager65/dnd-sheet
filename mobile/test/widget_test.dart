@@ -15,7 +15,7 @@ import 'package:dnd_sheet/models/homebrew.dart';
 import 'package:dnd_sheet/screens/character_form_screen.dart';
 import 'package:dnd_sheet/screens/homebrew_screen.dart';
 import 'package:dnd_sheet/widgets/expandable_row.dart';
-import 'package:dnd_sheet/widgets/ledger_bits.dart';
+import 'package:dnd_sheet/widgets/common_bits.dart';
 
 void main() {
   // Bypasses charactersRepo.init() (which needs Hive/path_provider plugin

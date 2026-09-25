@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../data/homebrew_repository.dart';
 import '../data/srd_catalog.dart';
 import '../models/homebrew.dart';
-import '../theme/ledger_theme.dart';
+import '../theme/app_theme.dart';
 
 /// A searchable full-screen picker over a list of SRD catalog entries -
 /// used for Species/Background/Class in New Character, and every "add X"
@@ -129,31 +129,25 @@ class _CatalogPickerScreenState extends State<CatalogPickerScreen> {
                 controller: _searchController,
                 autofocus: true,
                 onChanged: (v) => setState(() => _query = v),
-                style: const TextStyle(color: LedgerColors.ink),
+                style: const TextStyle(color: AppColors.ink),
                 decoration: InputDecoration(
                   hintText: 'Search…',
-                  hintStyle: const TextStyle(color: LedgerColors.inkDim),
+                  hintStyle: const TextStyle(color: AppColors.inkDim),
                   prefixIcon: const Icon(
                     Icons.search,
-                    color: LedgerColors.inkDim,
+                    color: AppColors.inkDim,
                     size: 20,
                   ),
                   filled: true,
-                  fillColor: LedgerColors.paper2,
+                  fillColor: AppColors.paper2,
                   border: const UnderlineInputBorder(
-                    borderSide: BorderSide(
-                      color: LedgerColors.inkDim,
-                      width: 2,
-                    ),
+                    borderSide: BorderSide(color: AppColors.inkDim, width: 2),
                   ),
                   enabledBorder: const UnderlineInputBorder(
-                    borderSide: BorderSide(color: LedgerColors.rule),
+                    borderSide: BorderSide(color: AppColors.rule),
                   ),
                   focusedBorder: const UnderlineInputBorder(
-                    borderSide: BorderSide(
-                      color: LedgerColors.accent,
-                      width: 2,
-                    ),
+                    borderSide: BorderSide(color: AppColors.accent, width: 2),
                   ),
                   isDense: true,
                   contentPadding: const EdgeInsets.symmetric(vertical: 10),
@@ -183,7 +177,7 @@ class _CatalogPickerScreenState extends State<CatalogPickerScreen> {
                       padding: EdgeInsets.all(18),
                       child: Text(
                         'Nothing matches that search.',
-                        style: TextStyle(color: LedgerColors.inkDim),
+                        style: TextStyle(color: AppColors.inkDim),
                       ),
                     )
                   : ListView.separated(
@@ -206,8 +200,8 @@ class _CatalogPickerScreenState extends State<CatalogPickerScreen> {
                             item.name,
                             style: TextStyle(
                               color: reason == null
-                                  ? LedgerColors.ink
-                                  : LedgerColors.inkDim,
+                                  ? AppColors.ink
+                                  : AppColors.inkDim,
                             ),
                           ),
                           subtitle: caption.isEmpty
@@ -215,7 +209,7 @@ class _CatalogPickerScreenState extends State<CatalogPickerScreen> {
                               : Text(
                                   caption,
                                   style: const TextStyle(
-                                    color: LedgerColors.inkDim,
+                                    color: AppColors.inkDim,
                                     fontSize: 11,
                                   ),
                                 ),

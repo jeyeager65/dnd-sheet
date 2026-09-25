@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../theme/ledger_theme.dart';
+import '../theme/app_theme.dart';
 
 const _abilityNames = {
   'str': 'Strength',
@@ -100,7 +100,7 @@ class _BackgroundAbilityPickerState extends State<BackgroundAbilityPicker> {
         Text(
           'Raise ${widget.options.map((k) => _abilityNames[k]).join(', ')} '
           '(max 20).',
-          style: const TextStyle(fontSize: 12, color: LedgerColors.inkDim),
+          style: const TextStyle(fontSize: 12, color: AppColors.inkDim),
         ),
         const SizedBox(height: 6),
         SegmentedButton<bool>(
@@ -128,7 +128,7 @@ class _BackgroundAbilityPickerState extends State<BackgroundAbilityPicker> {
               padding: EdgeInsets.only(top: 4),
               child: Text(
                 'Pick two different abilities.',
-                style: TextStyle(fontSize: 12, color: LedgerColors.danger),
+                style: TextStyle(fontSize: 12, color: AppColors.danger),
               ),
             ),
         ],

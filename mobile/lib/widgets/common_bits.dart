@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../theme/ledger_theme.dart';
+import '../theme/app_theme.dart';
 
 /// Small shared pieces that don't warrant their own file: a section label
 /// ("RESOURCES" style heading, underlined to separate it from what's
@@ -25,7 +25,7 @@ class SectionLabel extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 6),
       decoration: const BoxDecoration(
         border: Border(
-          bottom: BorderSide(color: LedgerColors.accentSoft, width: 2),
+          bottom: BorderSide(color: AppColors.accentSoft, width: 2),
         ),
       ),
       child: Row(
@@ -38,7 +38,7 @@ class SectionLabel extends StatelessWidget {
                 fontSize: 14,
                 letterSpacing: 1.2,
                 fontWeight: FontWeight.w600,
-                color: LedgerColors.accent,
+                color: AppColors.accent,
               ),
             ),
           ),
@@ -60,8 +60,8 @@ class Tally extends StatelessWidget {
       height: 9,
       margin: const EdgeInsets.only(right: 6),
       decoration: BoxDecoration(
-        border: Border.all(color: LedgerColors.accent, width: 1.4),
-        color: on ? LedgerColors.accent : Colors.transparent,
+        border: Border.all(color: AppColors.accent, width: 1.4),
+        color: on ? AppColors.accent : Colors.transparent,
       ),
     );
   }
@@ -88,7 +88,7 @@ class FactRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 9),
       decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: LedgerColors.rule)),
+        border: Border(bottom: BorderSide(color: AppColors.rule)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -101,16 +101,16 @@ class FactRow extends StatelessWidget {
                   label,
                   style: const TextStyle(
                     fontWeight: FontWeight.w600,
-                    color: LedgerColors.ink,
+                    color: AppColors.ink,
                   ),
                 ),
               ),
-              Text(value, style: LedgerTheme.dataStyle(fontSize: 14)),
+              Text(value, style: AppTheme.dataStyle(fontSize: 14)),
               if (onDelete != null)
                 IconButton(
                   onPressed: onDelete,
                   icon: const Icon(Icons.delete_outline, size: 18),
-                  color: LedgerColors.inkDim,
+                  color: AppColors.inkDim,
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(
                     minWidth: 30,
@@ -124,10 +124,7 @@ class FactRow extends StatelessWidget {
               padding: const EdgeInsets.only(top: 2),
               child: Text(
                 caption!,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: LedgerColors.inkDim,
-                ),
+                style: const TextStyle(fontSize: 12, color: AppColors.inkDim),
               ),
             ),
         ],

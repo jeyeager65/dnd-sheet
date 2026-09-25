@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../data/character_repository.dart';
 import '../models/character.dart';
-import '../theme/ledger_theme.dart';
+import '../theme/app_theme.dart';
 import 'about.dart';
 import 'character_form_screen.dart';
 import 'character_sheet_screen.dart';
@@ -73,7 +73,7 @@ class CharacterListScreen extends StatelessWidget {
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(foregroundColor: LedgerColors.danger),
+            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
             child: const Text('Delete'),
           ),
         ],
@@ -133,7 +133,7 @@ class CharacterListScreen extends StatelessWidget {
                     padding: EdgeInsets.symmetric(vertical: 24),
                     child: Text(
                       'No characters yet. Add one below.',
-                      style: TextStyle(color: LedgerColors.inkDim),
+                      style: TextStyle(color: AppColors.inkDim),
                     ),
                   ),
                 for (final family in families)
@@ -233,7 +233,7 @@ class _CharacterFamilyCardState extends State<_CharacterFamilyCard> {
     return Container(
       margin: const EdgeInsets.only(bottom: 4),
       decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: LedgerColors.rule)),
+        border: Border(bottom: BorderSide(color: AppColors.rule)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -254,7 +254,7 @@ class _CharacterFamilyCardState extends State<_CharacterFamilyCard> {
                   icon: const Icon(
                     Icons.more_vert,
                     size: 20,
-                    color: LedgerColors.inkDim,
+                    color: AppColors.inkDim,
                   ),
                   onSelected: (value) {
                     if (value == 'duplicate') _duplicate(context);
@@ -277,7 +277,7 @@ class _CharacterFamilyCardState extends State<_CharacterFamilyCard> {
                 IconButton(
                   onPressed: () => onDelete(current),
                   icon: const Icon(Icons.delete_outline, size: 20),
-                  color: LedgerColors.inkDim,
+                  color: AppColors.inkDim,
                 ),
               ],
             ),
@@ -292,14 +292,14 @@ class _CharacterFamilyCardState extends State<_CharacterFamilyCard> {
                     Icon(
                       _expanded ? Icons.expand_more : Icons.chevron_right,
                       size: 18,
-                      color: LedgerColors.inkDim,
+                      color: AppColors.inkDim,
                     ),
                     const SizedBox(width: 4),
                     Text(
                       'Previous levels (${others.length})',
                       style: const TextStyle(
                         fontSize: 13,
-                        color: LedgerColors.inkDim,
+                        color: AppColors.inkDim,
                       ),
                     ),
                   ],
@@ -330,7 +330,7 @@ class _CharacterFamilyCardState extends State<_CharacterFamilyCard> {
                                 snapshot.snapshotStatusLabel,
                                 style: const TextStyle(
                                   fontSize: 13,
-                                  color: LedgerColors.inkDim,
+                                  color: AppColors.inkDim,
                                 ),
                               ),
                             ),
@@ -346,7 +346,7 @@ class _CharacterFamilyCardState extends State<_CharacterFamilyCard> {
                           IconButton(
                             onPressed: () => onDelete(snapshot),
                             icon: const Icon(Icons.delete_outline, size: 18),
-                            color: LedgerColors.inkDim,
+                            color: AppColors.inkDim,
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(
                               minWidth: 26,
@@ -388,7 +388,7 @@ class _CharacterRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: bordered
             ? const BoxDecoration(
-                border: Border(bottom: BorderSide(color: LedgerColors.rule)),
+                border: Border(bottom: BorderSide(color: AppColors.rule)),
               )
             : null,
         child: Row(
@@ -399,15 +399,15 @@ class _CharacterRow extends StatelessWidget {
                 children: [
                   Text(
                     name,
-                    style: LedgerTheme.nameStyle(fontSize: 17)
-                        .copyWith(color: LedgerColors.ink),
+                    style: AppTheme.nameStyle(fontSize: 17)
+                        .copyWith(color: AppColors.ink),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     meta,
                     style: const TextStyle(
                       fontSize: 13,
-                      color: LedgerColors.inkDim,
+                      color: AppColors.inkDim,
                     ),
                   ),
                 ],

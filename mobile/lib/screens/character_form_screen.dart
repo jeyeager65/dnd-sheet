@@ -7,7 +7,7 @@ import '../data/character_repository.dart';
 import '../data/srd_catalog.dart';
 import '../domain/rules.dart' as rules;
 import '../models/character.dart';
-import '../theme/ledger_theme.dart';
+import '../theme/app_theme.dart';
 import 'catalog_picker_screen.dart';
 
 enum CharacterFormMode { create, edit }
@@ -633,7 +633,7 @@ class _CharacterFormScreenState extends State<CharacterFormScreen> {
           const SizedBox(height: 4),
           Text(
             '${_chosenSkills.length} / ${choice.count} chosen',
-            style: const TextStyle(fontSize: 12, color: LedgerColors.inkDim),
+            style: const TextStyle(fontSize: 12, color: AppColors.inkDim),
           ),
         ],
       ),
@@ -686,7 +686,7 @@ class _CharacterFormScreenState extends State<CharacterFormScreen> {
                     '${_toolChoiceSelections[req.tool.key]?.length ?? 0} / ${req.count} chosen',
                     style: const TextStyle(
                       fontSize: 12,
-                      color: LedgerColors.inkDim,
+                      color: AppColors.inkDim,
                     ),
                   ),
                 ],
@@ -705,7 +705,7 @@ class _CharacterFormScreenState extends State<CharacterFormScreen> {
               'multiple entries with commas.',
               style: TextStyle(
                 fontSize: 12,
-                color: LedgerColors.inkDim,
+                color: AppColors.inkDim,
                 fontStyle: FontStyle.italic,
               ),
             ),
@@ -915,7 +915,7 @@ class _CharacterFormScreenState extends State<CharacterFormScreen> {
                     'Changing this recalculates Max HP, Hit Dice, and class/species resource uses, grants any newly-reached class or subclass features, and surfaces a Pending Choice for any Ability Score Improvement or subclass level crossed.',
                     style: TextStyle(
                       fontSize: 12,
-                      color: LedgerColors.inkDim,
+                      color: AppColors.inkDim,
                       fontStyle: FontStyle.italic,
                     ),
                   ),
@@ -986,7 +986,7 @@ class _CharacterFormScreenState extends State<CharacterFormScreen> {
                     'If HP, Hit Dice, or resources look wrong for your actual level (e.g. after a hand-built starting level or a missed level-up), this fixes them - without changing level, inventory, or feats. Not something you need often, which is why it lives here instead of on the sheet.',
                     style: TextStyle(
                       fontSize: 12,
-                      color: LedgerColors.inkDim,
+                      color: AppColors.inkDim,
                       fontStyle: FontStyle.italic,
                     ),
                   ),
@@ -1044,7 +1044,7 @@ class _CharacterFormScreenState extends State<CharacterFormScreen> {
                     'Background grants its skills, feat, and ability increases (added to the scores below when the character is created). Class and species features, resources, and spells are filled in; choices they offer (Expertise, a lineage\'s ability, ...) show up as Pending Choices on the Features tab.',
                     style: TextStyle(
                       fontSize: 12,
-                      color: LedgerColors.inkDim,
+                      color: AppColors.inkDim,
                       fontStyle: FontStyle.italic,
                     ),
                   ),
@@ -1095,7 +1095,7 @@ class _CharacterFormScreenState extends State<CharacterFormScreen> {
                     const SizedBox(height: 4),
                     Container(
                       decoration: const BoxDecoration(
-                        color: LedgerColors.paper2,
+                        color: AppColors.paper2,
                         border: _fieldBorder,
                       ),
                       padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -1103,7 +1103,7 @@ class _CharacterFormScreenState extends State<CharacterFormScreen> {
                         child: DropdownButtonFormField<String?>(
                           initialValue: _selectedAlignment,
                           isExpanded: true,
-                          style: const TextStyle(color: LedgerColors.ink),
+                          style: const TextStyle(color: AppColors.ink),
                           decoration: const InputDecoration(
                             border: InputBorder.none,
                             isDense: true,
@@ -1114,7 +1114,7 @@ class _CharacterFormScreenState extends State<CharacterFormScreen> {
                               value: null,
                               child: Text(
                                 'None',
-                                style: TextStyle(color: LedgerColors.inkDim),
+                                style: TextStyle(color: AppColors.inkDim),
                               ),
                             ),
                             for (final a in srdCatalog.alignments)
@@ -1199,13 +1199,13 @@ class _CharacterFormScreenState extends State<CharacterFormScreen> {
 const _fieldLabelStyle = TextStyle(
   fontSize: 11,
   letterSpacing: 0.8,
-  color: LedgerColors.inkDim,
+  color: AppColors.inkDim,
 );
 const _fieldBorder = Border(
-  top: BorderSide(color: LedgerColors.rule),
-  left: BorderSide(color: LedgerColors.rule),
-  right: BorderSide(color: LedgerColors.rule),
-  bottom: BorderSide(color: LedgerColors.inkDim, width: 2),
+  top: BorderSide(color: AppColors.rule),
+  left: BorderSide(color: AppColors.rule),
+  right: BorderSide(color: AppColors.rule),
+  bottom: BorderSide(color: AppColors.inkDim, width: 2),
 );
 
 /// A real, editable field - underlying data a Save actually writes back.
@@ -1232,14 +1232,14 @@ class _EditableField extends StatelessWidget {
           const SizedBox(height: 4),
           Container(
             decoration: const BoxDecoration(
-              color: LedgerColors.paper2,
+              color: AppColors.paper2,
               border: _fieldBorder,
             ),
             padding: const EdgeInsets.symmetric(horizontal: 10),
             child: TextField(
               controller: controller,
               keyboardType: numeric ? TextInputType.number : TextInputType.text,
-              style: const TextStyle(color: LedgerColors.ink),
+              style: const TextStyle(color: AppColors.ink),
               maxLines: multiline ? 4 : 1,
               minLines: 1,
               decoration: const InputDecoration(
@@ -1268,7 +1268,7 @@ class _Note extends StatelessWidget {
       text,
       style: const TextStyle(
         fontSize: 12,
-        color: LedgerColors.inkDim,
+        color: AppColors.inkDim,
         fontStyle: FontStyle.italic,
       ),
     ),
@@ -1302,7 +1302,7 @@ class _PickerField extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
               decoration: const BoxDecoration(
-                color: LedgerColors.paper2,
+                color: AppColors.paper2,
                 border: _fieldBorder,
               ),
               child: Row(
@@ -1311,9 +1311,7 @@ class _PickerField extends StatelessWidget {
                     child: Text(
                       value ?? placeholder,
                       style: TextStyle(
-                        color: value != null
-                            ? LedgerColors.ink
-                            : LedgerColors.inkDim,
+                        color: value != null ? AppColors.ink : AppColors.inkDim,
                         fontStyle: value != null
                             ? FontStyle.normal
                             : FontStyle.italic,
@@ -1323,7 +1321,7 @@ class _PickerField extends StatelessWidget {
                   const Icon(
                     Icons.chevron_right,
                     size: 18,
-                    color: LedgerColors.inkDim,
+                    color: AppColors.inkDim,
                   ),
                 ],
               ),
@@ -1356,17 +1354,17 @@ class _SkillChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
           border: Border.all(
-            color: selected ? LedgerColors.accent : LedgerColors.rule,
+            color: selected ? AppColors.accent : AppColors.rule,
           ),
           color: selected
-              ? LedgerColors.accent.withValues(alpha: 0.18)
+              ? AppColors.accent.withValues(alpha: 0.18)
               : Colors.transparent,
         ),
         child: Text(
           label,
           style: TextStyle(
             fontSize: 12,
-            color: selected ? LedgerColors.accent : LedgerColors.inkDim,
+            color: selected ? AppColors.accent : AppColors.inkDim,
           ),
         ),
       ),

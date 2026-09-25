@@ -7,7 +7,7 @@ import 'data/local_official_content.dart';
 import 'data/sheet_text_repository.dart';
 import 'data/srd_catalog.dart';
 import 'screens/character_list_screen.dart';
-import 'theme/ledger_theme.dart';
+import 'theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,7 +35,7 @@ class DndSheetApp extends StatelessWidget {
     return MaterialApp(
       title: 'DnD Sheet',
       debugShowCheckedModeBanner: false,
-      theme: LedgerTheme.data,
+      theme: AppTheme.data,
       home: const CharacterListScreen(),
     );
   }
