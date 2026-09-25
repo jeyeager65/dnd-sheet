@@ -1,4 +1,4 @@
-package com.dndsheet.dnd_sheet
+package dev.yeager.dndsheet
 
 import io.flutter.embedding.android.FlutterActivity
 

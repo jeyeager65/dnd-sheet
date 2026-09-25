@@ -41,7 +41,7 @@ void main() {
   ) async {
     PackageInfo.setMockInitialValues(
       appName: 'D&D Sheet',
-      packageName: 'com.dndsheet.dnd_sheet',
+      packageName: 'dev.yeager.dndsheet',
       version: '1.2.0',
       buildNumber: '57',
       buildSignature: '',

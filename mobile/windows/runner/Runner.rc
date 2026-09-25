@@ -89,11 +89,11 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.dndsheet" "\0"
+            VALUE "CompanyName", "Jason Yeager" "\0"
             VALUE "FileDescription", "D&D Sheet" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "dnd_sheet" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.dndsheet. All rights reserved." "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 Jason Yeager. All rights reserved." "\0"
             VALUE "OriginalFilename", "dnd_sheet.exe" "\0"
             VALUE "ProductName", "D&D Sheet" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
