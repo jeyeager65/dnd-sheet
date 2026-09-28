@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../data/homebrew_catalog.dart';
 import '../data/homebrew_repository.dart';
 import '../data/srd_catalog.dart';
+import '../domain/rules.dart' as rules;
 import '../theme/app_theme.dart';
 import '../widgets/common_bits.dart';
 import '../widgets/weapon_stats_fields.dart';
@@ -671,14 +672,111 @@ class _HomebrewRulesEditorState extends State<HomebrewRulesEditor> {
 
   List<Widget> _weapon() {
     final stats = WeaponStats.fromData(_d) ?? WeaponStats();
-    return weaponStatsFields(stats, (fn) {
-      fn();
+    void saveStats() {
       for (final e in stats.toData().entries) {
         _d[e.key] = e.value;
       }
       setState(() {});
       widget.onChanged({..._d});
-    });
+    }
+
+    final baseNames = [for (final w in srdCatalog.weaponsByKey.values) w.name]
+      ..sort();
+    return [
+      _dropdown<String>(
+        'Base weapon',
+        stats.baseWeapon ?? '',
+        ['', ...baseNames],
+        (v) {
+          final ref = v == null || v.isEmpty ? null : rules.srdWeaponNamed(v);
+          stats.baseWeapon = ref?.name;
+          if (ref != null) {
+            final (dice, type) = ref.splitDamage;
+            stats
+              ..damageDice = dice
+              ..damageType = type
+              ..category = ref.category
+              ..properties = [...ref.properties]
+              ..mastery = ref.mastery;
+          }
+          saveStats();
+        },
+        display: (n) => n.isEmpty ? 'None' : n,
+      ),
+      const Text(
+        'What kind of weapon this is, e.g. Greatsword for a magic '
+        'greatsword - it then counts as that weapon for Weapon Mastery '
+        'and proficiency. Picking one fills in the stats below.',
+        style: TextStyle(fontSize: 11, color: AppColors.inkDim),
+      ),
+      const SizedBox(height: 10),
+      // Keyed on the base weapon so picking one rebuilds these fields with
+      // its stats (they only read their initial value).
+      Column(
+        key: ValueKey('base:${stats.baseWeapon}'),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: weaponStatsFields(stats, (fn) {
+          fn();
+          saveStats();
+        }),
+      ),
+      const SizedBox(height: 12),
+      const Text(
+        'Magic weapon (optional)',
+        style: TextStyle(fontWeight: FontWeight.w600),
+      ),
+      const SizedBox(height: 8),
+      _dropdown<String>(
+        'Rarity',
+        _d['rarity'] as String? ?? '',
+        ['', ..._rarities],
+        (v) => _set('rarity', v == null || v.isEmpty ? null : v),
+        display: (r) => r.isEmpty ? 'None (not magic)' : r,
+      ),
+      _switch('requiresAttunement', 'Requires attunement'),
+      Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: TextFormField(
+          initialValue: '${stats.magicBonus}',
+          keyboardType: const TextInputType.numberWithOptions(signed: true),
+          decoration: const InputDecoration(
+            labelText: 'Magic bonus',
+            hintText: 'e.g. 1 for a +1 weapon',
+          ),
+          onChanged: (v) {
+            stats.magicBonus = int.tryParse(v.trim()) ?? 0;
+            saveStats();
+          },
+        ),
+      ),
+      Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: TextFormField(
+          initialValue: stats.specialFeatures.join('\n'),
+          maxLines: null,
+          minLines: 2,
+          decoration: const InputDecoration(
+            labelText: 'Special features',
+            hintText:
+                'One per line. Any special feature also gives the weapon '
+                'a consecutive-hit counter on the Combat tab.',
+          ),
+          onChanged: (v) {
+            stats.specialFeatures = [
+              for (final line in v.split('\n'))
+                if (line.trim().isNotEmpty) line.trim(),
+            ];
+            saveStats();
+          },
+        ),
+      ),
+      const Text(
+        'Saved onto the weapon when a character adds it - a character who '
+        'already has it keeps their own copy. A weapon that requires '
+        'attunement is also put in inventory, to tick Attuned there.',
+        style: TextStyle(fontSize: 11, color: AppColors.inkDim),
+      ),
+    ];
   }
 
   List<Widget> _armor() => [

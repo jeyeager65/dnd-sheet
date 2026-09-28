@@ -918,7 +918,28 @@ class _CombatTab extends StatelessWidget {
         if (!context.mounted) return;
         stats = await _showHomebrewWeaponDialog(context, picked.name);
         if (stats == null) return;
-        if (entry != null) saveHomebrewData(entry.id, stats.toData());
+        if (entry != null) {
+          // Keep any magic-weapon fields already set on the entry - the
+          // dialog only asks for the base stats.
+          stats
+            ..magicBonus = entry.data['magicBonus'] as int? ?? 0
+            ..specialFeatures =
+                (entry.data['specialFeatures'] as List?)?.cast<String>() ?? [];
+          saveHomebrewData(entry.id, stats.toData());
+        }
+      }
+      // Attunement is tracked on the inventory line, so a weapon that
+      // needs it also goes into inventory (unless it's already there).
+      final needsAttunement =
+          entry?.data['requiresAttunement'] as bool? ?? false;
+      if (needsAttunement &&
+          !character.inventory.any(
+            (i) => i.name.toLowerCase() == picked.name.toLowerCase(),
+          )) {
+        character.inventory = [
+          ...character.inventory,
+          InventoryEntry(name: picked.name, quantity: 1, equipped: true),
+        ];
       }
       character.weapons = [
         ...character.weapons,
@@ -926,7 +947,7 @@ class _CombatTab extends StatelessWidget {
           picked.name,
           proficient: rules.isProficientWithWeapon(
             character,
-            picked.name,
+            stats.baseWeapon ?? picked.name,
             stats.category,
             stats.properties,
           ),

@@ -625,19 +625,46 @@ String baseFeatName(String name) =>
 String? featNameChoice(String name) =>
     RegExp(r'\(([^)]*)\)$').firstMatch(name)?.group(1);
 
-/// Effects from attuned magic items - homebrew only (no built-in SRD
+/// Effects from carried magic items - homebrew only (no built-in SRD
 /// magic item needs this yet), matched the same way liveFeatureEffects
-/// matches feats: by name, against a same-named homebrew 'magicItem'
-/// entry. Ungated by anything else - "Requires Attunement" is exactly
-/// what InventoryEntry.attuned already tracks.
+/// matches feats: by name, against a same-named homebrew 'magicItem' or
+/// magic 'weapon' entry. A magic item's effects need the item Attuned;
+/// a magic weapon's need that only if it requires attunement ("Requires
+/// Attunement" is exactly what InventoryEntry.attuned already tracks),
+/// otherwise carrying it is enough. A weapon's own attack/damage effects
+/// are narrowed to attacks with that weapon by [matchingEffects].
 List<Effect> liveItemEffects(InventoryEntry item) {
-  if (!item.attuned) return const [];
-  final homebrew = homebrewRepo.entries.where(
+  final entry = _itemEntry(item.name);
+  if (entry == null) return const [];
+  final needsAttunement =
+      entry.kind == 'magicItem' ||
+      (entry.data['requiresAttunement'] as bool? ?? false);
+  if (needsAttunement && !item.attuned) return const [];
+  return entry.effects;
+}
+
+HomebrewEntry? _itemEntry(String name) {
+  final matches = homebrewRepo.entries.where(
     (e) =>
-        e.kind == 'magicItem' &&
-        e.name.toLowerCase() == item.name.toLowerCase(),
+        (e.kind == 'magicItem' || e.kind == 'weapon') &&
+        e.name.toLowerCase() == name.toLowerCase(),
   );
-  return homebrew.isNotEmpty ? homebrew.first.effects : const [];
+  if (matches.isEmpty) return null;
+  return matches.firstWhere(
+    (e) => e.kind == 'magicItem',
+    orElse: () => matches.first,
+  );
+}
+
+/// Whether [effect], from inventory item [item], counts toward a roll
+/// made with [weapon] - a homebrew magic weapon's attack/damage bonus
+/// belongs to attacks with that weapon alone, not every attack.
+bool _itemEffectApplies(InventoryEntry item, Effect effect, Weapon? weapon) {
+  if (effect.target != 'attackRoll' && effect.target != 'damageRoll') {
+    return true;
+  }
+  if (_itemEntry(item.name)?.kind != 'weapon') return true;
+  return weapon != null && weapon.name.toLowerCase() == item.name.toLowerCase();
 }
 
 /// Recognized Effect conditions - an unrecognized string never matches
@@ -688,7 +715,10 @@ List<(String, int)> matchingEffects(
     collect(feat.name, liveFeatureEffects(feat));
   }
   for (final item in c.inventory) {
-    collect(item.name, liveItemEffects(item));
+    collect(item.name, [
+      for (final e in liveItemEffects(item))
+        if (_itemEffectApplies(item, e, weapon)) e,
+    ]);
   }
   for (final (label, effect) in featureEffects(c)) {
     collect(label, [effect]);
@@ -960,7 +990,7 @@ int pdfAttackRowCount(Character c) =>
 /// name match first, then the longest SRD weapon name contained in its
 /// name ("Longsword +1", "Flame Tongue Longsword" -> Longsword). Null for a
 /// weapon that matches nothing (homebrew).
-SrdWeaponRef? srdWeaponFor(Weapon w) => srdWeaponNamed(w.name);
+SrdWeaponRef? srdWeaponFor(Weapon w) => srdWeaponNamed(w.baseWeapon ?? w.name);
 
 SrdWeaponRef? srdWeaponNamed(String name) {
   final lower = name.toLowerCase();

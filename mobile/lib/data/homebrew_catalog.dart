@@ -9,7 +9,12 @@ import 'srd_catalog.dart';
 // everywhere an SRD one does. Keys are documented on each type below.
 
 /// A weapon's stats. data keys: damageDice, damageType, category,
-/// properties (list), mastery.
+/// properties (list), mastery, baseWeapon (an SRD weapon name, for a
+/// weapon whose name doesn't say what kind it is) - plus, for a magic
+/// weapon, magicBonus
+/// (int) and specialFeatures (list of text), copied onto the character's
+/// weapon when it's added. (rarity/requiresAttunement live in the same
+/// data map but aren't weapon stats - see rules.itemInfo.)
 class WeaponStats {
   WeaponStats({
     this.damageDice = '1d6',
@@ -17,13 +22,20 @@ class WeaponStats {
     this.category = 'Simple Melee Weapons',
     List<String>? properties,
     this.mastery,
-  }) : properties = properties ?? [];
+    this.magicBonus = 0,
+    List<String>? specialFeatures,
+    this.baseWeapon,
+  }) : properties = properties ?? [],
+       specialFeatures = specialFeatures ?? [];
 
   String damageDice;
   String damageType;
   String category;
   List<String> properties;
   String? mastery;
+  int magicBonus;
+  List<String> specialFeatures;
+  String? baseWeapon;
 
   static WeaponStats? fromData(Map<String, dynamic> data) {
     if (data['damageDice'] == null) return null;
@@ -33,6 +45,9 @@ class WeaponStats {
       category: data['category'] as String? ?? 'Simple Melee Weapons',
       properties: (data['properties'] as List?)?.cast<String>() ?? [],
       mastery: data['mastery'] as String?,
+      magicBonus: data['magicBonus'] as int? ?? 0,
+      specialFeatures: (data['specialFeatures'] as List?)?.cast<String>() ?? [],
+      baseWeapon: data['baseWeapon'] as String?,
     );
   }
 
@@ -42,6 +57,9 @@ class WeaponStats {
     'category': category,
     'properties': properties,
     'mastery': mastery,
+    'magicBonus': magicBonus,
+    'specialFeatures': specialFeatures,
+    'baseWeapon': baseWeapon,
   };
 
   Weapon toWeapon(String name, {required bool proficient}) => Weapon(
@@ -56,6 +74,9 @@ class WeaponStats {
     proficient: proficient,
     finesse: properties.contains('Finesse'),
     category: category,
+    magicBonus: magicBonus,
+    specialFeatures: [...specialFeatures],
+    baseWeapon: baseWeapon,
   );
 }
 
@@ -199,6 +220,8 @@ HomebrewEntry? homebrewById(String id) =>
 //              shortDesc}], spells [{level, spells: [names]}]
 //  spell:      level, school, castingTime, range, components, duration,
 //              concentration, ritual, classes [names], higherLevel
+//  weapon:     see WeaponStats; a magic weapon also rarity,
+//              requiresAttunement, and effects (on the entry itself)
 //  magicItem:  itemCategory, rarity, requiresAttunement, charges (int),
 //              recharge ("dawn" | "long" | "short" | "none")
 //  feat, species, class (also): grantedSpells [{name, level (character/

@@ -783,8 +783,8 @@ class _FormulaTermDialogState extends State<_FormulaTermDialog> {
 }
 
 /// One generic edit form, kind-conditional sections - not a form-builder
-/// per kind. Every kind gets name/source/desc; only 'feat' and
-/// 'magicItem' get an Effects section, since those are the only two
+/// per kind. Every kind gets name/source/desc; only 'feat', 'magicItem',
+/// and 'weapon' get an Effects section, since those are the only ones
 /// rules.matchingEffects actually reads.
 class HomebrewEditScreen extends StatefulWidget {
   const HomebrewEditScreen({super.key, required this.entry});
@@ -827,7 +827,8 @@ class _HomebrewEditScreenState extends State<HomebrewEditScreen> {
 
   bool get _isFeat => widget.entry.kind == 'feat';
 
-  bool get _supportsEffects => _isFeat || widget.entry.kind == 'magicItem';
+  bool get _supportsEffects =>
+      _isFeat || const ['magicItem', 'weapon'].contains(widget.entry.kind);
 
   /// Non-blocking heads-up when this entry's name collides with real
   /// SRD/built-in content - the override is allowed (homebrew wins, see
@@ -1019,14 +1020,20 @@ class _HomebrewEditScreenState extends State<HomebrewEditScreen> {
             ],
             if (_supportsEffects) ...[
               const SectionLabel('Effects'),
-              Text(
-                widget.entry.kind == 'magicItem'
-                    ? 'Effects only apply while this item is marked '
-                          'Attuned in inventory.'
-                    : 'Numeric bonuses this grants when the feat is on '
-                          'the sheet.',
-                style: const TextStyle(fontSize: 12, color: AppColors.inkDim),
-              ),
+              Text(switch (widget.entry.kind) {
+                'magicItem' =>
+                  'Effects only apply while this item is marked '
+                      'Attuned in inventory.',
+                'weapon' =>
+                  'Effects apply while this weapon is in inventory '
+                      '(and marked Attuned, if it requires attunement). '
+                      'Attack and damage effects only count for attacks '
+                      'with this weapon - for a plain +1/+2/+3, use Magic '
+                      'bonus above instead.',
+                _ =>
+                  'Numeric bonuses this grants when the feat is on '
+                      'the sheet.',
+              }, style: const TextStyle(fontSize: 12, color: AppColors.inkDim)),
               const SizedBox(height: 4),
               const Text(
                 'Every effect changes something about the wearer/holder '

@@ -1054,6 +1054,62 @@ void main() {
     );
   });
 
+  test('a homebrew magic weapon\'s effects need attunement only if it requires it, and its attack/damage effects only count for that weapon', () {
+    final jarson = buildSampleJarson();
+    homebrewRepo.entries.add(
+      HomebrewEntry(
+        id: 'homebrew_test-sword',
+        kind: 'weapon',
+        name: 'Sword of the Failed Dragon Slayer',
+        effects: const [
+          Effect(target: 'damageRoll', formula: '1'),
+          Effect(target: 'initiative', formula: '2'),
+        ],
+        data: const {'damageDice': '2d6', 'requiresAttunement': true},
+      ),
+    );
+    final carried = InventoryEntry(
+      name: 'Sword of the Failed Dragon Slayer',
+      quantity: 1,
+    );
+    jarson.inventory = [...jarson.inventory, carried];
+    final sword = jarson.weapons.firstWhere(
+      (w) => w.name == 'Sword of the Failed Dragon Slayer',
+    );
+    final greatsword = jarson.weapons.firstWhere((w) => w.name == 'Greatsword');
+
+    // Requires attunement, not attuned - nothing.
+    expect(rules.sumEffects(jarson, 'damageRoll', weapon: sword), 0);
+    expect(
+      rules.matchingEffects(jarson, 'initiative').map((e) => e.$1),
+      isNot(contains('Sword of the Failed Dragon Slayer')),
+    );
+
+    carried.attuned = true;
+    expect(rules.sumEffects(jarson, 'damageRoll', weapon: sword), 1);
+    // The damage bonus is the sword's own, not every weapon's...
+    expect(rules.sumEffects(jarson, 'damageRoll', weapon: greatsword), 0);
+    // ...but a non-attack effect applies to the character as usual.
+    expect(
+      rules.matchingEffects(jarson, 'initiative').map((e) => e.$1),
+      contains('Sword of the Failed Dragon Slayer'),
+    );
+
+    // One that doesn't require attunement works just by being carried.
+    homebrewRepo.entries.removeWhere((e) => e.id == 'homebrew_test-sword');
+    homebrewRepo.entries.add(
+      HomebrewEntry(
+        id: 'homebrew_test-sword',
+        kind: 'weapon',
+        name: 'Sword of the Failed Dragon Slayer',
+        effects: const [Effect(target: 'damageRoll', formula: '1')],
+        data: const {'damageDice': '2d6'},
+      ),
+    );
+    carried.attuned = false;
+    expect(rules.sumEffects(jarson, 'damageRoll', weapon: sword), 1);
+  });
+
   test('a homebrew feat named exactly like a built-in one overrides it, rather than being shadowed', () {
     // Jarson already has Alert granted (sample_data.dart) - don't add a
     // second one, that would double-count the effect.

@@ -156,6 +156,7 @@ class Weapon {
     this.specialFeatures = const [],
     this.hitStreak = 0,
     this.category,
+    this.baseWeapon,
   });
 
   final String name;
@@ -183,6 +184,12 @@ class Weapon {
   /// entered without it.
   String? category;
 
+  /// The SRD weapon this one is a kind of ("Greatsword" for a homebrew
+  /// magic greatsword), for when the name alone doesn't say so - decides
+  /// which Weapon Mastery pick covers it (see rules.srdWeaponFor). Null
+  /// means "resolve by name".
+  String? baseWeapon;
+
   Map<String, dynamic> toJson() => {
     'name': name,
     'damageDice': damageDice,
@@ -196,6 +203,7 @@ class Weapon {
     'specialFeatures': specialFeatures,
     'hitStreak': hitStreak,
     'category': category,
+    'baseWeapon': baseWeapon,
   };
 
   factory Weapon.fromJson(Map<String, dynamic> j) => Weapon(
@@ -212,6 +220,7 @@ class Weapon {
         (j['specialFeatures'] as List?)?.cast<String>() ?? const [],
     hitStreak: j['hitStreak'] as int? ?? 0,
     category: j['category'] as String?,
+    baseWeapon: j['baseWeapon'] as String?,
   );
 }
 

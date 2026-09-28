@@ -136,6 +136,7 @@ Character buildSampleJarson() {
         proficient: true,
         magicBonus: 2,
         category: 'Martial Melee Weapons',
+        baseWeapon: 'Greatsword',
         specialFeatures: const [
           'Mounting Fury — 2nd consecutive hit on a target: +1d6 fire. 3rd+: +2d6 fire. Resets on a miss or when you switch targets.',
         ],

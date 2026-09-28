@@ -202,6 +202,51 @@ void main() {
     expect(rules.spellDamageInfo(ref, 5).dice, '3d8');
   });
 
+  test('a homebrew magic weapon carries its bonus and special features onto the weapon', () {
+    final e = _entry('weapon', 'Flame Tongue Test', {
+      'damageDice': '2d6',
+      'damageType': 'Slashing',
+      'category': 'Martial Melee Weapons',
+      'properties': ['Heavy', 'Two-Handed'],
+      'rarity': 'Very Rare',
+      'requiresAttunement': true,
+      'magicBonus': 2,
+      'specialFeatures': ['Mounting Fury: extra fire on consecutive hits.'],
+    });
+    final weapon = WeaponStats.fromData(e.data)!
+        .toWeapon(e.name, proficient: true);
+    expect(weapon.magicBonus, 2);
+    expect(weapon.specialFeatures, [
+      'Mounting Fury: extra fire on consecutive hits.',
+    ]);
+    final info = rules.itemInfo('Flame Tongue Test')!;
+    expect(info.rarity, 'Very Rare');
+    expect(info.requiresAttunement, isTrue);
+
+    // With no base weapon, the name says nothing about its kind...
+    final c = _build(
+      species: _srd(srdCatalog.species, 'Human'),
+      cls: _srd(srdCatalog.classOptions, 'Fighter'),
+    );
+    c.weaponMasteries = ['Greatsword'];
+    weapon.mastery = 'Graze';
+    expect(rules.masteryApplies(c, weapon), isFalse);
+    // ...with one, a Greatsword mastery pick covers it.
+    final based = WeaponStats.fromData({
+      ...e.data,
+      'baseWeapon': 'Greatsword',
+      'mastery': 'Graze',
+    })!.toWeapon(e.name, proficient: true);
+    expect(based.baseWeapon, 'Greatsword');
+    expect(rules.masteryApplies(c, based), isTrue);
+    expect(Weapon.fromJson(based.toJson()).baseWeapon, 'Greatsword');
+
+    // An entry saved before these fields existed still reads as mundane.
+    final plain = WeaponStats.fromData({'damageDice': '1d8'})!;
+    expect(plain.magicBonus, 0);
+    expect(plain.specialFeatures, isEmpty);
+  });
+
   test('a carried magic item with charges gets a resource', () {
     _entry('magicItem', 'Wand of Sparks', {
       'itemCategory': 'Wand',
