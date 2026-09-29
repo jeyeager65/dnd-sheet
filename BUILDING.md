@@ -56,10 +56,35 @@ either the free Community License if you qualify or a commercial one.
 
 ### Android signing
 
-Release APKs are currently signed with the debug key, as set in
-[`mobile/android/app/build.gradle.kts`](mobile/android/app/build.gradle.kts).
-That's fine for personal use and sideloading. A Play Store release would
-need a real signing key.
+Release APKs are signed with a permanent release key, so each new
+version installs over the last. Android only accepts an update signed
+with the same key as the installed app.
+
+- **Where the key lives:** a keystore outside the repo, in
+  `%USERPROFILE%\.dnd-sheet-signing\`. **Back that folder up.** If it's
+  lost, no future APK can install over the existing app.
+- **Setting it up (once):** run
+  [`mobile/tool/setup_android_signing.ps1`](mobile/tool/setup_android_signing.ps1).
+  It creates the keystore with a random password, or reuses the existing
+  one. It then writes `mobile/android/key.properties` (gitignored) for
+  local builds and stores the keystore and passwords as repository
+  secrets for CI with the GitHub CLI. It's safe to rerun, for example
+  on a new computer after restoring the folder.
+- **How builds use it:**
+  [`build.gradle.kts`](mobile/android/app/build.gradle.kts) signs release
+  builds with the key in `key.properties`. CI writes that file from the
+  `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`,
+  `ANDROID_KEY_ALIAS` and `ANDROID_KEY_PASSWORD` secrets, and fails if
+  they're missing. The exception is a pull request from a fork, which
+  can't see secrets and gets a debug-signed APK. The build log's "Show
+  signing certificate" step prints the certificate's SHA-256 digest.
+- **Without `key.properties`,** a local release build falls back to the
+  debug key. That APK won't install over a release-signed one, and vice
+  versa.
+- **Version codes:** a local build uses the build number from
+  `pubspec.yaml` (`+1`), while CI uses its run number. So a local build
+  usually can't install over a CI build, because Android sees it as a
+  downgrade. Pass `--build-number` with a higher number if you need to.
 
 ## Building with GitHub Actions
 

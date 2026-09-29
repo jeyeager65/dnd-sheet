@@ -34,10 +34,11 @@ Get the latest version from the
    isn't from the Play Store. Choose **Install anyway**.
 
 To update, install the new APK over the old one, which keeps your
-characters. The builds aren't signed with a permanent key yet, so if
-Android refuses with "App not installed" or a message about a conflict
-with an existing package, **export your characters and homebrew first**,
-then uninstall the old app, install the new one and import them.
+characters. If Android refuses with "App not installed" or a conflict
+with an existing package, the old copy came from a different source,
+such as a build you made yourself. **Export your characters and
+homebrew first**, then uninstall the old app, install the new one and
+import them.
 
 ### Windows
 
