@@ -1,5 +1,5 @@
 /// The character schema. A trimmed-down port of the Quasar app's
-/// models/character.ts - only the fields Jarson's sheet actually uses so
+/// models/character.ts - only the fields Torvek's sheet actually uses so
 /// far. Extend this as more of the real app gets ported, rather than
 /// modeling fields nothing reads yet.
 library;
@@ -171,7 +171,7 @@ class Weapon {
   List<String> specialFeatures;
 
   /// A generic counter for a special feature that scales with consecutive
-  /// hits on the same target (e.g. "Mounting Fury") - bump it after a hit,
+  /// hits on the same target (e.g. "Kindling") - bump it after a hit,
   /// reset it on a miss or when switching targets. Only meaningful once
   /// specialFeatures is non-empty.
   int hitStreak;

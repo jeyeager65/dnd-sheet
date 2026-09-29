@@ -1,13 +1,11 @@
 import '../models/character.dart';
 
-/// Jarson's data, seeded into Hive on first launch. This is a stand-in for
-/// the real app's character-creation flow and SRD catalog, both still
-/// unported - it exists so the sheet has real (not hardcoded-in-the-UI)
-/// data to compute against from day one.
-Character buildSampleJarson() {
+/// Torvek, a made-up level 9 Dragonborn Champion - a fully built sample
+/// character the tests compute against.
+Character buildSampleCharacter() {
   return Character(
-    id: 'jarson',
-    name: 'Jarson',
+    id: 'torvek',
+    name: 'Torvek',
     speciesLabel: 'Red · Fire',
     speciesKey: 'srd-2024_dragonborn-species',
     speciesChoice: 'Red',
@@ -28,7 +26,7 @@ Character buildSampleJarson() {
     maxHp: 76,
     currentHp: 76,
     // Half Plate + Shield: 15 + Dex modifier (max 2) [16] + 2 = 18,
-    // matching his known real AC exactly - computed, not hardcoded.
+    // giving AC 18 - computed, not hardcoded.
     equippedArmor: EquippedArmor(
       name: 'Half Plate Armor',
       armorClassFormula: '15 + Dex modifier (max 2)',
@@ -50,7 +48,7 @@ Character buildSampleJarson() {
       SkillEntry(name: 'Intimidation', ability: 'cha', proficient: false),
     ],
     // Resource keys follow rules.dart's recalculateClassResources scheme
-    // (`${classKey}_$name` / `${speciesKey}_$name`) so loading Jarson
+    // (`${classKey}_$name` / `${speciesKey}_$name`) so loading Torvek
     // through the repository (which recalculates on every load) never
     // creates a duplicate under the old ad hoc key.
     resources: [
@@ -129,7 +127,7 @@ Character buildSampleJarson() {
         category: 'Martial Melee Weapons',
       ),
       Weapon(
-        name: 'Sword of the Failed Dragon Slayer',
+        name: 'Emberfang, Blade of the Ashen Vigil',
         damageDice: '2d6',
         damageType: 'slashing',
         properties: const ['Heavy', 'Two-Handed'],
@@ -138,7 +136,7 @@ Character buildSampleJarson() {
         category: 'Martial Melee Weapons',
         baseWeapon: 'Greatsword',
         specialFeatures: const [
-          'Mounting Fury — 2nd consecutive hit on a target: +1d6 fire. 3rd+: +2d6 fire. Resets on a miss or when you switch targets.',
+          'Kindling — each consecutive hit on the same target adds 1d4 fire per earlier hit (max 2d4). Resets on a miss.',
         ],
       ),
     ],

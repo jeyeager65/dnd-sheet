@@ -211,13 +211,13 @@ void main() {
       'rarity': 'Very Rare',
       'requiresAttunement': true,
       'magicBonus': 2,
-      'specialFeatures': ['Mounting Fury: extra fire on consecutive hits.'],
+      'specialFeatures': ['Kindling: extra fire on consecutive hits.'],
     });
     final weapon = WeaponStats.fromData(e.data)!
         .toWeapon(e.name, proficient: true);
     expect(weapon.magicBonus, 2);
     expect(weapon.specialFeatures, [
-      'Mounting Fury: extra fire on consecutive hits.',
+      'Kindling: extra fire on consecutive hits.',
     ]);
     final info = rules.itemInfo('Flame Tongue Test')!;
     expect(info.rarity, 'Very Rare');

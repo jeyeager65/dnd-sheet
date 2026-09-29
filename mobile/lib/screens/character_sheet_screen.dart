@@ -27,7 +27,7 @@ import 'share_json.dart';
 /// Items / Spells structure; Combat is the default because that's the tab
 /// you actually need mid-session. Everything shown is computed from the
 /// Character in charactersRepo via domain/rules.dart, not hardcoded -
-/// change Jarson's feats or ability scores and the math here follows.
+/// change Torvek's feats or ability scores and the math here follows.
 class CharacterSheetScreen extends StatefulWidget {
   const CharacterSheetScreen({super.key, required this.characterId});
 

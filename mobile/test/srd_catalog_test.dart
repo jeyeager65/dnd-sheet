@@ -8,13 +8,13 @@ void main() {
     await srdCatalog.init();
   });
 
-  test('loads feats, including the ones already granted to Jarson', () {
+  test('loads feats, including the ones already granted to Torvek', () {
     expect(srdCatalog.featsByKey.length, greaterThan(15));
     final alert = srdCatalog.featsByKey.values.firstWhere(
       (f) => f.name == 'Alert',
     );
     // Alert's own `desc` is just an intro line - the real mechanics live
-    // in `benefits`, which is exactly the bug fixed for Jarson earlier.
+    // in `benefits`, which is exactly the bug fixed for Torvek earlier.
     expect(alert.fullDescription, contains('Initiative Proficiency'));
     expect(alert.fullDescription, contains('Initiative Swap'));
   });

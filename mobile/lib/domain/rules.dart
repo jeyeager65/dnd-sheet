@@ -1429,7 +1429,7 @@ void spendHitDie(Character c, int roll) {
 /// at level 1, then the average die result (rounded up) each level after -
 /// never a random roll, so this is safe to recompute at any time (the
 /// same rule the web app's recalculateDerivedStats relied on). Verified
-/// against Jarson's real numbers: d10, Con +2, level 9 -> 76, matching
+/// against the sample character's numbers: d10, Con +2, level 9 -> 76, matching
 /// the character as the DM originally built him.
 int maxHpForLevel({
   required String die,

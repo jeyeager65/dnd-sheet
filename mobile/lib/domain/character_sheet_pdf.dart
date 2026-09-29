@@ -366,7 +366,7 @@ void _drawWrapped(
 
 /// Same top-anchored placement as [_draw], but shrinks the font (down to
 /// [minFontSize]) until [text] actually fits [maxWidth] - a weapon's full
-/// name ("Sword of the Failed Dragon Slayer") can easily run past a
+/// name ("Emberfang, Blade of the Ashen Vigil") can easily run past a
 /// table cell's fixed printed width at the column's normal size, and
 /// there's no room to widen the cell itself (it's bounded by the sheet's
 /// own ruled lines). Cheaper than wrapping to a second line, which this
@@ -560,7 +560,7 @@ String _speciesDisplay(Character c) {
 /// The real class name ("Fighter") and, if chosen, subclass name
 /// ("Champion") - resolved fresh from the catalog rather than parsed out
 /// of classLabel, which isn't reliably "just the class name": a
-/// hand-seeded character (Jarson's own sample data) can have a classLabel
+/// hand-seeded character (Torvek's own sample data) can have a classLabel
 /// like "Dragonborn Fighter · Champion" that folds the species name in
 /// too, for its own display purposes elsewhere (the AppBar title). Falls
 /// back to splitting classLabel only when classKey doesn't resolve (a
@@ -808,7 +808,7 @@ Future<Uint8List> fillCharacterSheetTopSection(
   // reading only c.features left this box empty. Everything else in
   // c.features (class and subclass features alike - not distinguishing
   // 'subclass' from a subclass's own name as source, since
-  // sample_data.dart's Jarson uses the subclass name, e.g. 'Champion', not
+  // sample_data.dart's Torvek uses the subclass name, e.g. 'Champion', not
   // the literal string 'subclass') goes in Class Features. c.feats is
   // always feats, regardless of source (background, ASI-substitute, ...),
   // minus Ability Score Improvement: its effect is already in the ability

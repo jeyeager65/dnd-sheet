@@ -31,188 +31,188 @@ void main() {
   setUp(() {
     charactersRepo.characters
       ..clear()
-      ..add(buildSampleJarson());
+      ..add(buildSampleCharacter());
     homebrewRepo.entries.clear();
   });
 
   test(
     'a freshly-seeded character is its own family (familyId == id) and current',
     () {
-      final jarson = charactersRepo.byId('jarson');
-      expect(jarson.familyId, 'jarson');
-      expect(jarson.isCurrent, isTrue);
+      final torvek = charactersRepo.byId('torvek');
+      expect(torvek.familyId, 'torvek');
+      expect(torvek.isCurrent, isTrue);
       expect(charactersRepo.listFamilies(), [
-        [jarson],
+        [torvek],
       ]);
     },
   );
 
   test('levelUpCharacter advances the character in place by one level and leaves an automatic, non-current backup of the pre-level-up state', () async {
-    final jarson = charactersRepo.byId('jarson');
-    final beforeMaxHp = jarson.maxHp;
-    expect(jarson.level, 9);
+    final torvek = charactersRepo.byId('torvek');
+    final beforeMaxHp = torvek.maxHp;
+    expect(torvek.level, 9);
 
-    final summary = await charactersRepo.levelUpCharacter('jarson');
+    final summary = await charactersRepo.levelUpCharacter('torvek');
 
     // The same id/object advances forward - still current, same family.
-    expect(jarson.id, 'jarson');
-    expect(jarson.level, 10);
-    expect(jarson.isCurrent, isTrue);
+    expect(torvek.id, 'torvek');
+    expect(torvek.level, 10);
+    expect(torvek.isCurrent, isTrue);
     expect(summary.oldLevel, 9);
     expect(summary.newLevel, 10);
     expect(summary.oldMaxHp, beforeMaxHp);
-    expect(summary.newMaxHp, jarson.maxHp);
+    expect(summary.newMaxHp, torvek.maxHp);
 
     // A new, non-current backup exists at the OLD level, sharing no
     // mutable state with the (now leveled-up) original.
     final families = charactersRepo.listFamilies();
     expect(families.length, 1);
     expect(families.first.length, 2);
-    final backup = families.first.firstWhere((c) => c.id != 'jarson');
-    expect(backup.familyId, 'jarson');
+    final backup = families.first.firstWhere((c) => c.id != 'torvek');
+    expect(backup.familyId, 'torvek');
     expect(backup.isCurrent, isFalse);
     expect(backup.level, 9);
-    expect(backup.name, jarson.name);
+    expect(backup.name, torvek.name);
     backup.weapons = [];
-    expect(jarson.weapons, isNotEmpty);
+    expect(torvek.weapons, isNotEmpty);
   });
 
   test('levelUpCharacter logs a History entry naming the new features and Pending Choices gained at that level, not just Max HP', () async {
-    final jarson = charactersRepo.byId('jarson');
+    final torvek = charactersRepo.byId('torvek');
     // Level 4 -> 5 crosses Extra Attack/Tactical Shift (real class
     // features) with no Pending Choice; level 3 -> 4 crosses Ability
     // Score Improvement (a Pending Choice) with no new feature - between
     // them this exercises both halves of the enriched detail string.
-    // Cleared first: Jarson's own seed data already has every feature up
+    // Cleared first: Torvek's own seed data already has every feature up
     // to his real level 9 granted, so classFeaturesForLevelUp would
     // (correctly) find nothing "new" to grant without this.
-    jarson.features = [];
-    jarson.level = 4;
-    final atFive = await charactersRepo.levelUpCharacter('jarson');
-    expect(jarson.history.last.label, 'Leveled up: 4 → 5');
-    expect(jarson.history.last.detail, contains('Max HP:'));
-    expect(jarson.history.last.detail, contains('New features:'));
+    torvek.features = [];
+    torvek.level = 4;
+    final atFive = await charactersRepo.levelUpCharacter('torvek');
+    expect(torvek.history.last.label, 'Leveled up: 4 → 5');
+    expect(torvek.history.last.detail, contains('Max HP:'));
+    expect(torvek.history.last.detail, contains('New features:'));
     for (final name in atFive.newFeatureNames) {
-      expect(jarson.history.last.detail, contains(name));
+      expect(torvek.history.last.detail, contains(name));
     }
-    expect(jarson.history.last.detail, isNot(contains('New choices')));
+    expect(torvek.history.last.detail, isNot(contains('New choices')));
     // Level 4 -> 5 also crosses a Proficiency Bonus threshold (+2 -> +3),
     // which moves every proficient weapon's attack bonus too - both should
     // show up in the same detail string.
-    expect(jarson.history.last.detail, contains('Proficiency Bonus: +2 → +3.'));
-    expect(jarson.history.last.detail, contains('Weapons:'));
+    expect(torvek.history.last.detail, contains('Proficiency Bonus: +2 → +3.'));
+    expect(torvek.history.last.detail, contains('Weapons:'));
 
-    jarson.level = 3;
-    final atFour = await charactersRepo.levelUpCharacter('jarson');
-    expect(jarson.history.last.detail, contains('New choices to make:'));
+    torvek.level = 3;
+    final atFour = await charactersRepo.levelUpCharacter('torvek');
+    expect(torvek.history.last.detail, contains('New choices to make:'));
     for (final choice in atFour.newPendingChoices) {
-      expect(jarson.history.last.detail, contains(choice.label));
+      expect(torvek.history.last.detail, contains(choice.label));
     }
   });
 
   test(
     'promoteToCurrent makes the target current and demotes every sibling',
     () async {
-      await charactersRepo.levelUpCharacter('jarson');
+      await charactersRepo.levelUpCharacter('torvek');
       final backup = charactersRepo.characters.firstWhere(
-        (c) => c.familyId == 'jarson' && c.id != 'jarson',
+        (c) => c.familyId == 'torvek' && c.id != 'torvek',
       );
 
       await charactersRepo.promoteToCurrent(backup.id);
 
       expect(charactersRepo.byId(backup.id).isCurrent, isTrue);
-      expect(charactersRepo.byId('jarson').isCurrent, isFalse);
+      expect(charactersRepo.byId('torvek').isCurrent, isFalse);
     },
   );
 
   test('snapshotStatusLabel reflects the real level of a demoted character, not a stale label', () async {
-    final jarson = charactersRepo.byId('jarson');
-    expect(jarson.level, 9);
+    final torvek = charactersRepo.byId('torvek');
+    expect(torvek.level, 9);
 
-    await charactersRepo.levelUpCharacter('jarson');
+    await charactersRepo.levelUpCharacter('torvek');
     final backup = charactersRepo.characters.firstWhere(
-      (c) => c.familyId == 'jarson' && c.id != 'jarson',
+      (c) => c.familyId == 'torvek' && c.id != 'torvek',
     );
     expect(backup.snapshotStatusLabel, 'Level 9 (previous)');
-    expect(jarson.level, 10); // the live character actually advanced
+    expect(torvek.level, 10); // the live character actually advanced
 
     await charactersRepo.promoteToCurrent(backup.id);
 
     // Demoted, but his real level (10, from the level-up above) hasn't
     // changed just because he's no longer current.
-    expect(jarson.isCurrent, isFalse);
-    expect(jarson.snapshotStatusLabel, 'Level 10 (previous)');
+    expect(torvek.isCurrent, isFalse);
+    expect(torvek.snapshotStatusLabel, 'Level 10 (previous)');
   });
 
   test('duplicateAsNewCharacter creates a fully independent character in its own new family', () async {
     final duplicate = await charactersRepo.duplicateAsNewCharacter(
-      'jarson',
-      'Jarson (copy)',
+      'torvek',
+      'Torvek (copy)',
     );
 
-    expect(duplicate.id, isNot('jarson'));
-    expect(duplicate.familyId, duplicate.id); // its own family, not Jarson's
-    expect(duplicate.name, 'Jarson (copy)');
+    expect(duplicate.id, isNot('torvek'));
+    expect(duplicate.familyId, duplicate.id); // its own family, not Torvek's
+    expect(duplicate.name, 'Torvek (copy)');
     expect(duplicate.isCurrent, isTrue);
     expect(charactersRepo.listFamilies().length, 2);
   });
 
   test('deleting the current snapshot promotes a remaining sibling, never leaving a family with zero current snapshots', () async {
-    await charactersRepo.levelUpCharacter('jarson');
+    await charactersRepo.levelUpCharacter('torvek');
     final backup = charactersRepo.characters.firstWhere(
-      (c) => c.familyId == 'jarson' && c.id != 'jarson',
+      (c) => c.familyId == 'torvek' && c.id != 'torvek',
     );
-    expect(charactersRepo.byId('jarson').isCurrent, isTrue);
+    expect(charactersRepo.byId('torvek').isCurrent, isTrue);
 
-    await charactersRepo.delete('jarson');
+    await charactersRepo.delete('torvek');
 
-    expect(charactersRepo.characters.any((c) => c.id == 'jarson'), isFalse);
+    expect(charactersRepo.characters.any((c) => c.id == 'torvek'), isFalse);
     expect(charactersRepo.byId(backup.id).isCurrent, isTrue);
   });
 
   test(
     'deleting a non-current snapshot leaves the current one untouched',
     () async {
-      await charactersRepo.levelUpCharacter('jarson');
+      await charactersRepo.levelUpCharacter('torvek');
       final backup = charactersRepo.characters.firstWhere(
-        (c) => c.familyId == 'jarson' && c.id != 'jarson',
+        (c) => c.familyId == 'torvek' && c.id != 'torvek',
       );
 
       await charactersRepo.delete(backup.id);
 
       expect(charactersRepo.characters.any((c) => c.id == backup.id), isFalse);
-      expect(charactersRepo.byId('jarson').isCurrent, isTrue);
+      expect(charactersRepo.byId('torvek').isCurrent, isTrue);
     },
   );
 
   test('exportFamily includes every snapshot in the family, importFromJson adds them back with fresh ids but the same family link', () async {
-    await charactersRepo.levelUpCharacter('jarson');
+    await charactersRepo.levelUpCharacter('torvek');
     final backup = charactersRepo.characters.firstWhere(
-      (c) => c.familyId == 'jarson' && c.id != 'jarson',
+      (c) => c.familyId == 'torvek' && c.id != 'torvek',
     );
-    final json = charactersRepo.exportFamily('jarson');
+    final json = charactersRepo.exportFamily('torvek');
 
     final imported = await charactersRepo.importFromJson(json);
 
     expect(imported, hasLength(2));
     // Fresh ids, never colliding with the originals.
-    expect(imported.map((c) => c.id), isNot(contains('jarson')));
+    expect(imported.map((c) => c.id), isNot(contains('torvek')));
     expect(imported.map((c) => c.id), isNot(contains(backup.id)));
     // But still linked to each other as one family, distinct from the
     // original family's id.
     final familyIds = imported.map((c) => c.familyId).toSet();
     expect(familyIds, hasLength(1));
-    expect(familyIds.single, isNot('jarson'));
+    expect(familyIds.single, isNot('torvek'));
     // Names carried over correctly, at their own (different) levels.
-    expect(imported.map((c) => c.name), everyElement('Jarson'));
+    expect(imported.map((c) => c.name), everyElement('Torvek'));
     expect(imported.map((c) => c.level), containsAll([9, 10]));
     // Additive - the originals are still there too.
     expect(charactersRepo.characters, hasLength(4));
   });
 
   test('exportAll covers every character across every family', () async {
-    await charactersRepo.levelUpCharacter('jarson');
-    await charactersRepo.duplicateAsNewCharacter('jarson', 'Jarson (copy)');
+    await charactersRepo.levelUpCharacter('torvek');
+    await charactersRepo.duplicateAsNewCharacter('torvek', 'Torvek (copy)');
 
     final json = charactersRepo.exportAll();
     final imported = await charactersRepo.importFromJson(json);
@@ -224,7 +224,7 @@ void main() {
   test(
     "importFromJson rejects anything that isn't a current export file",
     () async {
-      final single = charactersRepo.byId('jarson').toJson();
+      final single = charactersRepo.byId('torvek').toJson();
       await expectLater(
         charactersRepo.importFromJson(jsonEncode(single)),
         throwsFormatException,
@@ -238,25 +238,25 @@ void main() {
   );
 
   test('familyId round-trips through Character.toJson/fromJson', () {
-    final jarson = charactersRepo.byId('jarson');
-    final restored = Character.fromJson(jarson.toJson());
-    expect(restored.familyId, jarson.familyId);
-    expect(restored.isCurrent, jarson.isCurrent);
+    final torvek = charactersRepo.byId('torvek');
+    final restored = Character.fromJson(torvek.toJson());
+    expect(restored.familyId, torvek.familyId);
+    expect(restored.isCurrent, torvek.isCurrent);
   });
 
   test('backgroundLabel/backgroundKey round-trip through Character.toJson/fromJson', () {
-    final jarson = charactersRepo.byId('jarson');
-    expect(jarson.backgroundLabel, 'Soldier');
-    expect(jarson.backgroundKey, 'srd-2024_soldier-background');
+    final torvek = charactersRepo.byId('torvek');
+    expect(torvek.backgroundLabel, 'Soldier');
+    expect(torvek.backgroundKey, 'srd-2024_soldier-background');
 
-    final restored = Character.fromJson(jarson.toJson());
+    final restored = Character.fromJson(torvek.toJson());
     expect(restored.backgroundLabel, 'Soldier');
     expect(restored.backgroundKey, 'srd-2024_soldier-background');
   });
 
   test('history entries round-trip through Character.toJson/fromJson', () {
-    final jarson = charactersRepo.byId('jarson');
-    jarson.history = [
+    final torvek = charactersRepo.byId('torvek');
+    torvek.history = [
       HistoryEntry(
         id: 'h1',
         timestamp: DateTime.utc(2026, 9, 19, 12, 0),
@@ -264,7 +264,7 @@ void main() {
         detail: 'DEX 12 → 14',
       ),
     ];
-    final restored = Character.fromJson(jarson.toJson());
+    final restored = Character.fromJson(torvek.toJson());
 
     expect(restored.history, hasLength(1));
     expect(restored.history.first.id, 'h1');
@@ -276,23 +276,23 @@ void main() {
   test(
     'a character with no history round-trips to an empty list, not a crash',
     () {
-      final jarson = charactersRepo.byId('jarson');
-      expect(jarson.history, isEmpty);
-      final restored = Character.fromJson(jarson.toJson());
+      final torvek = charactersRepo.byId('torvek');
+      expect(torvek.history, isEmpty);
+      final restored = Character.fromJson(torvek.toJson());
       expect(restored.history, isEmpty);
     },
   );
 
   test('a Mount defaults currentHp to maxHp and round-trips through JSON', () {
-    final jarson = charactersRepo.byId('jarson');
-    jarson.mounts = [
+    final torvek = charactersRepo.byId('torvek');
+    torvek.mounts = [
       Mount(name: 'Warhorse', armorClass: 11, maxHp: 19, speed: 60),
     ];
-    expect(jarson.mounts.first.currentHp, 19); // defaults to full
+    expect(torvek.mounts.first.currentHp, 19); // defaults to full
 
-    jarson.mounts.first.currentHp = 12;
-    jarson.mounts.first.active = true;
-    final restored = Character.fromJson(jarson.toJson());
+    torvek.mounts.first.currentHp = 12;
+    torvek.mounts.first.active = true;
+    final restored = Character.fromJson(torvek.toJson());
 
     expect(restored.mounts.length, 1);
     expect(restored.mounts.first.name, 'Warhorse');
@@ -304,8 +304,8 @@ void main() {
   });
 
   test('a Weapon\'s damage dice/type can be edited after being added, not just at creation', () {
-    final jarson = charactersRepo.byId('jarson');
-    final greatsword = jarson.weapons.firstWhere((w) => w.name == 'Greatsword');
+    final torvek = charactersRepo.byId('torvek');
+    final greatsword = torvek.weapons.firstWhere((w) => w.name == 'Greatsword');
 
     greatsword
       ..damageDice = '3d6'
@@ -324,31 +324,31 @@ void main() {
   test(
     'an InventoryEntry\'s name and caption can be edited after being added',
     () {
-      final jarson = charactersRepo.byId('jarson');
+      final torvek = charactersRepo.byId('torvek');
       final item = InventoryEntry(name: 'Torch', quantity: 3);
-      jarson.inventory = [item];
+      torvek.inventory = [item];
 
       item
         ..name = 'Everburning Torch'
         ..caption = 'Never goes out'
         ..quantity = 1;
 
-      expect(jarson.inventory.first.name, 'Everburning Torch');
-      expect(jarson.inventory.first.caption, 'Never goes out');
-      expect(jarson.inventory.first.quantity, 1);
+      expect(torvek.inventory.first.name, 'Everburning Torch');
+      expect(torvek.inventory.first.caption, 'Never goes out');
+      expect(torvek.inventory.first.quantity, 1);
 
       // Round-trips too, not just in-memory.
-      final restored = Character.fromJson(jarson.toJson());
+      final restored = Character.fromJson(torvek.toJson());
       expect(restored.inventory.first.name, 'Everburning Torch');
       expect(restored.inventory.first.caption, 'Never goes out');
     },
   );
 
   test('an InnateAttack using the new levelDice shape round-trips through Character.fromJson(c.toJson())', () {
-    final jarson = charactersRepo.byId('jarson');
-    final restored = Character.fromJson(jarson.toJson());
+    final torvek = charactersRepo.byId('torvek');
+    final restored = Character.fromJson(torvek.toJson());
 
-    final original = jarson.innateAttacks.firstWhere(
+    final original = torvek.innateAttacks.firstWhere(
       (a) => a.name == 'Breath Weapon',
     );
     final restoredAttack = restored.innateAttacks.firstWhere(
@@ -374,12 +374,12 @@ void main() {
         ],
       ),
     );
-    final jarson = charactersRepo.byId('jarson');
-    jarson.feats.add(
+    final torvek = charactersRepo.byId('torvek');
+    torvek.feats.add(
       GrantedFeature(name: 'Test Homebrew Feat', source: 'homebrew'),
     );
 
-    final json = charactersRepo.exportFamily('jarson');
+    final json = charactersRepo.exportFamily('torvek');
     final decoded = jsonDecode(json) as Map<String, dynamic>;
 
     expect(decoded['homebrew'], hasLength(1));
@@ -389,11 +389,11 @@ void main() {
   });
 
   test('exporting a character with no homebrew feat/attuned magic item bundles an empty homebrew list', () {
-    // Jarson's seed data has no homebrew feats or attuned magic items,
+    // Torvek's seed data has no homebrew feats or attuned magic items,
     // and any unrelated homebrew catalog entries shouldn't leak in.
     homebrewRepo.create('feat', 'Unrelated Homebrew Feat');
 
-    final json = charactersRepo.exportFamily('jarson');
+    final json = charactersRepo.exportFamily('torvek');
     final decoded = jsonDecode(json) as Map<String, dynamic>;
 
     expect(decoded['homebrew'], isEmpty);
@@ -411,13 +411,13 @@ void main() {
         ],
       ),
     );
-    final jarson = charactersRepo.byId('jarson');
-    jarson.feats.add(
+    final torvek = charactersRepo.byId('torvek');
+    torvek.feats.add(
       GrantedFeature(name: 'Test Homebrew Feat', source: 'homebrew'),
     );
-    final beforeSave = rules.savingThrowModifier(jarson, 'wis');
+    final beforeSave = rules.savingThrowModifier(torvek, 'wis');
 
-    final json = charactersRepo.exportFamily('jarson');
+    final json = charactersRepo.exportFamily('torvek');
 
     // Simulate a fresh install: no local homebrew catalog at all.
     homebrewRepo.entries.clear();
@@ -445,11 +445,11 @@ void main() {
         ],
       ),
     );
-    final jarson = charactersRepo.byId('jarson');
-    jarson.feats.add(
+    final torvek = charactersRepo.byId('torvek');
+    torvek.feats.add(
       GrantedFeature(name: 'Test Homebrew Feat', source: 'homebrew'),
     );
-    final json = charactersRepo.exportFamily('jarson');
+    final json = charactersRepo.exportFamily('torvek');
 
     await charactersRepo.importFromJson(json);
     await charactersRepo.importFromJson(json);
@@ -472,11 +472,11 @@ void main() {
         ],
       ),
     );
-    final jarson = charactersRepo.byId('jarson');
-    jarson.feats.add(
+    final torvek = charactersRepo.byId('torvek');
+    torvek.feats.add(
       GrantedFeature(name: 'Test Homebrew Feat', source: 'homebrew'),
     );
-    final json = charactersRepo.exportFamily('jarson');
+    final json = charactersRepo.exportFamily('torvek');
 
     // Local entry with the same kind+name but a different effect -
     // simulates the importing device having already tuned its own
@@ -501,13 +501,13 @@ void main() {
   });
 
   test("EquippedArmor.category round-trips through Character.toJson/fromJson, and legacy armor with no category loads as null", () {
-    final jarson = charactersRepo.byId('jarson');
-    jarson.equippedArmor = EquippedArmor(
+    final torvek = charactersRepo.byId('torvek');
+    torvek.equippedArmor = EquippedArmor(
       name: 'Plate Armor',
       armorClassFormula: '18',
       category: 'Heavy',
     );
-    final restored = Character.fromJson(jarson.toJson());
+    final restored = Character.fromJson(torvek.toJson());
     expect(restored.equippedArmor?.category, 'Heavy');
 
     final legacy = EquippedArmor.fromJson({

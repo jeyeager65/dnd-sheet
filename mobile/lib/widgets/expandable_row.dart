@@ -81,7 +81,7 @@ class ExpandableRow extends StatefulWidget {
   /// A second line under the title, in the header itself (not the
   /// collapsible [body]) - for a row whose title alone doesn't leave room
   /// for a useful one-line summary (e.g. a weapon's "+8 / 2d6+8 slashing"
-  /// next to a long name like "Sword of the Failed Dragon Slayer", which
+  /// next to a long name like "Emberfang, Blade of the Ashen Vigil", which
   /// otherwise crowds out or gets crowded out by [trailing]).
   final Widget? subtitle;
   final Widget body;

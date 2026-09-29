@@ -32,7 +32,7 @@ void main() {
   setUp(() {
     charactersRepo.characters
       ..clear()
-      ..add(buildSampleJarson());
+      ..add(buildSampleCharacter());
     homebrewRepo.entries.clear();
   });
 
@@ -56,21 +56,21 @@ void main() {
     );
   });
 
-  testWidgets('shows the character list with Jarson in it', (
+  testWidgets('shows the character list with Torvek in it', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(const DndSheetApp());
 
     expect(find.text('My Characters'), findsOneWidget);
-    expect(find.text('Jarson'), findsAtLeastNWidgets(1));
+    expect(find.text('Torvek'), findsAtLeastNWidgets(1));
   });
 
-  testWidgets('tapping Jarson opens the sheet on the Combat tab', (
+  testWidgets('tapping Torvek opens the sheet on the Combat tab', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(const DndSheetApp());
 
-    await tester.tap(find.text('Jarson').first);
+    await tester.tap(find.text('Torvek').first);
     await tester.pumpAndSettle();
 
     // Weapons sits below the stat grid and Hit Points, so it may be off
@@ -89,10 +89,10 @@ void main() {
   testWidgets('a rest asks first, listing what it would recover', (
     WidgetTester tester,
   ) async {
-    final jarson = charactersRepo.characters.first;
-    jarson.currentHp = jarson.maxHp - 10;
+    final torvek = charactersRepo.characters.first;
+    torvek.currentHp = torvek.maxHp - 10;
     await tester.pumpWidget(const DndSheetApp());
-    await tester.tap(find.text('Jarson').first);
+    await tester.tap(find.text('Torvek').first);
     await tester.pumpAndSettle();
 
     // Rests now sits below Hit Points/Weapons/Resources/Mounts, off the
@@ -107,21 +107,21 @@ void main() {
     expect(find.text('Take a Long Rest?'), findsOneWidget);
     expect(
       find.text(
-        '• HP: ${jarson.maxHp - 10} → ${jarson.maxHp} of ${jarson.maxHp}',
+        '• HP: ${torvek.maxHp - 10} → ${torvek.maxHp} of ${torvek.maxHp}',
       ),
       findsOneWidget,
     );
 
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
-    expect(jarson.currentHp, jarson.maxHp - 10);
+    expect(torvek.currentHp, torvek.maxHp - 10);
 
     await tester.tap(find.text('Long Rest'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Take Long Rest'));
     await tester.pumpAndSettle();
     expect(find.text('Take a Long Rest?'), findsNothing);
-    expect(jarson.currentHp, jarson.maxHp);
+    expect(torvek.currentHp, torvek.maxHp);
   });
 
   testWidgets('the sheet AppBar offers an Export PDF action', (
@@ -129,7 +129,7 @@ void main() {
   ) async {
     await tester.pumpWidget(const DndSheetApp());
 
-    await tester.tap(find.text('Jarson').first);
+    await tester.tap(find.text('Torvek').first);
     await tester.pumpAndSettle();
 
     expect(find.byTooltip('Export PDF'), findsOneWidget);
@@ -150,7 +150,7 @@ void main() {
 
       await tester.pumpWidget(const DndSheetApp());
 
-      await tester.tap(find.text('Jarson').first);
+      await tester.tap(find.text('Torvek').first);
       await tester.pumpAndSettle();
 
       await tester.dragUntilVisible(
@@ -163,12 +163,12 @@ void main() {
       // the name - computed live from the real character rather than a
       // hardcoded number, since a weapon's attack/damage bonus depends on
       // ability scores, proficiency, and any magic bonus.
-      final jarson = charactersRepo.byId('jarson');
-      final greatsword = jarson.weapons.firstWhere(
+      final torvek = charactersRepo.byId('torvek');
+      final greatsword = torvek.weapons.firstWhere(
         (w) => w.name == 'Greatsword',
       );
-      final attack = rules.attackFor(jarson, greatsword);
-      final damage = rules.damageFor(jarson, greatsword);
+      final attack = rules.attackFor(torvek, greatsword);
+      final damage = rules.damageFor(torvek, greatsword);
       expect(
         find.text('${rules.formatModifier(attack.bonus)} / ${damage.text}'),
         findsOneWidget,
@@ -197,11 +197,11 @@ void main() {
   );
 
   testWidgets(
-    "shows Breath Weapon's live level-scaled damage (2d10 at Jarson's level 9), not a stale hardcoded value",
+    "shows Breath Weapon's live level-scaled damage (2d10 at Torvek's level 9), not a stale hardcoded value",
     (WidgetTester tester) async {
       await tester.pumpWidget(const DndSheetApp());
 
-      await tester.tap(find.text('Jarson').first);
+      await tester.tap(find.text('Torvek').first);
       await tester.pumpAndSettle();
 
       // "d10" alone would also match the Hit Dice section's "d10
@@ -218,11 +218,11 @@ void main() {
       // the verbatim SRD trait text, which legitimately mentions every
       // tier (1d10/2d10/3d10/4d10) in one scaling sentence, so asserting
       // "3d10 nowhere on screen" would fail against correct real text.
-      final jarson = charactersRepo.byId('jarson');
-      final breathWeapon = jarson.innateAttacks.firstWhere(
+      final torvek = charactersRepo.byId('torvek');
+      final breathWeapon = torvek.innateAttacks.firstWhere(
         (a) => a.name == 'Breath Weapon',
       );
-      final info = rules.innateAttackInfo(jarson, breathWeapon);
+      final info = rules.innateAttackInfo(torvek, breathWeapon);
       expect(
         find.textContaining(
           '${info.diceCount}${info.dieType} Fire · DC ${info.saveDc}',
@@ -249,14 +249,14 @@ void main() {
 
       await tester.pumpWidget(const DndSheetApp());
 
-      await tester.tap(find.text('Jarson').first);
+      await tester.tap(find.text('Torvek').first);
       await tester.pumpAndSettle();
 
       // Combat is the default tab - switch to Overview.
       await tester.tap(find.text('Overview'));
       await tester.pumpAndSettle();
 
-      // All 18 real skills are listed, not just Jarson's pre-existing
+      // All 18 real skills are listed, not just Torvek's pre-existing
       // sparse 5-entry list (matches the PWA's always-show-all behavior).
       for (final name in const [
         'Acrobatics',
@@ -281,7 +281,7 @@ void main() {
         expect(find.textContaining(name), findsOneWidget, reason: name);
       }
 
-      final jarson = charactersRepo.byId('jarson');
+      final torvek = charactersRepo.byId('torvek');
 
       // Saving Throws' and Skills' checkboxes are each locked until that
       // section's own Edit is tapped. Scoped to the section specifically,
@@ -305,9 +305,9 @@ void main() {
       await tapSectionEdit('SAVING THROWS');
       expect(find.text('Done'), findsOneWidget);
 
-      // Saving throws: Jarson starts proficient in Str and Con only -
+      // Saving throws: Torvek starts proficient in Str and Con only -
       // toggle Dex on via its checkbox.
-      expect(jarson.savingThrowProficiencies, isNot(contains('dex')));
+      expect(torvek.savingThrowProficiencies, isNot(contains('dex')));
       final dexRow = find.ancestor(
         of: find.text('Dexterity'),
         matching: find.byType(Row),
@@ -316,17 +316,17 @@ void main() {
         find.descendant(of: dexRow, matching: find.byType(Checkbox)).first,
       );
       await tester.pumpAndSettle();
-      expect(jarson.savingThrowProficiencies, contains('dex'));
+      expect(torvek.savingThrowProficiencies, contains('dex'));
 
       // Skills has its own separate Edit/Done toggle - Saving Throws
       // being unlocked doesn't unlock it too.
       await tapSectionEdit('SKILLS');
       expect(find.text('Done'), findsNWidgets(2));
 
-      // Skills: Jarson isn't proficient in Stealth - toggle it on, then
+      // Skills: Torvek isn't proficient in Stealth - toggle it on, then
       // toggle Expertise on too, then verify unchecking Proficient also
       // clears Expertise (can't have expertise without proficiency).
-      expect(jarson.skills.where((s) => s.name == 'Stealth'), isEmpty);
+      expect(torvek.skills.where((s) => s.name == 'Stealth'), isEmpty);
       final stealthRow = find.ancestor(
         of: find.textContaining('Stealth'),
         matching: find.byType(Row),
@@ -338,20 +338,20 @@ void main() {
       await tester.tap(stealthChecks.at(0));
       await tester.pumpAndSettle();
       expect(
-        jarson.skills.firstWhere((s) => s.name == 'Stealth').proficient,
+        torvek.skills.firstWhere((s) => s.name == 'Stealth').proficient,
         isTrue,
       );
 
       await tester.tap(stealthChecks.at(1));
       await tester.pumpAndSettle();
       expect(
-        jarson.skills.firstWhere((s) => s.name == 'Stealth').expertise,
+        torvek.skills.firstWhere((s) => s.name == 'Stealth').expertise,
         isTrue,
       );
 
       await tester.tap(stealthChecks.at(0));
       await tester.pumpAndSettle();
-      expect(jarson.skills.where((s) => s.name == 'Stealth'), isEmpty);
+      expect(torvek.skills.where((s) => s.name == 'Stealth'), isEmpty);
     },
   );
 
@@ -365,14 +365,14 @@ void main() {
 
       await tester.pumpWidget(const DndSheetApp());
 
-      await tester.tap(find.text('Jarson').first);
+      await tester.tap(find.text('Torvek').first);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Overview'));
       await tester.pumpAndSettle();
 
-      final jarson = charactersRepo.byId('jarson');
-      expect(jarson.abilityScores.str, 19);
-      expect(jarson.history, isEmpty);
+      final torvek = charactersRepo.byId('torvek');
+      expect(torvek.abilityScores.str, 19);
+      expect(torvek.history, isEmpty);
 
       await tester.tap(find.text('Edit Scores'));
       await tester.pumpAndSettle();
@@ -386,10 +386,10 @@ void main() {
       await tester.tap(find.text('Save'));
       await tester.pumpAndSettle();
 
-      expect(jarson.abilityScores.str, 21);
-      expect(jarson.history, hasLength(1));
-      expect(jarson.history.first.label, 'Belt of Storm Giant Strength');
-      expect(jarson.history.first.detail, 'STR 19 → 21');
+      expect(torvek.abilityScores.str, 21);
+      expect(torvek.history, hasLength(1));
+      expect(torvek.history.first.label, 'Belt of Storm Giant Strength');
+      expect(torvek.history.first.detail, 'STR 19 → 21');
 
       // The History section renders the new entry.
       expect(find.text('Belt of Storm Giant Strength'), findsOneWidget);
@@ -411,7 +411,7 @@ void main() {
 
       await tester.pumpWidget(const DndSheetApp());
 
-      await tester.tap(find.text('Jarson').first);
+      await tester.tap(find.text('Torvek').first);
       await tester.pumpAndSettle();
       expect(find.text('Lv.9 Dragonborn Fighter · Champion'), findsOneWidget);
 
@@ -446,7 +446,7 @@ void main() {
       expect(find.textContaining('Opportunity Attacks'), findsWidgets);
 
       // Back three times (detail -> table of contents -> Reference ->
-      // character sheet) lands right back on Jarson's sheet.
+      // character sheet) lands right back on Torvek's sheet.
       await tester.pageBack();
       await tester.pumpAndSettle();
       await tester.pageBack();
@@ -462,12 +462,12 @@ void main() {
     (WidgetTester tester) async {
       await tester.pumpWidget(const DndSheetApp());
 
-      await tester.tap(find.text('Jarson').first);
+      await tester.tap(find.text('Torvek').first);
       await tester.pumpAndSettle();
 
-      final jarson = charactersRepo.byId('jarson');
-      jarson.currentHp = jarson.maxHp;
-      expect(jarson.tempHp, 0);
+      final torvek = charactersRepo.byId('torvek');
+      torvek.currentHp = torvek.maxHp;
+      expect(torvek.tempHp, 0);
 
       await tester.dragUntilVisible(
         find.text('Temp HP'),
@@ -482,13 +482,13 @@ void main() {
       await tester.tap(find.text('Save'));
       await tester.pumpAndSettle();
 
-      expect(jarson.tempHp, 5);
+      expect(torvek.tempHp, 5);
 
       // Damage is absorbed by Temp HP first.
       await tester.tap(find.text('-1'));
       await tester.pumpAndSettle();
-      expect(jarson.tempHp, 4);
-      expect(jarson.currentHp, jarson.maxHp);
+      expect(torvek.tempHp, 4);
+      expect(torvek.currentHp, torvek.maxHp);
 
       // A second, smaller grant replaces the remaining 4, it doesn't add
       // to it.
@@ -498,20 +498,20 @@ void main() {
       await tester.enterText(find.widgetWithText(TextField, 'New amount'), '2');
       await tester.tap(find.text('Save'));
       await tester.pumpAndSettle();
-      expect(jarson.tempHp, 2);
+      expect(torvek.tempHp, 2);
     },
   );
 
   testWidgets(
-    "Take Damage shows a breakdown of what changed the raw amount and applies only the final total (Jarson's Draconic Resistance halves Fire)",
+    "Take Damage shows a breakdown of what changed the raw amount and applies only the final total (Torvek's Draconic Resistance halves Fire)",
     (WidgetTester tester) async {
       await tester.pumpWidget(const DndSheetApp());
 
-      await tester.tap(find.text('Jarson').first);
+      await tester.tap(find.text('Torvek').first);
       await tester.pumpAndSettle();
 
-      final jarson = charactersRepo.byId('jarson');
-      jarson.currentHp = jarson.maxHp;
+      final torvek = charactersRepo.byId('torvek');
+      torvek.currentHp = torvek.maxHp;
 
       await tester.dragUntilVisible(
         find.text('Take Damage'),
@@ -545,7 +545,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Only the computed 9, not the raw 19, actually came off HP.
-      expect(jarson.currentHp, jarson.maxHp - 9);
+      expect(torvek.currentHp, torvek.maxHp - 9);
     },
   );
 
@@ -554,11 +554,11 @@ void main() {
     (WidgetTester tester) async {
       await tester.pumpWidget(const DndSheetApp());
 
-      await tester.tap(find.text('Jarson').first);
+      await tester.tap(find.text('Torvek').first);
       await tester.pumpAndSettle();
 
-      final jarson = charactersRepo.byId('jarson');
-      jarson.currentHp = jarson.maxHp;
+      final torvek = charactersRepo.byId('torvek');
+      torvek.currentHp = torvek.maxHp;
 
       await tester.dragUntilVisible(
         find.text('Take Damage'),
@@ -592,7 +592,7 @@ void main() {
 
       await tester.tap(find.text('Apply'));
       await tester.pumpAndSettle();
-      expect(jarson.currentHp, jarson.maxHp - 4);
+      expect(torvek.currentHp, torvek.maxHp - 4);
     },
   );
 
@@ -603,12 +603,12 @@ void main() {
 
       await tester.tap(find.byIcon(Icons.delete_outline));
       await tester.pumpAndSettle();
-      expect(find.text('Delete Jarson?'), findsOneWidget);
+      expect(find.text('Delete Torvek?'), findsOneWidget);
 
       // Cancel first - the character should still be there.
       await tester.tap(find.text('Cancel'));
       await tester.pumpAndSettle();
-      expect(find.text('Jarson'), findsAtLeastNWidgets(1));
+      expect(find.text('Torvek'), findsAtLeastNWidgets(1));
 
       // Now actually delete it.
       await tester.tap(find.byIcon(Icons.delete_outline));
@@ -616,7 +616,7 @@ void main() {
       await tester.tap(find.text('Delete'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Jarson'), findsNothing);
+      expect(find.text('Torvek'), findsNothing);
       expect(find.text('No characters yet. Add one below.'), findsOneWidget);
     },
   );
@@ -631,10 +631,10 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
       await tester.pumpWidget(const DndSheetApp());
 
-      await tester.tap(find.text('Jarson').first);
+      await tester.tap(find.text('Torvek').first);
       await tester.pumpAndSettle();
-      final jarson = charactersRepo.byId('jarson');
-      expect(jarson.level, 9);
+      final torvek = charactersRepo.byId('torvek');
+      expect(torvek.level, 9);
 
       await tester.tap(find.byTooltip('Level Up'));
       await tester.pumpAndSettle();
@@ -652,9 +652,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(jarson.id, 'jarson'); // same character, advanced in place
-      expect(jarson.level, 10);
-      expect(jarson.isCurrent, isTrue);
+      expect(torvek.id, 'torvek'); // same character, advanced in place
+      expect(torvek.level, 10);
+      expect(torvek.isCurrent, isTrue);
 
       // Back on the character list, the old Level 9 state is preserved as
       // an automatic, non-current backup - no separate "snapshot" step
@@ -672,7 +672,7 @@ void main() {
       await tester.tap(find.text('Promote'));
       await tester.pumpAndSettle();
       expect(find.text('Level 10 (previous)'), findsOneWidget);
-      expect(jarson.isCurrent, isFalse);
+      expect(torvek.isCurrent, isFalse);
     },
   );
 
@@ -800,7 +800,7 @@ void main() {
     (WidgetTester tester) async {
       await tester.pumpWidget(const DndSheetApp());
 
-      await tester.tap(find.text('Jarson').first);
+      await tester.tap(find.text('Torvek').first);
       await tester.pumpAndSettle();
 
       await tester.dragUntilVisible(
@@ -823,27 +823,27 @@ void main() {
       await tester.tap(find.text('Add'));
       await tester.pumpAndSettle();
 
-      final jarson = charactersRepo.byId('jarson');
+      final torvek = charactersRepo.byId('torvek');
       expect(
-        jarson.resources.any((r) => r.name == 'Bottomless Tankard'),
+        torvek.resources.any((r) => r.name == 'Bottomless Tankard'),
         isTrue,
       );
-      final resource = jarson.resources.firstWhere(
+      final resource = torvek.resources.firstWhere(
         (r) => r.name == 'Bottomless Tankard',
       );
       expect(resource.max, 1);
-      expect(rules.isCustomResource(jarson, resource), isTrue);
+      expect(rules.isCustomResource(torvek, resource), isTrue);
 
       resource.used = 1;
-      rules.applyLongRest(jarson);
-      expect(jarson.resources.firstWhere((r) => r.key == resource.key).used, 0);
+      rules.applyLongRest(torvek);
+      expect(torvek.resources.firstWhere((r) => r.key == resource.key).used, 0);
 
       // A manually-added resource isn't a recognized class/species key, so
       // recalculateClassResources must leave it alone rather than dropping
       // it (same reasoning as isCustomResource's managedNames check).
-      rules.recalculateClassResources(jarson);
+      rules.recalculateClassResources(torvek);
       expect(
-        jarson.resources.any((r) => r.name == 'Bottomless Tankard'),
+        torvek.resources.any((r) => r.name == 'Bottomless Tankard'),
         isTrue,
       );
     },
@@ -853,13 +853,13 @@ void main() {
     'deleting a homebrew feat granted to a character warns which character uses it before deleting',
     (WidgetTester tester) async {
       final entry = homebrewRepo.create('feat', 'Test Homebrew Feat');
-      final jarson = charactersRepo.byId('jarson');
-      jarson.feats.add(
+      final torvek = charactersRepo.byId('torvek');
+      torvek.feats.add(
         GrantedFeature(name: 'Test Homebrew Feat', source: 'homebrew'),
       );
 
       await tester.pumpWidget(const DndSheetApp());
-      await tester.tap(find.text('Jarson').first);
+      await tester.tap(find.text('Torvek').first);
       await tester.pumpAndSettle();
       await tester.tap(find.byTooltip('Reference'));
       await tester.pumpAndSettle();
@@ -871,7 +871,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Delete Test Homebrew Feat?'), findsOneWidget);
-      expect(find.textContaining('Used by Jarson'), findsOneWidget);
+      expect(find.textContaining('Used by Torvek'), findsOneWidget);
 
       await tester.tap(find.text('Cancel'));
       await tester.pumpAndSettle();
@@ -1029,15 +1029,15 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      final jarson = charactersRepo.byId('jarson');
-      expect(jarson.alignment, isNull);
-      expect(jarson.languages, isEmpty);
+      final torvek = charactersRepo.byId('torvek');
+      expect(torvek.alignment, isNull);
+      expect(torvek.languages, isEmpty);
 
       await tester.pumpWidget(
         MaterialApp(
           home: CharacterFormScreen(
             mode: CharacterFormMode.edit,
-            character: jarson,
+            character: torvek,
           ),
         ),
       );
@@ -1060,8 +1060,8 @@ void main() {
       await tester.tap(find.text('Save Changes'));
       await tester.pumpAndSettle();
 
-      expect(jarson.alignment, realAlignment);
-      expect(jarson.languages, [firstLanguage]);
+      expect(torvek.alignment, realAlignment);
+      expect(torvek.languages, [firstLanguage]);
     },
   );
 
@@ -1073,15 +1073,15 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      final jarson = charactersRepo.byId('jarson');
-      expect(jarson.backgroundKey, isNotNull);
-      expect(jarson.toolProficiencyChoices, isEmpty);
+      final torvek = charactersRepo.byId('torvek');
+      expect(torvek.backgroundKey, isNotNull);
+      expect(torvek.toolProficiencyChoices, isEmpty);
 
       await tester.pumpWidget(
         MaterialApp(
           home: CharacterFormScreen(
             mode: CharacterFormMode.edit,
-            character: jarson,
+            character: torvek,
           ),
         ),
       );
@@ -1094,7 +1094,7 @@ void main() {
       await tester.tap(find.text('Save Changes'));
       await tester.pumpAndSettle();
 
-      expect(jarson.toolProficiencyChoices, ['Dice']);
+      expect(torvek.toolProficiencyChoices, ['Dice']);
     },
   );
 
@@ -1106,13 +1106,13 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      final jarson = charactersRepo.byId('jarson');
+      final torvek = charactersRepo.byId('torvek');
 
       await tester.pumpWidget(
         MaterialApp(
           home: CharacterFormScreen(
             mode: CharacterFormMode.edit,
-            character: jarson,
+            character: torvek,
           ),
         ),
       );
@@ -1126,14 +1126,14 @@ void main() {
       await tester.tap(find.text('Save Changes'));
       await tester.pumpAndSettle();
 
-      expect(jarson.toolProficiencyChoices, ["Artisan's Tools"]);
+      expect(torvek.toolProficiencyChoices, ["Artisan's Tools"]);
     },
   );
 
   testWidgets(
     'a Pending Choice saved before "asi" existed as a kind (kind: null) still gets the direct ASI-or-Feat dialog, matched by its label instead',
     (WidgetTester tester) async {
-      final jarson = charactersRepo.byId('jarson');
+      final torvek = charactersRepo.byId('torvek');
       // Simulates a character whose Pending Choice was created and
       // persisted by an older build of the app, before PendingChoice.kind
       // supported 'asi' - reinstalling/updating never rewrites data
@@ -1143,10 +1143,10 @@ void main() {
         label: 'Level 4: Ability Score Improvement',
       );
       expect(legacyChoice.kind, isNull);
-      jarson.pendingChoices = [legacyChoice];
+      torvek.pendingChoices = [legacyChoice];
 
       await tester.pumpWidget(const DndSheetApp());
-      await tester.tap(find.text('Jarson').first);
+      await tester.tap(find.text('Torvek').first);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Features'));
       await tester.pumpAndSettle();
@@ -1165,16 +1165,16 @@ void main() {
   testWidgets(
     'resolving an Ability Score Improvement Pending Choice offers a direct "ASI or a Feat?" choice instead of a feat browser',
     (WidgetTester tester) async {
-      final jarson = charactersRepo.byId('jarson');
-      jarson.level = 3;
-      final asiChoice = rules.pendingChoicesForLevelUp(jarson, 3, 4).single;
+      final torvek = charactersRepo.byId('torvek');
+      torvek.level = 3;
+      final asiChoice = rules.pendingChoicesForLevelUp(torvek, 3, 4).single;
       expect(asiChoice.kind, 'asi');
-      jarson.level = 4;
-      jarson.pendingChoices = [asiChoice];
-      final beforeStr = jarson.abilityScores.str;
+      torvek.level = 4;
+      torvek.pendingChoices = [asiChoice];
+      final beforeStr = torvek.abilityScores.str;
 
       await tester.pumpWidget(const DndSheetApp());
-      await tester.tap(find.text('Jarson').first);
+      await tester.tap(find.text('Torvek').first);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Features'));
       await tester.pumpAndSettle();
@@ -1205,28 +1205,28 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        jarson.feats.any((f) => f.name == 'Ability Score Improvement'),
+        torvek.feats.any((f) => f.name == 'Ability Score Improvement'),
         isTrue,
       );
-      expect(jarson.pendingChoices, isEmpty);
+      expect(torvek.pendingChoices, isEmpty);
       // Default dialog selection is +2 Strength - clamped at 20 (19 + 2
       // would be 21), same as AbilityScores.increase always clamps.
       expect(beforeStr, 19);
-      expect(jarson.abilityScores.str, 20);
+      expect(torvek.abilityScores.str, 20);
     },
   );
 
   testWidgets(
     'choosing "Choose a Feat" instead opens the General Feat picker, with Ability Score Improvement excluded (it already has its own button)',
     (WidgetTester tester) async {
-      final jarson = charactersRepo.byId('jarson');
-      jarson.level = 3;
-      final asiChoice = rules.pendingChoicesForLevelUp(jarson, 3, 4).single;
-      jarson.level = 4;
-      jarson.pendingChoices = [asiChoice];
+      final torvek = charactersRepo.byId('torvek');
+      torvek.level = 3;
+      final asiChoice = rules.pendingChoicesForLevelUp(torvek, 3, 4).single;
+      torvek.level = 4;
+      torvek.pendingChoices = [asiChoice];
 
       await tester.pumpWidget(const DndSheetApp());
-      await tester.tap(find.text('Jarson').first);
+      await tester.tap(find.text('Torvek').first);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Features'));
       await tester.pumpAndSettle();
@@ -1279,14 +1279,14 @@ void main() {
       );
       homebrewRepo.create('feat', 'Homebrew Uncategorized Pick');
 
-      final jarson = charactersRepo.byId('jarson');
-      jarson.level = 3;
-      final asiChoice = rules.pendingChoicesForLevelUp(jarson, 3, 4).single;
-      jarson.level = 4;
-      jarson.pendingChoices = [asiChoice];
+      final torvek = charactersRepo.byId('torvek');
+      torvek.level = 3;
+      final asiChoice = rules.pendingChoicesForLevelUp(torvek, 3, 4).single;
+      torvek.level = 4;
+      torvek.pendingChoices = [asiChoice];
 
       await tester.pumpWidget(const DndSheetApp());
-      await tester.tap(find.text('Jarson').first);
+      await tester.tap(find.text('Torvek').first);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Features'));
       await tester.pumpAndSettle();
@@ -1405,7 +1405,7 @@ void main() {
       await tester.tap(find.text('Create Character'));
       await tester.pumpAndSettle();
       expect(find.text('Choose your Draconic Ancestors.'), findsOneWidget);
-      expect(charactersRepo.characters.length, 1); // still just Jarson
+      expect(charactersRepo.characters.length, 1); // still just Torvek
 
       await tester.tap(find.text('Red — Fire'));
       await tester.pumpAndSettle();
@@ -1428,12 +1428,12 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      final jarson = charactersRepo.byId('jarson');
-      final beforeAc = rules.armorClassFor(jarson);
-      expect(jarson.history, isEmpty);
+      final torvek = charactersRepo.byId('torvek');
+      final beforeAc = rules.armorClassFor(torvek);
+      expect(torvek.history, isEmpty);
 
       await tester.pumpWidget(const DndSheetApp());
-      await tester.tap(find.text('Jarson').first);
+      await tester.tap(find.text('Torvek').first);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Items'));
       await tester.pumpAndSettle();
@@ -1441,11 +1441,11 @@ void main() {
       await tester.tap(find.byIcon(Icons.delete_outline).first);
       await tester.pumpAndSettle();
 
-      final afterAc = rules.armorClassFor(jarson);
-      expect(jarson.equippedArmor, isNull);
-      expect(jarson.history, hasLength(1));
-      expect(jarson.history.first.label, 'Unequipped Half Plate Armor');
-      expect(jarson.history.first.detail, 'AC: $beforeAc → $afterAc.');
+      final afterAc = rules.armorClassFor(torvek);
+      expect(torvek.equippedArmor, isNull);
+      expect(torvek.history, hasLength(1));
+      expect(torvek.history.first.label, 'Unequipped Half Plate Armor');
+      expect(torvek.history.first.detail, 'AC: $beforeAc → $afterAc.');
 
       // Auditable afterward from the Overview tab's History section.
       await tester.tap(find.text('Overview'));
@@ -1468,7 +1468,7 @@ void main() {
       wizard.spellcasting!.spells = [KnownSpell(spellKey: bless.key)];
 
       await tester.pumpWidget(const DndSheetApp());
-      await tester.tap(find.text('Jarson').first);
+      await tester.tap(find.text('Torvek').first);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Spells'));
       await tester.pumpAndSettle();
@@ -1512,7 +1512,7 @@ void main() {
     (WidgetTester tester) async {
       sheetTextRepo.overrides.clear();
       await tester.pumpWidget(const DndSheetApp());
-      await tester.tap(find.text('Jarson').first);
+      await tester.tap(find.text('Torvek').first);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Features'));
       await tester.pumpAndSettle();
@@ -1556,10 +1556,10 @@ void main() {
   testWidgets(
     'Level Up lets you record a Hit Die roll instead of the average',
     (WidgetTester tester) async {
-      final jarson = charactersRepo.characters.single;
-      final before = jarson.maxHp;
+      final torvek = charactersRepo.characters.single;
+      final before = torvek.maxHp;
       await tester.pumpWidget(const DndSheetApp());
-      await tester.tap(find.text('Jarson').first);
+      await tester.tap(find.text('Torvek').first);
       await tester.pumpAndSettle();
       await tester.tap(find.byTooltip('Level Up'));
       await tester.pumpAndSettle();
@@ -1575,7 +1575,7 @@ void main() {
       await tester.pumpAndSettle();
 
       final leveled = charactersRepo.characters.firstWhere(
-        (c) => c.isCurrent && c.name == 'Jarson',
+        (c) => c.isCurrent && c.name == 'Torvek',
       );
       expect(leveled.level, 10);
       expect(leveled.hitPointRolls[10], 9);
@@ -1592,7 +1592,7 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
 
       await tester.pumpWidget(const DndSheetApp());
-      await tester.tap(find.text('Jarson').first);
+      await tester.tap(find.text('Torvek').first);
       await tester.pumpAndSettle();
 
       expect(find.byType(NavigationRail), findsOneWidget);

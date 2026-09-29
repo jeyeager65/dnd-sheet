@@ -68,11 +68,11 @@ void main() {
   });
 
   test('pendingChoicesForLevelUp surfaces ASI choices crossed, matching the real Fighter table (4, 6, 8, 12, 14, 16)', () {
-    final jarson = buildSampleJarson();
-    jarson.level = 3;
-    jarson.pendingChoices = [];
+    final torvek = buildSampleCharacter();
+    torvek.level = 3;
+    torvek.pendingChoices = [];
 
-    final crossing5 = rules.pendingChoicesForLevelUp(jarson, 3, 5);
+    final crossing5 = rules.pendingChoicesForLevelUp(torvek, 3, 5);
     expect(crossing5.length, 1);
     expect(crossing5.first.label, contains('Level 4'));
     // kind: 'asi' routes it to its own "ASI or a General Feat?" choice
@@ -80,10 +80,10 @@ void main() {
     // to search for "Ability Score Improvement" by name.
     expect(crossing5.first.kind, 'asi');
 
-    final crossingNone = rules.pendingChoicesForLevelUp(jarson, 9, 10);
+    final crossingNone = rules.pendingChoicesForLevelUp(torvek, 9, 10);
     expect(crossingNone, isEmpty);
 
-    final crossingTwo = rules.pendingChoicesForLevelUp(jarson, 3, 7);
+    final crossingTwo = rules.pendingChoicesForLevelUp(torvek, 3, 7);
     expect(
       crossingTwo.map((c) => c.label),
       containsAll([contains('Level 4'), contains('Level 6')]),
@@ -91,19 +91,19 @@ void main() {
   });
 
   test('pendingChoicesForLevelUp never returns a choice already present (no duplicates)', () {
-    final jarson = buildSampleJarson();
-    final already = rules.pendingChoicesForLevelUp(jarson, 3, 5).first;
-    jarson.pendingChoices = [already];
-    final again = rules.pendingChoicesForLevelUp(jarson, 3, 5);
+    final torvek = buildSampleCharacter();
+    final already = rules.pendingChoicesForLevelUp(torvek, 3, 5).first;
+    torvek.pendingChoices = [already];
+    final again = rules.pendingChoicesForLevelUp(torvek, 3, 5);
     expect(again, isEmpty);
   });
 
   test('classFeaturesForLevelUp grants Extra Attack at 5 and Indomitable at 9, skipping choice-driven entries', () {
-    final jarson = buildSampleJarson();
-    jarson.level = 3;
-    jarson.features = [];
+    final torvek = buildSampleCharacter();
+    torvek.level = 3;
+    torvek.features = [];
 
-    final crossing5 = rules.classFeaturesForLevelUp(jarson, 3, 5);
+    final crossing5 = rules.classFeaturesForLevelUp(torvek, 3, 5);
     expect(
       crossing5.map((f) => f.name),
       containsAll(['Extra Attack', 'Tactical Shift']),
@@ -116,8 +116,8 @@ void main() {
     );
     expect(crossing5.any((f) => f.name == 'Fighter Subclass'), isFalse);
 
-    jarson.features = crossing5;
-    final crossing9 = rules.classFeaturesForLevelUp(jarson, 5, 9);
+    torvek.features = crossing5;
+    final crossing9 = rules.classFeaturesForLevelUp(torvek, 5, 9);
     expect(
       crossing9.map((f) => f.name),
       containsAll(['Indomitable', 'Tactical Master']),
@@ -125,58 +125,59 @@ void main() {
   });
 
   test('classFeaturesForLevelUp never re-grants a feature already present', () {
-    final jarson = buildSampleJarson(); // already has Extra Attack at level 9
-    final regranted = rules.classFeaturesForLevelUp(jarson, 3, 9);
+    final torvek =
+        buildSampleCharacter(); // already has Extra Attack at level 9
+    final regranted = rules.classFeaturesForLevelUp(torvek, 3, 9);
     expect(regranted.any((f) => f.name == 'Extra Attack'), isFalse);
   });
 
   test('resolvePendingChoice removes the choice, grants the feat, and applies ability deltas', () {
-    final jarson = buildSampleJarson();
+    final torvek = buildSampleCharacter();
     final choice = PendingChoice(
       id: 'test-1',
       label: 'Level 4: Ability Score Improvement',
     );
-    jarson.pendingChoices = [choice];
-    final beforeCon = jarson.abilityScores.con;
+    torvek.pendingChoices = [choice];
+    final beforeCon = torvek.abilityScores.con;
 
     rules.resolvePendingChoice(
-      jarson,
+      torvek,
       'test-1',
       GrantedFeature(name: 'Ability Score Improvement', source: 'feat'),
       abilityScoreDeltas: {'con': 2},
     );
 
-    expect(jarson.pendingChoices, isEmpty);
+    expect(torvek.pendingChoices, isEmpty);
     expect(
-      jarson.feats.any((f) => f.name == 'Ability Score Improvement'),
+      torvek.feats.any((f) => f.name == 'Ability Score Improvement'),
       isTrue,
     );
-    expect(jarson.abilityScores.con, beforeCon + 2);
-    expect(jarson.history, hasLength(1));
-    expect(jarson.history.first.label, contains('Ability Score Improvement'));
-    expect(jarson.history.first.detail, contains('CON'));
+    expect(torvek.abilityScores.con, beforeCon + 2);
+    expect(torvek.history, hasLength(1));
+    expect(torvek.history.first.label, contains('Ability Score Improvement'));
+    expect(torvek.history.first.detail, contains('CON'));
     expect(
-      jarson.history.first.detail,
+      torvek.history.first.detail,
       contains('$beforeCon → ${beforeCon + 2}'),
     );
   });
 
   test('grantFeat logs a history entry even without ability score deltas', () {
-    final jarson = buildSampleJarson();
-    rules.grantFeat(jarson, GrantedFeature(name: 'Alert', source: 'feat'));
-    expect(jarson.feats.any((f) => f.name == 'Alert'), isTrue);
-    expect(jarson.history, hasLength(1));
-    expect(jarson.history.first.label, 'Feat: Alert (Level ${jarson.level})');
-    expect(jarson.history.first.detail, isNull);
+    final torvek = buildSampleCharacter();
+    rules.grantFeat(torvek, GrantedFeature(name: 'Alert', source: 'feat'));
+    expect(torvek.feats.any((f) => f.name == 'Alert'), isTrue);
+    expect(torvek.history, hasLength(1));
+    expect(torvek.history.first.label, 'Feat: Alert (Level ${torvek.level})');
+    expect(torvek.history.first.detail, isNull);
   });
 
   test(
     'setAbilityScores updates the scores and logs only what actually changed',
     () {
-      final jarson = buildSampleJarson();
-      final before = jarson.abilityScores;
+      final torvek = buildSampleCharacter();
+      final before = torvek.abilityScores;
       rules.setAbilityScores(
-        jarson,
+        torvek,
         AbilityScores(
           str: before.str,
           dex: before.dex + 2,
@@ -187,50 +188,50 @@ void main() {
         ),
         label: 'Belt of Giant Strength',
       );
-      expect(jarson.abilityScores.dex, before.dex + 2);
-      expect(jarson.history, hasLength(1));
-      expect(jarson.history.first.label, 'Belt of Giant Strength');
+      expect(torvek.abilityScores.dex, before.dex + 2);
+      expect(torvek.history, hasLength(1));
+      expect(torvek.history.first.label, 'Belt of Giant Strength');
       expect(
-        jarson.history.first.detail,
+        torvek.history.first.detail,
         '${'DEX'} ${before.dex} → ${before.dex + 2}',
       );
     },
   );
 
   test('setAbilityScores logs nothing when nothing actually changed', () {
-    final jarson = buildSampleJarson();
-    rules.setAbilityScores(jarson, jarson.abilityScores);
-    expect(jarson.history, isEmpty);
+    final torvek = buildSampleCharacter();
+    rules.setAbilityScores(torvek, torvek.abilityScores);
+    expect(torvek.history, isEmpty);
   });
 
   test('logHistory appends oldest-first', () {
-    final jarson = buildSampleJarson();
-    rules.logHistory(jarson, 'First');
-    rules.logHistory(jarson, 'Second');
-    expect(jarson.history.map((h) => h.label), ['First', 'Second']);
+    final torvek = buildSampleCharacter();
+    rules.logHistory(torvek, 'First');
+    rules.logHistory(torvek, 'Second');
+    expect(torvek.history.map((h) => h.label), ['First', 'Second']);
   });
 
   test('liveFeatureText prefers the real SRD text over a stale stored desc (Remarkable Athlete)', () {
-    final jarson = buildSampleJarson();
-    final stale = jarson.features.firstWhere(
+    final torvek = buildSampleCharacter();
+    final stale = torvek.features.firstWhere(
       (f) => f.name == 'Remarkable Athlete',
     );
-    // Jarson's sample data still carries the pre-port, 2014-style desc.
+    // Torvek's sample data still carries the pre-port, 2014-style desc.
     expect(stale.desc, contains('half your Proficiency Bonus'));
 
-    final live = rules.liveFeatureText(jarson, stale);
+    final live = rules.liveFeatureText(torvek, stale);
     expect(live, isNot(contains('half your Proficiency Bonus')));
     expect(live, contains('Advantage on Initiative rolls'));
   });
 
   test('liveFeatureText falls back to the stored desc for an uncataloged/homebrew feature', () {
-    final jarson = buildSampleJarson();
+    final torvek = buildSampleCharacter();
     final homebrew = GrantedFeature(
       name: 'Definitely Not A Real Feature',
       source: 'homebrew',
       desc: 'Custom text.',
     );
-    expect(rules.liveFeatureText(jarson, homebrew), 'Custom text.');
+    expect(rules.liveFeatureText(torvek, homebrew), 'Custom text.');
   });
 
   test('armorClassFromFormula handles light (uncapped Dex), medium (capped), and heavy (flat) armor', () {
@@ -257,22 +258,22 @@ void main() {
   });
 
   test(
-    "armorClassFor matches Jarson's known AC of 18 from Half Plate + Shield",
+    "armorClassFor matches Torvek's known AC of 18 from Half Plate + Shield",
     () {
-      final jarson = buildSampleJarson();
-      // Half Plate: 15 + Dex modifier (max 2). Jarson's Dex is 12 (+1 mod),
+      final torvek = buildSampleCharacter();
+      // Half Plate: 15 + Dex modifier (max 2). Torvek's Dex is 12 (+1 mod),
       // under the cap, so 15 + 1 = 16, plus the Shield's flat +2 = 18.
-      expect(rules.armorClassFor(jarson), 18);
+      expect(rules.armorClassFor(torvek), 18);
       // Medium, not Heavy - matters for Heavy-armor-gated effects like
       // Heavy Armor Master, which shouldn't apply to him while wearing it.
-      expect(jarson.equippedArmor?.category, 'Medium');
+      expect(torvek.equippedArmor?.category, 'Medium');
     },
   );
 
   test('armorClassOverride wins over the computed value when set', () {
-    final jarson = buildSampleJarson();
-    jarson.armorClassOverride = 25;
-    expect(rules.armorClassFor(jarson), 25);
+    final torvek = buildSampleCharacter();
+    torvek.armorClassOverride = 25;
+    expect(rules.armorClassFor(torvek), 25);
   });
 
   const secondWindKey = 'srd-2024_fighter-class_Second Wind';
@@ -281,7 +282,7 @@ void main() {
   const breathWeaponKey = 'srd-2024_dragonborn-species_Breath Weapon';
 
   test('recalculateClassResources matches the real Fighter level table (classes.json)', () {
-    final jarson = buildSampleJarson();
+    final torvek = buildSampleCharacter();
 
     // Second Wind scales: 2 uses at 1-3, 3 at 4-9, 4 at 10+ - not the flat
     // "1" the very first mockup assumed.
@@ -292,9 +293,9 @@ void main() {
       (9, 3),
       (10, 4),
     ]) {
-      jarson.level = level;
-      rules.recalculateClassResources(jarson);
-      final secondWind = jarson.resources.firstWhere(
+      torvek.level = level;
+      rules.recalculateClassResources(torvek);
+      final secondWind = torvek.resources.firstWhere(
         (r) => r.key == secondWindKey,
       );
       expect(
@@ -307,26 +308,26 @@ void main() {
     // Action Surge isn't unlocked at all below level 2 (matches the web
     // app: an un-unlocked threshold resource is omitted, not shown as
     // 0/0), then 1 use at 2-16, 2 uses at 17+.
-    jarson.level = 1;
-    rules.recalculateClassResources(jarson);
-    expect(jarson.resources.where((r) => r.key == actionSurgeKey), isEmpty);
+    torvek.level = 1;
+    rules.recalculateClassResources(torvek);
+    expect(torvek.resources.where((r) => r.key == actionSurgeKey), isEmpty);
     for (final (level, expected) in [(2, 1), (9, 1), (17, 2)]) {
-      jarson.level = level;
-      rules.recalculateClassResources(jarson);
-      final actionSurge = jarson.resources.firstWhere(
+      torvek.level = level;
+      rules.recalculateClassResources(torvek);
+      final actionSurge = torvek.resources.firstWhere(
         (r) => r.key == actionSurgeKey,
       );
       expect(actionSurge.max, expected, reason: 'Action Surge at level $level');
     }
 
     // Indomitable: not unlocked below 9, 1 at 9-12, 2 at 13-16, 3 at 17+.
-    jarson.level = 8;
-    rules.recalculateClassResources(jarson);
-    expect(jarson.resources.where((r) => r.key == indomitableKey), isEmpty);
+    torvek.level = 8;
+    rules.recalculateClassResources(torvek);
+    expect(torvek.resources.where((r) => r.key == indomitableKey), isEmpty);
     for (final (level, expected) in [(9, 1), (13, 2), (17, 3)]) {
-      jarson.level = level;
-      rules.recalculateClassResources(jarson);
-      final indomitable = jarson.resources.firstWhere(
+      torvek.level = level;
+      rules.recalculateClassResources(torvek);
+      final indomitable = torvek.resources.firstWhere(
         (r) => r.key == indomitableKey,
       );
       expect(indomitable.max, expected, reason: 'Indomitable at level $level');
@@ -334,11 +335,11 @@ void main() {
   });
 
   test('recalculateClassResources also scales the Dragonborn species resource (Breath Weapon) with Proficiency Bonus', () {
-    final jarson = buildSampleJarson();
+    final torvek = buildSampleCharacter();
     for (final (level, expectedMax) in [(1, 2), (5, 3), (9, 4), (17, 6)]) {
-      jarson.level = level;
-      rules.recalculateClassResources(jarson);
-      final breathWeapon = jarson.resources.firstWhere(
+      torvek.level = level;
+      rules.recalculateClassResources(torvek);
+      final breathWeapon = torvek.resources.firstWhere(
         (r) => r.key == breathWeaponKey,
       );
       expect(
@@ -350,13 +351,13 @@ void main() {
   });
 
   test('recalculateClassResources clamps used-but-now-invalid uses down to the new max', () {
-    final jarson = buildSampleJarson();
-    jarson.resources.firstWhere((r) => r.key == secondWindKey).used = 3;
+    final torvek = buildSampleCharacter();
+    torvek.resources.firstWhere((r) => r.key == secondWindKey).used = 3;
 
-    jarson.level = 1; // Second Wind max drops from 3 to 2 at level 1
-    rules.recalculateClassResources(jarson);
+    torvek.level = 1; // Second Wind max drops from 3 to 2 at level 1
+    rules.recalculateClassResources(torvek);
 
-    final secondWind = jarson.resources.firstWhere(
+    final secondWind = torvek.resources.firstWhere(
       (r) => r.key == secondWindKey,
     );
     expect(secondWind.max, 2);
@@ -364,93 +365,90 @@ void main() {
   });
 
   test('recalculateClassResources drops an unlocked-then-un-unlocked resource rather than leaving it stale', () {
-    final jarson = buildSampleJarson();
-    jarson.level = 17; // Action Surge and Indomitable both unlocked here
-    rules.recalculateClassResources(jarson);
-    expect(jarson.resources.where((r) => r.key == actionSurgeKey), isNotEmpty);
+    final torvek = buildSampleCharacter();
+    torvek.level = 17; // Action Surge and Indomitable both unlocked here
+    rules.recalculateClassResources(torvek);
+    expect(torvek.resources.where((r) => r.key == actionSurgeKey), isNotEmpty);
 
-    jarson.level = 1; // level corrected back down below their thresholds
-    rules.recalculateClassResources(jarson);
-    expect(jarson.resources.where((r) => r.key == actionSurgeKey), isEmpty);
-    expect(jarson.resources.where((r) => r.key == indomitableKey), isEmpty);
+    torvek.level = 1; // level corrected back down below their thresholds
+    rules.recalculateClassResources(torvek);
+    expect(torvek.resources.where((r) => r.key == actionSurgeKey), isEmpty);
+    expect(torvek.resources.where((r) => r.key == indomitableKey), isEmpty);
   });
 
-  test(
-    'maxHpForLevel matches Jarson\'s real numbers (d10, Con +2, level 9 -> 76)',
-    () {
-      expect(rules.maxHpForLevel(die: 'd10', conModifier: 2, level: 9), 76);
-    },
-  );
+  test('maxHpForLevel matches the sample character\'s numbers (d10, Con +2, level 9 -> 76)', () {
+    expect(rules.maxHpForLevel(die: 'd10', conModifier: 2, level: 9), 76);
+  });
 
   test('recalculateHp is idempotent and clamps current HP/Hit Dice to the new totals', () {
-    final jarson = buildSampleJarson();
-    jarson.currentHp = 10;
-    jarson.hitDiceSpent = 9;
+    final torvek = buildSampleCharacter();
+    torvek.currentHp = 10;
+    torvek.hitDiceSpent = 9;
 
-    jarson.level = 5;
-    rules.recalculateHp(jarson);
+    torvek.level = 5;
+    rules.recalculateHp(torvek);
 
     expect(
-      jarson.maxHp,
+      torvek.maxHp,
       rules.maxHpForLevel(die: 'd10', conModifier: 2, level: 5),
     );
-    expect(jarson.hitDiceTotal, 5);
-    expect(jarson.currentHp, 10); // below the new max, so untouched
-    expect(jarson.hitDiceSpent, 5); // was 9, clamped down to the new total
+    expect(torvek.hitDiceTotal, 5);
+    expect(torvek.currentHp, 10); // below the new max, so untouched
+    expect(torvek.hitDiceSpent, 5); // was 9, clamped down to the new total
 
-    final before = jarson.maxHp;
-    rules.recalculateHp(jarson);
+    final before = torvek.maxHp;
+    rules.recalculateHp(torvek);
     expect(
-      jarson.maxHp,
+      torvek.maxHp,
       before,
     ); // calling it again at the same level changes nothing
   });
 
   test('subclassPendingChoices does nothing before level 3', () {
-    final jarson = buildSampleJarson();
-    jarson.subclassKey = null;
-    jarson.pendingChoices = [];
+    final torvek = buildSampleCharacter();
+    torvek.subclassKey = null;
+    torvek.pendingChoices = [];
 
-    expect(rules.subclassPendingChoices(jarson, 1, 2), isEmpty);
+    expect(rules.subclassPendingChoices(torvek, 1, 2), isEmpty);
   });
 
   test('subclassPendingChoices surfaces a choice on crossing level 3, never auto-assigning', () {
-    final jarson = buildSampleJarson();
-    jarson.subclassKey = null;
-    jarson.classLabel = 'Lv.3 Dragonborn Fighter';
-    jarson.features = [];
-    jarson.pendingChoices = [];
+    final torvek = buildSampleCharacter();
+    torvek.subclassKey = null;
+    torvek.classLabel = 'Lv.3 Dragonborn Fighter';
+    torvek.features = [];
+    torvek.pendingChoices = [];
 
-    final choices = rules.subclassPendingChoices(jarson, 2, 3);
+    final choices = rules.subclassPendingChoices(torvek, 2, 3);
 
     expect(choices.length, 1);
     expect(choices.first.label, contains('Level 3'));
     expect(choices.first.kind, 'subclass');
     // Nothing is assigned or granted just from surfacing the choice.
-    expect(jarson.subclassKey, isNull);
-    expect(jarson.features, isEmpty);
+    expect(torvek.subclassKey, isNull);
+    expect(torvek.features, isEmpty);
   });
 
   test('subclassPendingChoices never duplicates an already-pending choice, and never fires once resolved', () {
-    final jarson = buildSampleJarson();
-    jarson.subclassKey = null;
-    jarson.pendingChoices = [];
+    final torvek = buildSampleCharacter();
+    torvek.subclassKey = null;
+    torvek.pendingChoices = [];
 
-    final first = rules.subclassPendingChoices(jarson, 2, 3);
-    jarson.pendingChoices = first;
-    expect(rules.subclassPendingChoices(jarson, 2, 3), isEmpty);
+    final first = rules.subclassPendingChoices(torvek, 2, 3);
+    torvek.pendingChoices = first;
+    expect(rules.subclassPendingChoices(torvek, 2, 3), isEmpty);
 
-    jarson.subclassKey = 'srd-2024_champion-subclass'; // now resolved
-    expect(rules.subclassPendingChoices(jarson, 2, 3), isEmpty);
+    torvek.subclassKey = 'srd-2024_champion-subclass'; // now resolved
+    expect(rules.subclassPendingChoices(torvek, 2, 3), isEmpty);
   });
 
   test('resolveSubclassChoice assigns Champion, updates classLabel, and grants reached features only', () {
-    final jarson = buildSampleJarson();
-    jarson.level = 3;
-    jarson.subclassKey = null;
-    jarson.classLabel = 'Lv.3 Dragonborn Fighter';
-    jarson.features = [];
-    jarson.pendingChoices = [
+    final torvek = buildSampleCharacter();
+    torvek.level = 3;
+    torvek.subclassKey = null;
+    torvek.classLabel = 'Lv.3 Dragonborn Fighter';
+    torvek.features = [];
+    torvek.pendingChoices = [
       PendingChoice(
         id: 'sub-1',
         label: 'Level 3: Fighter Subclass',
@@ -458,33 +456,33 @@ void main() {
       ),
     ];
 
-    rules.resolveSubclassChoice(jarson, 'sub-1', 'srd-2024_champion-subclass');
+    rules.resolveSubclassChoice(torvek, 'sub-1', 'srd-2024_champion-subclass');
 
-    expect(jarson.pendingChoices, isEmpty);
-    expect(jarson.subclassKey, 'srd-2024_champion-subclass');
-    expect(jarson.classLabel, contains('Champion'));
+    expect(torvek.pendingChoices, isEmpty);
+    expect(torvek.subclassKey, 'srd-2024_champion-subclass');
+    expect(torvek.classLabel, contains('Champion'));
     expect(
-      jarson.features.map((f) => f.name),
+      torvek.features.map((f) => f.name),
       containsAll(['Improved Critical', 'Remarkable Athlete']),
     );
-    expect(jarson.features.every((f) => f.source == 'subclass'), isTrue);
+    expect(torvek.features.every((f) => f.source == 'subclass'), isTrue);
     // Level 7's Additional Fighting Style hasn't been reached yet.
     expect(
-      jarson.features.any((f) => f.name == 'Additional Fighting Style'),
+      torvek.features.any((f) => f.name == 'Additional Fighting Style'),
       isFalse,
     );
-    expect(jarson.history.last.label, contains('Subclass chosen: Champion'));
-    expect(jarson.history.last.detail, contains('New features:'));
-    expect(jarson.history.last.detail, contains('Improved Critical'));
-    expect(jarson.history.last.detail, contains('Remarkable Athlete'));
+    expect(torvek.history.last.label, contains('Subclass chosen: Champion'));
+    expect(torvek.history.last.detail, contains('New features:'));
+    expect(torvek.history.last.detail, contains('Improved Critical'));
+    expect(torvek.history.last.detail, contains('Remarkable Athlete'));
   });
 
   test('resolveSubclassChoice backfills every reached subclass feature on a big level jump, surfacing choice-driven ones as a Pending Choice instead of auto-granting them', () {
-    final jarson = buildSampleJarson();
-    jarson.level = 10;
-    jarson.subclassKey = null;
-    jarson.features = [];
-    jarson.pendingChoices = [
+    final torvek = buildSampleCharacter();
+    torvek.level = 10;
+    torvek.subclassKey = null;
+    torvek.features = [];
+    torvek.pendingChoices = [
       PendingChoice(
         id: 'sub-1',
         label: 'Level 3: Fighter Subclass',
@@ -492,10 +490,10 @@ void main() {
       ),
     ];
 
-    rules.resolveSubclassChoice(jarson, 'sub-1', 'srd-2024_champion-subclass');
+    rules.resolveSubclassChoice(torvek, 'sub-1', 'srd-2024_champion-subclass');
 
     expect(
-      jarson.features.map((f) => f.name),
+      torvek.features.map((f) => f.name),
       containsAll([
         'Improved Critical',
         'Remarkable Athlete',
@@ -505,42 +503,42 @@ void main() {
     // Additional Fighting Style (level 7) is choice-driven - never silently
     // auto-granted, even on a big backfilling jump like this one.
     expect(
-      jarson.features.any((f) => f.name == 'Additional Fighting Style'),
+      torvek.features.any((f) => f.name == 'Additional Fighting Style'),
       isFalse,
     );
     expect(
-      jarson.pendingChoices.map((p) => p.label),
+      torvek.pendingChoices.map((p) => p.label),
       contains('Level 7: Additional Fighting Style'),
     );
     expect(
-      jarson.pendingChoices
+      torvek.pendingChoices
           .firstWhere((p) => p.label == 'Level 7: Additional Fighting Style')
           .featCategory,
       'Fighting Style Feat',
     );
-    expect(jarson.history.last.detail, contains('New choices to make:'));
+    expect(torvek.history.last.detail, contains('New choices to make:'));
     expect(
-      jarson.history.last.detail,
+      torvek.history.last.detail,
       contains('Level 7: Additional Fighting Style'),
     );
   });
 
   test('levelUpOneLevel crossing Champion\'s level 7 surfaces Additional Fighting Style as a Pending Choice, not a silently-granted feature', () {
-    final jarson = buildSampleJarson();
+    final torvek = buildSampleCharacter();
     // Champion's subclass key is already set on the sample data - rewind
     // to level 6 (just below the level 7 feature) to exercise an ordinary
     // one-level-at-a-time advance, the normal "Level Up" button's path.
-    jarson.level = 6;
+    torvek.level = 6;
 
-    final summary = rules.levelUpOneLevel(jarson);
+    final summary = rules.levelUpOneLevel(torvek);
 
     expect(summary.newLevel, 7);
     expect(
-      jarson.features.any((f) => f.name == 'Additional Fighting Style'),
+      torvek.features.any((f) => f.name == 'Additional Fighting Style'),
       isFalse,
     );
     expect(
-      jarson.pendingChoices.map((p) => p.label),
+      torvek.pendingChoices.map((p) => p.label),
       contains('Level 7: Additional Fighting Style'),
     );
     expect(
@@ -550,12 +548,12 @@ void main() {
   });
 
   test('repairMissingFeatChoices converts an already-granted inert Additional Fighting Style feature (from before the level-up fix) into a resolvable Pending Choice', () {
-    final jarson = buildSampleJarson();
+    final torvek = buildSampleCharacter();
     // Reproduces exactly what the old buggy subclassFeaturesForLevelUp did:
     // auto-granted the choice-driven feature as a plain inert feature, with
     // no Pending Choice ever created for it.
-    jarson.features = [
-      ...jarson.features,
+    torvek.features = [
+      ...torvek.features,
       GrantedFeature(
         name: 'Additional Fighting Style',
         source: 'subclass',
@@ -563,64 +561,64 @@ void main() {
       ),
     ];
 
-    rules.repairMissingFeatChoices(jarson);
+    rules.repairMissingFeatChoices(torvek);
 
     expect(
-      jarson.features.any((f) => f.name == 'Additional Fighting Style'),
+      torvek.features.any((f) => f.name == 'Additional Fighting Style'),
       isFalse,
     );
     expect(
-      jarson.pendingChoices.map((p) => p.label),
+      torvek.pendingChoices.map((p) => p.label),
       contains('Level 7: Additional Fighting Style'),
     );
-    expect(jarson.history.last.label, contains('Data repair'));
+    expect(torvek.history.last.label, contains('Data repair'));
 
     // Idempotent - calling it again (e.g. every app load) does nothing more.
-    final historyLengthAfterFirstRepair = jarson.history.length;
-    rules.repairMissingFeatChoices(jarson);
-    expect(jarson.history.length, historyLengthAfterFirstRepair);
+    final historyLengthAfterFirstRepair = torvek.history.length;
+    rules.repairMissingFeatChoices(torvek);
+    expect(torvek.history.length, historyLengthAfterFirstRepair);
   });
 
   test('repairMissingFeatChoices does nothing for a character with no stale inert choice feature', () {
-    final jarson = buildSampleJarson();
-    final before = jarson.history.length;
+    final torvek = buildSampleCharacter();
+    final before = torvek.history.length;
 
-    rules.repairMissingFeatChoices(jarson);
+    rules.repairMissingFeatChoices(torvek);
 
-    expect(jarson.history.length, before);
+    expect(torvek.history.length, before);
   });
 
   test('subclassFeaturesForLevelUp does nothing until a subclass is actually chosen', () {
-    final jarson = buildSampleJarson();
-    jarson.subclassKey = null;
-    jarson.features = [];
+    final torvek = buildSampleCharacter();
+    torvek.subclassKey = null;
+    torvek.features = [];
 
-    rules.subclassFeaturesForLevelUp(jarson, 9, 10);
+    rules.subclassFeaturesForLevelUp(torvek, 9, 10);
 
-    expect(jarson.features, isEmpty); // never auto-assigns, even at level 10
+    expect(torvek.features, isEmpty); // never auto-assigns, even at level 10
   });
 
   test('subclassFeaturesForLevelUp only grants newly-crossed features once already chosen, never re-granting', () {
-    final jarson = buildSampleJarson(); // already Champion, level 9
-    final beforeCount = jarson.features.length;
+    final torvek = buildSampleCharacter(); // already Champion, level 9
+    final beforeCount = torvek.features.length;
 
-    rules.subclassFeaturesForLevelUp(jarson, 9, 10);
-    expect(jarson.features.length, beforeCount + 1); // just Heroic Warrior
-    expect(jarson.features.last.name, 'Heroic Warrior');
+    rules.subclassFeaturesForLevelUp(torvek, 9, 10);
+    expect(torvek.features.length, beforeCount + 1); // just Heroic Warrior
+    expect(torvek.features.last.name, 'Heroic Warrior');
 
-    rules.subclassFeaturesForLevelUp(jarson, 10, 15);
-    expect(jarson.features.any((f) => f.name == 'Superior Critical'), isTrue);
+    rules.subclassFeaturesForLevelUp(torvek, 10, 15);
+    expect(torvek.features.any((f) => f.name == 'Superior Critical'), isTrue);
     // Re-running an already-crossed range never duplicates.
-    final countAt15 = jarson.features.length;
-    rules.subclassFeaturesForLevelUp(jarson, 9, 15);
-    expect(jarson.features.length, countAt15);
+    final countAt15 = torvek.features.length;
+    rules.subclassFeaturesForLevelUp(torvek, 9, 15);
+    expect(torvek.features.length, countAt15);
   });
 
   test('featChoicePendingChoices surfaces Fighting Style at level 1, but not Ability Score Improvement (handled separately)', () {
-    final jarson = buildSampleJarson();
-    jarson.pendingChoices = [];
+    final torvek = buildSampleCharacter();
+    torvek.pendingChoices = [];
 
-    final choices = rules.featChoicePendingChoices(jarson, 0, 1);
+    final choices = rules.featChoicePendingChoices(torvek, 0, 1);
 
     expect(choices.length, 1);
     expect(choices.first.label, 'Level 1: Fighting Style');
@@ -659,9 +657,9 @@ void main() {
     expect(gwm.abilities, ['str']);
     expect((gwm.amount, gwm.max), (1, 20));
 
-    final jarson = buildSampleJarson();
-    jarson.feats.removeWhere((f) => f.name == 'Great Weapon Master');
-    jarson.abilityScores = const AbilityScores(
+    final torvek = buildSampleCharacter();
+    torvek.feats.removeWhere((f) => f.name == 'Great Weapon Master');
+    torvek.abilityScores = const AbilityScores(
       str: 20,
       dex: 12,
       con: 14,
@@ -670,25 +668,25 @@ void main() {
       cha: 10,
     );
     rules.grantFeat(
-      jarson,
+      torvek,
       GrantedFeature(name: 'Great Weapon Master', source: 'feat'),
       abilityScoreDeltas: {'str': 1},
     );
-    expect(jarson.abilityScores.str, 20); // already at the maximum
+    expect(torvek.abilityScores.str, 20); // already at the maximum
 
     rules.grantFeat(
-      jarson,
+      torvek,
       GrantedFeature(name: 'Boon of Combat Prowess', source: 'feat'),
       abilityScoreDeltas: {'str': 1},
     );
-    expect(jarson.abilityScores.str, 21); // an Epic Boon goes to 30
+    expect(torvek.abilityScores.str, 21); // an Epic Boon goes to 30
   });
 
   test('Great Weapon Master (a homebrew "official" entry, since it\'s a '
       'real 2024 feat NOT in the free SRD - see _builtinFeatEffects\' doc '
       'comment) only adds its Proficiency Bonus damage with a Heavy '
       'weapon', () {
-    final jarson = buildSampleJarson();
+    final torvek = buildSampleCharacter();
     final entry = homebrewRepo.create('feat', 'Great Weapon Master');
     homebrewRepo.update(
       HomebrewEntry(
@@ -705,10 +703,10 @@ void main() {
         ],
       ),
     );
-    final greatsword = jarson.weapons.firstWhere((w) => w.name == 'Greatsword');
-    final prof = rules.proficiencyBonusForLevel(jarson.level);
+    final greatsword = torvek.weapons.firstWhere((w) => w.name == 'Greatsword');
+    final prof = rules.proficiencyBonusForLevel(torvek.level);
 
-    final withFeat = rules.damageFor(jarson, greatsword);
+    final withFeat = rules.damageFor(torvek, greatsword);
     expect(withFeat.breakdown, contains('Great Weapon Master'));
     expect(
       withFeat.breakdown,
@@ -717,8 +715,8 @@ void main() {
 
     // Non-Heavy weapon: the feat's effect is conditioned on 'heavyWeapon'
     // and shouldn't fire even though the feat is still on the sheet.
-    // Jarson's seed weapons (Greatsword, Sword of the Failed Dragon
-    // Slayer) are both Heavy, so build a light one directly.
+    // Torvek's seed weapons (Greatsword and Emberfang) are both Heavy,
+    // so build a light one directly.
     final dagger = Weapon(
       name: 'Dagger',
       damageDice: '1d4',
@@ -729,13 +727,13 @@ void main() {
     );
     expect(dagger.isHeavy, isFalse);
     expect(
-      rules.damageFor(jarson, dagger).breakdown,
+      rules.damageFor(torvek, dagger).breakdown,
       isNot(contains('Great Weapon Master')),
     );
 
-    jarson.feats.removeWhere((f) => f.name == 'Great Weapon Master');
+    torvek.feats.removeWhere((f) => f.name == 'Great Weapon Master');
     expect(
-      rules.damageFor(jarson, greatsword).breakdown,
+      rules.damageFor(torvek, greatsword).breakdown,
       isNot(contains('Great Weapon Master')),
     );
   });
@@ -751,7 +749,7 @@ void main() {
   test(
     'enableSpellcasting sets the right ability and level-1 slots for a Wizard',
     () {
-      final wizard = buildSampleJarson();
+      final wizard = buildSampleCharacter();
       wizard.classKey = 'srd-2024_wizard-class';
       wizard.level = 1;
       wizard.spellcasting = null;
@@ -766,7 +764,7 @@ void main() {
   );
 
   test('recalculateSpellSlots grows/shrinks slots with level and clamps used down, for both full-caster and Pact Magic shapes', () {
-    final wizard = buildSampleJarson();
+    final wizard = buildSampleCharacter();
     wizard.classKey = 'srd-2024_wizard-class';
     wizard.level = 1;
     rules.enableSpellcasting(wizard);
@@ -779,7 +777,7 @@ void main() {
     expect(wizard.spellcasting!.slots[1]!.used, 2); // carried over, not reset
     expect(wizard.spellcasting!.slots[3]!.used, 0); // newly unlocked
 
-    final warlock = buildSampleJarson();
+    final warlock = buildSampleCharacter();
     warlock.classKey = 'srd-2024_warlock-class';
     warlock.level = 1;
     rules.enableSpellcasting(warlock);
@@ -798,7 +796,7 @@ void main() {
   test(
     'applyLongRest fully restores spell slots, matching every other resource',
     () {
-      final wizard = buildSampleJarson();
+      final wizard = buildSampleCharacter();
       wizard.classKey = 'srd-2024_wizard-class';
       wizard.level = 5;
       rules.enableSpellcasting(wizard);
@@ -816,71 +814,71 @@ void main() {
   );
 
   test('setTempHp replaces rather than adds, and clamps at 0', () {
-    final jarson = buildSampleJarson();
-    rules.setTempHp(jarson, 10);
-    expect(jarson.tempHp, 10);
+    final torvek = buildSampleCharacter();
+    rules.setTempHp(torvek, 10);
+    expect(torvek.tempHp, 10);
 
     // A second grant replaces, it never stacks on top (SRD: "They Don't
     // Stack") - even a smaller amount overwrites, since the UI is what
     // surfaces the current value for the player to decide against.
-    rules.setTempHp(jarson, 4);
-    expect(jarson.tempHp, 4);
+    rules.setTempHp(torvek, 4);
+    expect(torvek.tempHp, 4);
 
-    rules.setTempHp(jarson, -5);
-    expect(jarson.tempHp, 0);
+    rules.setTempHp(torvek, -5);
+    expect(torvek.tempHp, 0);
   });
 
   test('applyDamageOrHeal spends Temporary HP before real HP, carrying leftover damage over', () {
-    final jarson = buildSampleJarson();
-    jarson.currentHp = jarson.maxHp;
-    rules.setTempHp(jarson, 5);
+    final torvek = buildSampleCharacter();
+    torvek.currentHp = torvek.maxHp;
+    rules.setTempHp(torvek, 5);
 
     // 3 damage - fully absorbed by tempHp, real HP untouched.
-    rules.applyDamageOrHeal(jarson, -3);
-    expect(jarson.tempHp, 2);
-    expect(jarson.currentHp, jarson.maxHp);
+    rules.applyDamageOrHeal(torvek, -3);
+    expect(torvek.tempHp, 2);
+    expect(torvek.currentHp, torvek.maxHp);
 
     // 7 more damage - depletes the remaining 2 tempHp, 5 carries over to
     // real HP.
-    rules.applyDamageOrHeal(jarson, -7);
-    expect(jarson.tempHp, 0);
-    expect(jarson.currentHp, jarson.maxHp - 5);
+    rules.applyDamageOrHeal(torvek, -7);
+    expect(torvek.tempHp, 0);
+    expect(torvek.currentHp, torvek.maxHp - 5);
   });
 
   test('restPreview lists what each rest would recover, without changing '
       'the character', () {
-    final jarson = buildSampleJarson();
-    for (final r in jarson.resources) {
+    final torvek = buildSampleCharacter();
+    for (final r in torvek.resources) {
       r.used = 0;
     }
-    jarson.currentHp = jarson.maxHp;
-    jarson.tempHp = 0;
-    jarson.hitDiceSpent = 0;
-    jarson.exhaustionLevel = 0;
-    expect(rules.restPreview(jarson, longRest: true), isEmpty);
+    torvek.currentHp = torvek.maxHp;
+    torvek.tempHp = 0;
+    torvek.hitDiceSpent = 0;
+    torvek.exhaustionLevel = 0;
+    expect(rules.restPreview(torvek, longRest: true), isEmpty);
 
-    final secondWind = jarson.resources.firstWhere(
+    final secondWind = torvek.resources.firstWhere(
       (r) => r.name == 'Second Wind',
     );
-    final actionSurge = jarson.resources.firstWhere(
+    final actionSurge = torvek.resources.firstWhere(
       (r) => r.name == 'Action Surge',
     );
     secondWind.used = 1;
     actionSurge.used = 1;
-    jarson.currentHp = jarson.maxHp - 10;
+    torvek.currentHp = torvek.maxHp - 10;
 
-    final short = rules.restPreview(jarson, longRest: false);
+    final short = rules.restPreview(torvek, longRest: false);
     expect(short, [
       'Second Wind: ${secondWind.max - 1} → ${secondWind.max} of '
           '${secondWind.max} left',
     ]);
 
-    final long = rules.restPreview(jarson, longRest: true);
+    final long = rules.restPreview(torvek, longRest: true);
     expect(
       long,
       contains(
-        'HP: ${jarson.maxHp - 10} → ${jarson.maxHp} of '
-        '${jarson.maxHp}',
+        'HP: ${torvek.maxHp - 10} → ${torvek.maxHp} of '
+        '${torvek.maxHp}',
       ),
     );
     expect(long.any((l) => l.startsWith('Action Surge: 0 → 1')), isTrue);
@@ -888,21 +886,21 @@ void main() {
 
     // Just a preview - nothing was actually recovered.
     expect(secondWind.used, 1);
-    expect(jarson.currentHp, jarson.maxHp - 10);
+    expect(torvek.currentHp, torvek.maxHp - 10);
   });
 
   test('applyLongRest clears Temporary HP', () {
-    final jarson = buildSampleJarson();
-    rules.setTempHp(jarson, 8);
-    rules.applyLongRest(jarson);
-    expect(jarson.tempHp, 0);
+    final torvek = buildSampleCharacter();
+    rules.setTempHp(torvek, 8);
+    rules.applyLongRest(torvek);
+    expect(torvek.tempHp, 0);
   });
 
   test('innateAttackInfo scales Breath Weapon dice count with level exactly '
       'at the real thresholds (1d10/2d10/3d10/4d10 at 1/5/11/17), never '
       'stale, via the generalized levelDice breakpoints', () {
-    final jarson = buildSampleJarson();
-    final breathWeapon = jarson.innateAttacks.firstWhere(
+    final torvek = buildSampleCharacter();
+    final breathWeapon = torvek.innateAttacks.firstWhere(
       (a) => a.name == 'Breath Weapon',
     );
     for (final (level, expectedDice) in [
@@ -916,8 +914,8 @@ void main() {
       (17, 4),
       (20, 4),
     ]) {
-      jarson.level = level;
-      final info = rules.innateAttackInfo(jarson, breathWeapon);
+      torvek.level = level;
+      final info = rules.innateAttackInfo(torvek, breathWeapon);
       expect(
         info.diceCount,
         expectedDice,
@@ -929,58 +927,58 @@ void main() {
 
   test("innateAttackInfo computes Breath Weapon's save DC from its formula "
       '(8 + Proficiency Bonus + Constitution modifier)', () {
-    final jarson = buildSampleJarson(); // level 9, Con 14 (+2 mod)
-    final breathWeapon = jarson.innateAttacks.firstWhere(
+    final torvek = buildSampleCharacter(); // level 9, Con 14 (+2 mod)
+    final breathWeapon = torvek.innateAttacks.firstWhere(
       (a) => a.name == 'Breath Weapon',
     );
-    final info = rules.innateAttackInfo(jarson, breathWeapon);
-    final prof = rules.proficiencyBonusForLevel(jarson.level);
+    final info = rules.innateAttackInfo(torvek, breathWeapon);
+    final prof = rules.proficiencyBonusForLevel(torvek.level);
     expect(info.saveDc, 8 + prof + 2);
   });
 
   test('evaluateFormula: literal int, Proficiency Bonus, an ability modifier, a real two-term DC formula, subtraction, a bare negative, and an unrecognized term', () {
-    final jarson = buildSampleJarson(); // level 9 (Prof +4), Con 14 (+2)
-    expect(rules.evaluateFormula('3', jarson), 3);
+    final torvek = buildSampleCharacter(); // level 9 (Prof +4), Con 14 (+2)
+    expect(rules.evaluateFormula('3', torvek), 3);
     expect(
-      rules.evaluateFormula('Proficiency Bonus', jarson),
-      rules.proficiencyBonusForLevel(jarson.level),
+      rules.evaluateFormula('Proficiency Bonus', torvek),
+      rules.proficiencyBonusForLevel(torvek.level),
     );
-    expect(rules.evaluateFormula('Constitution modifier', jarson), 2);
+    expect(rules.evaluateFormula('Constitution modifier', torvek), 2);
     expect(
       rules.evaluateFormula(
         '8 + Proficiency Bonus + Constitution modifier',
-        jarson,
+        torvek,
       ),
-      8 + rules.proficiencyBonusForLevel(jarson.level) + 2,
+      8 + rules.proficiencyBonusForLevel(torvek.level) + 2,
     );
-    expect(rules.evaluateFormula('8 - 1', jarson), 7);
+    expect(rules.evaluateFormula('8 - 1', torvek), 7);
     // A cursed item's penalty - never exercised by a real example above,
     // worth its own assertion.
-    expect(rules.evaluateFormula('-1', jarson), -1);
-    expect(rules.evaluateFormula('not a real formula', jarson), 0);
+    expect(rules.evaluateFormula('-1', torvek), -1);
+    expect(rules.evaluateFormula('not a real formula', torvek), 0);
   });
 
   test(
     'sumEffects reproduces the old hardcoded Alert initiative bonus exactly',
     () {
-      // Jarson already has Alert granted (sample_data.dart) - don't add a
+      // Torvek already has Alert granted (sample_data.dart) - don't add a
       // second one, that would double-count the effect.
-      final jarson = buildSampleJarson();
-      expect(jarson.feats.where((f) => f.name == 'Alert').length, 1);
-      final withAlert = rules.initiativeModifier(jarson);
+      final torvek = buildSampleCharacter();
+      expect(torvek.feats.where((f) => f.name == 'Alert').length, 1);
+      final withAlert = rules.initiativeModifier(torvek);
 
-      jarson.feats.removeWhere((f) => f.name == 'Alert');
-      final withoutAlert = rules.initiativeModifier(jarson);
+      torvek.feats.removeWhere((f) => f.name == 'Alert');
+      final withoutAlert = rules.initiativeModifier(torvek);
 
       expect(
         withAlert - withoutAlert,
-        rules.proficiencyBonusForLevel(jarson.level),
+        rules.proficiencyBonusForLevel(torvek.level),
       );
     },
   );
 
   test('a homebrew feat Effect on a saving throw actually moves savingThrowModifier', () {
-    final jarson = buildSampleJarson();
+    final torvek = buildSampleCharacter();
     homebrewRepo.entries.add(
       HomebrewEntry(
         id: 'homebrew_test-wis-feat',
@@ -989,18 +987,18 @@ void main() {
         effects: const [Effect(target: 'save:wis', formula: '2')],
       ),
     );
-    jarson.feats.add(GrantedFeature(name: 'Test Wisdom Ward', source: 'feat'));
+    torvek.feats.add(GrantedFeature(name: 'Test Wisdom Ward', source: 'feat'));
 
-    final withFeat = rules.savingThrowModifier(jarson, 'wis');
-    jarson.feats.removeWhere((f) => f.name == 'Test Wisdom Ward');
-    final withoutFeat = rules.savingThrowModifier(jarson, 'wis');
+    final withFeat = rules.savingThrowModifier(torvek, 'wis');
+    torvek.feats.removeWhere((f) => f.name == 'Test Wisdom Ward');
+    final withoutFeat = rules.savingThrowModifier(torvek, 'wis');
 
     expect(withFeat - withoutFeat, 2);
   });
 
   test('a homebrew magicItem Effect only applies while the item is attuned, and tiers add rather than replace (Bloodied Boots)', () {
-    final jarson = buildSampleJarson();
-    jarson.currentHp = jarson.maxHp;
+    final torvek = buildSampleCharacter();
+    torvek.currentHp = torvek.maxHp;
     homebrewRepo.entries.add(
       HomebrewEntry(
         id: 'homebrew_test-boots',
@@ -1013,35 +1011,35 @@ void main() {
       ),
     );
     final boots = InventoryEntry(name: 'Test Bloodied Boots', quantity: 1);
-    jarson.inventory = [...jarson.inventory, boots];
-    final greatsword = jarson.weapons.firstWhere((w) => w.name == 'Greatsword');
+    torvek.inventory = [...torvek.inventory, boots];
+    final greatsword = torvek.weapons.firstWhere((w) => w.name == 'Greatsword');
 
     // Not attuned yet - no effect at all, even below max HP.
-    jarson.currentHp = jarson.maxHp - 1;
+    torvek.currentHp = torvek.maxHp - 1;
     expect(
-      rules.damageFor(jarson, greatsword).breakdown,
+      rules.damageFor(torvek, greatsword).breakdown,
       isNot(contains('Test Bloodied Boots')),
     );
 
     boots.attuned = true;
 
     // Full HP: attuned, but neither tier's condition is met.
-    jarson.currentHp = jarson.maxHp;
+    torvek.currentHp = torvek.maxHp;
     expect(
-      rules.damageFor(jarson, greatsword).breakdown,
+      rules.damageFor(torvek, greatsword).breakdown,
       isNot(contains('Test Bloodied Boots')),
     );
 
     // Hurt but not Bloodied: +1.
-    jarson.currentHp = jarson.maxHp - 1;
-    var breakdown = rules.damageFor(jarson, greatsword).breakdown;
+    torvek.currentHp = torvek.maxHp - 1;
+    var breakdown = rules.damageFor(torvek, greatsword).breakdown;
     expect(breakdown, contains('Test Bloodied Boots +1'));
 
     // Exactly half HP - Bloodied per the Rules Glossary ("half its Hit
     // Points or fewer") - both tiers fire, summing to +2.
-    jarson.currentHp = (jarson.maxHp / 2).floor();
+    torvek.currentHp = (torvek.maxHp / 2).floor();
     final total = rules
-        .matchingEffects(jarson, 'damageRoll', weapon: greatsword)
+        .matchingEffects(torvek, 'damageRoll', weapon: greatsword)
         .where((e) => e.$1 == 'Test Bloodied Boots')
         .fold(0, (a, e) => a + e.$2);
     expect(total, 2);
@@ -1049,18 +1047,18 @@ void main() {
     // Un-attuning drops it back to nothing, even while Bloodied.
     boots.attuned = false;
     expect(
-      rules.damageFor(jarson, greatsword).breakdown,
+      rules.damageFor(torvek, greatsword).breakdown,
       isNot(contains('Test Bloodied Boots')),
     );
   });
 
   test('a homebrew magic weapon\'s effects need attunement only if it requires it, and its attack/damage effects only count for that weapon', () {
-    final jarson = buildSampleJarson();
+    final torvek = buildSampleCharacter();
     homebrewRepo.entries.add(
       HomebrewEntry(
         id: 'homebrew_test-sword',
         kind: 'weapon',
-        name: 'Sword of the Failed Dragon Slayer',
+        name: 'Emberfang, Blade of the Ashen Vigil',
         effects: const [
           Effect(target: 'damageRoll', formula: '1'),
           Effect(target: 'initiative', formula: '2'),
@@ -1069,30 +1067,30 @@ void main() {
       ),
     );
     final carried = InventoryEntry(
-      name: 'Sword of the Failed Dragon Slayer',
+      name: 'Emberfang, Blade of the Ashen Vigil',
       quantity: 1,
     );
-    jarson.inventory = [...jarson.inventory, carried];
-    final sword = jarson.weapons.firstWhere(
-      (w) => w.name == 'Sword of the Failed Dragon Slayer',
+    torvek.inventory = [...torvek.inventory, carried];
+    final sword = torvek.weapons.firstWhere(
+      (w) => w.name == 'Emberfang, Blade of the Ashen Vigil',
     );
-    final greatsword = jarson.weapons.firstWhere((w) => w.name == 'Greatsword');
+    final greatsword = torvek.weapons.firstWhere((w) => w.name == 'Greatsword');
 
     // Requires attunement, not attuned - nothing.
-    expect(rules.sumEffects(jarson, 'damageRoll', weapon: sword), 0);
+    expect(rules.sumEffects(torvek, 'damageRoll', weapon: sword), 0);
     expect(
-      rules.matchingEffects(jarson, 'initiative').map((e) => e.$1),
-      isNot(contains('Sword of the Failed Dragon Slayer')),
+      rules.matchingEffects(torvek, 'initiative').map((e) => e.$1),
+      isNot(contains('Emberfang, Blade of the Ashen Vigil')),
     );
 
     carried.attuned = true;
-    expect(rules.sumEffects(jarson, 'damageRoll', weapon: sword), 1);
+    expect(rules.sumEffects(torvek, 'damageRoll', weapon: sword), 1);
     // The damage bonus is the sword's own, not every weapon's...
-    expect(rules.sumEffects(jarson, 'damageRoll', weapon: greatsword), 0);
+    expect(rules.sumEffects(torvek, 'damageRoll', weapon: greatsword), 0);
     // ...but a non-attack effect applies to the character as usual.
     expect(
-      rules.matchingEffects(jarson, 'initiative').map((e) => e.$1),
-      contains('Sword of the Failed Dragon Slayer'),
+      rules.matchingEffects(torvek, 'initiative').map((e) => e.$1),
+      contains('Emberfang, Blade of the Ashen Vigil'),
     );
 
     // One that doesn't require attunement works just by being carried.
@@ -1101,20 +1099,20 @@ void main() {
       HomebrewEntry(
         id: 'homebrew_test-sword',
         kind: 'weapon',
-        name: 'Sword of the Failed Dragon Slayer',
+        name: 'Emberfang, Blade of the Ashen Vigil',
         effects: const [Effect(target: 'damageRoll', formula: '1')],
         data: const {'damageDice': '2d6'},
       ),
     );
     carried.attuned = false;
-    expect(rules.sumEffects(jarson, 'damageRoll', weapon: sword), 1);
+    expect(rules.sumEffects(torvek, 'damageRoll', weapon: sword), 1);
   });
 
   test('a homebrew feat named exactly like a built-in one overrides it, rather than being shadowed', () {
-    // Jarson already has Alert granted (sample_data.dart) - don't add a
+    // Torvek already has Alert granted (sample_data.dart) - don't add a
     // second one, that would double-count the effect.
-    final jarson = buildSampleJarson();
-    expect(jarson.feats.where((f) => f.name == 'Alert').length, 1);
+    final torvek = buildSampleCharacter();
+    expect(torvek.feats.where((f) => f.name == 'Alert').length, 1);
     homebrewRepo.entries.add(
       HomebrewEntry(
         id: 'homebrew_test-alert-override',
@@ -1125,16 +1123,16 @@ void main() {
     );
 
     // The homebrew version's save:wis effect applies...
-    final baseWis = rules.abilityModifier(jarson.abilityScores.wis);
-    expect(rules.savingThrowModifier(jarson, 'wis'), baseWis + 3);
+    final baseWis = rules.abilityModifier(torvek.abilityScores.wis);
+    expect(rules.savingThrowModifier(torvek, 'wis'), baseWis + 3);
     // ...and the built-in initiative bonus does NOT (homebrew replaces,
     // not adds to, the built-in entry for the same name).
-    final baseDex = rules.abilityModifier(jarson.abilityScores.dex);
-    expect(rules.initiativeModifier(jarson), baseDex + jarson.initiativeBonus);
+    final baseDex = rules.abilityModifier(torvek.abilityScores.dex);
+    expect(rules.initiativeModifier(torvek), baseDex + torvek.initiativeBonus);
   });
 
   test('liveFeatureText overrides real SRD feat text with a same-named homebrew entry\'s desc', () {
-    final jarson = buildSampleJarson();
+    final torvek = buildSampleCharacter();
     homebrewRepo.entries.add(
       HomebrewEntry(
         id: 'homebrew_test-alert-text',
@@ -1145,13 +1143,13 @@ void main() {
     );
     final alert = GrantedFeature(name: 'Alert', source: 'feat');
     expect(
-      rules.liveFeatureText(jarson, alert),
+      rules.liveFeatureText(torvek, alert),
       'A custom house-ruled version of Alert.',
     );
   });
 
   test('liveFeatureText falls back to a same-named homebrew feat\'s desc for an uncataloged feat name', () {
-    final jarson = buildSampleJarson();
+    final torvek = buildSampleCharacter();
     homebrewRepo.entries.add(
       HomebrewEntry(
         id: 'homebrew_test-custom-feat',
@@ -1162,7 +1160,7 @@ void main() {
     );
     final feat = GrantedFeature(name: 'Totally Custom Feat', source: 'feat');
     expect(
-      rules.liveFeatureText(jarson, feat),
+      rules.liveFeatureText(torvek, feat),
       'A completely homebrew feat with real text.',
     );
   });
@@ -1243,34 +1241,34 @@ void main() {
     expect(legacy.effects, isEmpty);
   });
 
-  test('liveSpeciesResistances derives Draconic Resistance from speciesChoice - Jarson is Red, so Fire', () {
-    final jarson = buildSampleJarson();
-    final effects = rules.liveSpeciesResistances(jarson);
+  test('liveSpeciesResistances derives Draconic Resistance from speciesChoice - Torvek is Red, so Fire', () {
+    final torvek = buildSampleCharacter();
+    final effects = rules.liveSpeciesResistances(torvek);
 
     expect(effects, hasLength(1));
     expect(effects.first.target, 'damageResistance:fire');
   });
 
   test('liveSpeciesResistances is empty for a non-Dragonborn or an unset ancestry choice', () {
-    final jarson = buildSampleJarson();
-    jarson.speciesKey = 'srd-2024_human-species';
-    expect(rules.liveSpeciesResistances(jarson), isEmpty);
+    final torvek = buildSampleCharacter();
+    torvek.speciesKey = 'srd-2024_human-species';
+    expect(rules.liveSpeciesResistances(torvek), isEmpty);
 
-    jarson.speciesKey = 'srd-2024_dragonborn-species';
-    jarson.speciesChoice = null;
-    expect(rules.liveSpeciesResistances(jarson), isEmpty);
+    torvek.speciesKey = 'srd-2024_dragonborn-species';
+    torvek.speciesChoice = null;
+    expect(rules.liveSpeciesResistances(torvek), isEmpty);
   });
 
   test('computeDamageTaken passes an unrelated damage type straight through unchanged', () {
-    final jarson = buildSampleJarson();
-    final result = rules.computeDamageTaken(jarson, 20, 'cold', magical: false);
+    final torvek = buildSampleCharacter();
+    final result = rules.computeDamageTaken(torvek, 20, 'cold', magical: false);
     expect(result.finalAmount, 20);
     expect(result.steps, ['Raw damage: 20']);
   });
 
-  test("computeDamageTaken halves Fire damage via Jarson's Draconic Resistance, rounded down", () {
-    final jarson = buildSampleJarson();
-    final result = rules.computeDamageTaken(jarson, 19, 'fire', magical: false);
+  test("computeDamageTaken halves Fire damage via Torvek's Draconic Resistance, rounded down", () {
+    final torvek = buildSampleCharacter();
+    final result = rules.computeDamageTaken(torvek, 19, 'fire', magical: false);
     expect(result.finalAmount, 9); // (19 / 2).floor()
     expect(result.steps.last, contains('Draconic Resistance'));
     expect(result.steps.last, contains('9'));
@@ -1279,10 +1277,10 @@ void main() {
   test(
     'halfOnSave halves the raw damage as its own step, before resistance',
     () {
-      final jarson = buildSampleJarson();
+      final torvek = buildSampleCharacter();
       // Cold: no resistance, so this isolates halfOnSave's own effect.
       final result = rules.computeDamageTaken(
-        jarson,
+        torvek,
         13,
         'cold',
         magical: false,
@@ -1294,12 +1292,12 @@ void main() {
   );
 
   test('halfOnSave stacks with resistance as two separate, independently-rounded halvings (order-independent)', () {
-    final jarson = buildSampleJarson();
-    // Fire: Jarson is resistant (Draconic Resistance) - a successful save
+    final torvek = buildSampleCharacter();
+    // Fire: Torvek is resistant (Draconic Resistance) - a successful save
     // against a fire effect he's also resistant to should quarter it, not
     // just halve it once.
     final result = rules.computeDamageTaken(
-      jarson,
+      torvek,
       19,
       'fire',
       magical: false,
@@ -1316,17 +1314,17 @@ void main() {
     ]);
   });
 
-  test("Heavy Armor Master (a homebrew official entry - it's not in the free SRD either) reduces nonmagical Bludgeoning/Piercing/Slashing damage by Proficiency Bonus while wearing Heavy armor - Jarson's is 4", () {
-    final jarson = buildSampleJarson();
-    _grantHeavyArmorMaster(jarson);
-    jarson.equippedArmor = EquippedArmor(
+  test("Heavy Armor Master (a homebrew official entry - it's not in the free SRD either) reduces nonmagical Bludgeoning/Piercing/Slashing damage by Proficiency Bonus while wearing Heavy armor - Torvek's is 4", () {
+    final torvek = buildSampleCharacter();
+    _grantHeavyArmorMaster(torvek);
+    torvek.equippedArmor = EquippedArmor(
       name: 'Plate Armor',
       armorClassFormula: '18',
       category: 'Heavy',
     );
 
     final result = rules.computeDamageTaken(
-      jarson,
+      torvek,
       10,
       'bludgeoning',
       magical: false,
@@ -1337,7 +1335,7 @@ void main() {
 
     // Magical damage bypasses it entirely.
     final magicalResult = rules.computeDamageTaken(
-      jarson,
+      torvek,
       10,
       'bludgeoning',
       magical: true,
@@ -1346,7 +1344,7 @@ void main() {
 
     // A damage type outside Bludgeoning/Piercing/Slashing is unaffected.
     final fireResult = rules.computeDamageTaken(
-      jarson,
+      torvek,
       10,
       'fire',
       magical: false,
@@ -1362,16 +1360,16 @@ void main() {
   test(
     'Heavy Armor Master does nothing without Heavy armor actually equipped',
     () {
-      final jarson = buildSampleJarson();
-      _grantHeavyArmorMaster(jarson);
-      jarson.equippedArmor = EquippedArmor(
+      final torvek = buildSampleCharacter();
+      _grantHeavyArmorMaster(torvek);
+      torvek.equippedArmor = EquippedArmor(
         name: 'Studded Leather',
         armorClassFormula: '12 + Dex modifier',
         category: 'Light',
       );
 
       final result = rules.computeDamageTaken(
-        jarson,
+        torvek,
         10,
         'bludgeoning',
         magical: false,
@@ -1381,16 +1379,16 @@ void main() {
   );
 
   test('computeDamageTaken never goes negative even if reduction exceeds the (possibly already-halved) amount', () {
-    final jarson = buildSampleJarson();
-    _grantHeavyArmorMaster(jarson);
-    jarson.equippedArmor = EquippedArmor(
+    final torvek = buildSampleCharacter();
+    _grantHeavyArmorMaster(torvek);
+    torvek.equippedArmor = EquippedArmor(
       name: 'Plate Armor',
       armorClassFormula: '18',
       category: 'Heavy',
     );
 
     final result = rules.computeDamageTaken(
-      jarson,
+      torvek,
       2,
       'bludgeoning',
       magical: false,
@@ -1399,9 +1397,9 @@ void main() {
   });
 
   test('resistance applies before reduction, matching how 5e resolves both together', () {
-    final jarson = buildSampleJarson();
-    _grantHeavyArmorMaster(jarson);
-    jarson.equippedArmor = EquippedArmor(
+    final torvek = buildSampleCharacter();
+    _grantHeavyArmorMaster(torvek);
+    torvek.equippedArmor = EquippedArmor(
       name: 'Plate Armor',
       armorClassFormula: '18',
       category: 'Heavy',
@@ -1419,12 +1417,12 @@ void main() {
         ],
       ),
     );
-    jarson.inventory.add(
+    torvek.inventory.add(
       InventoryEntry(name: 'Stoneskin Amulet', quantity: 1, attuned: true),
     );
 
     final result = rules.computeDamageTaken(
-      jarson,
+      torvek,
       20,
       'bludgeoning',
       magical: false,
@@ -1437,16 +1435,16 @@ void main() {
   });
 
   test('a homebrew Heavy Armor Master entry\'s formula is respected as typed, not fixed at Proficiency Bonus', () {
-    final jarson = buildSampleJarson();
-    _grantHeavyArmorMaster(jarson, formula: '99'); // house-ruled amount
-    jarson.equippedArmor = EquippedArmor(
+    final torvek = buildSampleCharacter();
+    _grantHeavyArmorMaster(torvek, formula: '99'); // house-ruled amount
+    torvek.equippedArmor = EquippedArmor(
       name: 'Plate Armor',
       armorClassFormula: '18',
       category: 'Heavy',
     );
 
     final result = rules.computeDamageTaken(
-      jarson,
+      torvek,
       50,
       'piercing',
       magical: false,
@@ -1507,17 +1505,17 @@ void main() {
   });
 
   test('toolChoiceRequirementsFor gathers both a Soldier background\'s and a Bard class\'s tool choices together', () {
-    final jarson = buildSampleJarson();
+    final torvek = buildSampleCharacter();
     final soldier = srdCatalog.backgroundsByKey.values.firstWhere(
       (b) => b.name == 'Soldier',
     );
     final bard = srdCatalog.classesByKey.values.firstWhere(
       (c) => c.name == 'Bard',
     );
-    jarson.backgroundKey = soldier.key;
-    jarson.classKey = bard.key;
+    torvek.backgroundKey = soldier.key;
+    torvek.classKey = bard.key;
 
-    final requirements = rules.toolChoiceRequirementsFor(jarson);
+    final requirements = rules.toolChoiceRequirementsFor(torvek);
 
     expect(requirements, hasLength(2));
     expect(requirements[0].tool.name, 'Gaming Set');
@@ -1525,21 +1523,21 @@ void main() {
   });
 
   test('toolChoiceRequirementsFor is empty for a background/class combination with no tool choice at all', () {
-    final jarson = buildSampleJarson();
+    final torvek = buildSampleCharacter();
     final criminal = srdCatalog.backgroundsByKey.values.firstWhere(
       (b) => b.name == 'Criminal',
     );
     // Fixed Thieves' Tools (no choice), and Fighter has no Tool
-    // Proficiencies trait at all - Jarson's own real backgroundKey
+    // Proficiencies trait at all - Torvek's own real backgroundKey
     // (Soldier) does have a choice, which is exactly why this test
     // swaps it out first.
-    jarson.backgroundKey = criminal.key;
-    expect(rules.toolChoiceRequirementsFor(jarson), isEmpty);
+    torvek.backgroundKey = criminal.key;
+    expect(rules.toolChoiceRequirementsFor(torvek), isEmpty);
   });
 
   group('spellcasting', () {
     Character wizard({int level = 5}) {
-      final c = buildSampleJarson();
+      final c = buildSampleCharacter();
       c.classKey = 'srd-2024_wizard-class';
       c.level = level;
       c.abilityScores = const AbilityScores(
@@ -1590,7 +1588,7 @@ void main() {
       expect(rules.cantripLimit(wizard()), 4);
       expect(rules.preparedSpellLimit(wizard()), 9);
 
-      final paladin = buildSampleJarson()
+      final paladin = buildSampleCharacter()
         ..classKey = 'srd-2024_paladin-class'
         ..level = 5;
       rules.enableSpellcasting(paladin);
@@ -1663,7 +1661,7 @@ void main() {
     });
 
     test("a Short Rest restores Pact Magic slots but not a Wizard's", () {
-      final warlock = buildSampleJarson()
+      final warlock = buildSampleCharacter()
         ..classKey = 'srd-2024_warlock-class'
         ..level = 5;
       rules.enableSpellcasting(warlock);
@@ -1757,7 +1755,7 @@ void main() {
   group('sheet text', () {
     setUp(() => sheetTextRepo.overrides.clear());
 
-    Character wizard() => buildSampleJarson()
+    Character wizard() => buildSampleCharacter()
       ..classKey = 'srd-2024_wizard-class'
       ..subclassKey = null
       ..features = [];
@@ -1884,7 +1882,7 @@ void main() {
       AbilityScores? scores,
       String? speciesKey,
     }) {
-      final c = buildSampleJarson()
+      final c = buildSampleCharacter()
         ..classKey = classKey
         ..subclassKey = null
         ..level = level

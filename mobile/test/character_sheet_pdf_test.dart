@@ -32,11 +32,11 @@ void main() {
   });
 
   test('fillCharacterSheetTopSection draws every top-section value (name, species, class/subclass, ability scores, AC/HP/Hit Dice, Proficiency Bonus, Initiative/Speed/Passive Perception) onto the page without throwing', () async {
-    final jarson = buildSampleJarson();
+    final torvek = buildSampleCharacter();
 
     final result = await fillCharacterSheetTopSection(
       await _blankBasePdf(),
-      jarson,
+      torvek,
     );
 
     expect(result, isNotEmpty);
@@ -45,29 +45,29 @@ void main() {
     final text = PdfTextExtractor(document).extractText();
     document.dispose();
 
-    expect(text, contains('Jarson'));
+    expect(text, contains('Torvek'));
     expect(text, contains('Dragonborn')); // resolved from speciesKey
     expect(text, contains('Fighter'));
     expect(text, contains('Champion')); // subclass, split out of classLabel
-    expect(text, contains('${jarson.level}'));
-    expect(text, contains('${jarson.maxHp}'));
-    expect(text, contains('${jarson.hitDiceTotal}'));
-    // Ability scores/modifiers - Jarson's own real numbers.
-    expect(text, contains('${jarson.abilityScores.str}'));
-    expect(text, contains('${jarson.abilityScores.dex}'));
-    expect(text, contains('${jarson.abilityScores.con}'));
+    expect(text, contains('${torvek.level}'));
+    expect(text, contains('${torvek.maxHp}'));
+    expect(text, contains('${torvek.hitDiceTotal}'));
+    // Ability scores/modifiers - the sample character's numbers.
+    expect(text, contains('${torvek.abilityScores.str}'));
+    expect(text, contains('${torvek.abilityScores.dex}'));
+    expect(text, contains('${torvek.abilityScores.con}'));
   });
 
   test('SIZE shows the species\' real size category (just "Medium", not the full parenthetical)', () async {
-    final jarson = buildSampleJarson();
+    final torvek = buildSampleCharacter();
     expect(
-      srdCatalog.speciesByKey[jarson.speciesKey]!.size,
+      srdCatalog.speciesByKey[torvek.speciesKey]!.size,
       startsWith('Medium'),
     );
 
     final result = await fillCharacterSheetTopSection(
       await _blankBasePdf(),
-      jarson,
+      torvek,
     );
     final document = PdfDocument(inputBytes: result);
     final text = PdfTextExtractor(document).extractText();
@@ -80,11 +80,11 @@ void main() {
   test(
     'SIZE is left blank when speciesKey doesn\'t resolve to a real SRD species',
     () async {
-      final jarson = buildSampleJarson()..speciesKey = 'homebrew-species';
+      final torvek = buildSampleCharacter()..speciesKey = 'homebrew-species';
 
       final result = await fillCharacterSheetTopSection(
         await _blankBasePdf(),
-        jarson,
+        torvek,
       );
       final document = PdfDocument(inputBytes: result);
       final text = PdfTextExtractor(document).extractText();
@@ -96,16 +96,16 @@ void main() {
   );
 
   test('the species field resolves the real species name even after a Draconic Ancestry choice overwrote speciesLabel', () async {
-    final jarson = buildSampleJarson();
+    final torvek = buildSampleCharacter();
     // Mirrors exactly what _pickSpeciesChoice does on the Overview tab -
     // speciesLabel becomes just the choice ("Red · Fire"), losing
     // "Dragonborn" from that field entirely.
-    jarson.speciesChoice = 'Red';
-    jarson.speciesLabel = 'Red · Fire';
+    torvek.speciesChoice = 'Red';
+    torvek.speciesLabel = 'Red · Fire';
 
     final result = await fillCharacterSheetTopSection(
       await _blankBasePdf(),
-      jarson,
+      torvek,
     );
     final document = PdfDocument(inputBytes: result);
     final text = PdfTextExtractor(document).extractText();
@@ -117,11 +117,11 @@ void main() {
   });
 
   test('a nonzero Temp HP is drawn onto the sheet', () async {
-    final jarson = buildSampleJarson()..tempHp = 5;
+    final torvek = buildSampleCharacter()..tempHp = 5;
 
     final result = await fillCharacterSheetTopSection(
       await _blankBasePdf(),
-      jarson,
+      torvek,
     );
     final document = PdfDocument(inputBytes: result);
     final text = PdfTextExtractor(document).extractText();
@@ -131,23 +131,23 @@ void main() {
   });
 
   test('the WEAPONS & DAMAGE CANTRIPS table draws every carried weapon\'s name, attack bonus, damage, and mastery', () async {
-    final jarson = buildSampleJarson();
+    final torvek = buildSampleCharacter();
     expect(
-      jarson.weapons.length,
+      torvek.weapons.length,
       greaterThanOrEqualTo(2),
-    ); // Jarson's real data
+    ); // Torvek's real data
 
     final result = await fillCharacterSheetTopSection(
       await _blankBasePdf(),
-      jarson,
+      torvek,
     );
     final document = PdfDocument(inputBytes: result);
     final text = PdfTextExtractor(document).extractText();
     document.dispose();
 
-    for (final weapon in jarson.weapons) {
-      final attack = rules.attackFor(jarson, weapon);
-      final damage = rules.damageFor(jarson, weapon);
+    for (final weapon in torvek.weapons) {
+      final attack = rules.attackFor(torvek, weapon);
+      final damage = rules.damageFor(torvek, weapon);
       expect(text, contains(weapon.name), reason: weapon.name);
       expect(text, contains(rules.formatModifier(attack.bonus)));
       expect(text, contains(damage.text));
@@ -155,15 +155,15 @@ void main() {
   });
 
   test('an innate attack (Breath Weapon) appears in the same table, after weapons, with its save DC + ability, damage, and area', () async {
-    final jarson = buildSampleJarson();
-    final breathWeapon = jarson.innateAttacks.firstWhere(
+    final torvek = buildSampleCharacter();
+    final breathWeapon = torvek.innateAttacks.firstWhere(
       (a) => a.name == 'Breath Weapon',
     );
-    final info = rules.innateAttackInfo(jarson, breathWeapon);
+    final info = rules.innateAttackInfo(torvek, breathWeapon);
 
     final result = await fillCharacterSheetTopSection(
       await _blankBasePdf(),
-      jarson,
+      torvek,
     );
     final document = PdfDocument(inputBytes: result);
     final text = PdfTextExtractor(document).extractText();
@@ -177,25 +177,25 @@ void main() {
     expect(text, contains('${info.diceCount}${info.dieType} Fire'));
     // Pulled from the real bundled SRD trait text, not hand-typed.
     expect(text, contains('15-foot Cone or a 30-foot Line'));
-    // After both of Jarson's weapons, not before - weapon rows fill first.
+    // After both of Torvek's weapons, not before - weapon rows fill first.
     final breathIndex = text.indexOf('Breath Weapon');
     final greatswordIndex = text.indexOf('Greatsword');
     expect(greatswordIndex, lessThan(breathIndex));
   });
 
   test('an innate attack still shows up (with blank Notes, not a crash) when speciesKey doesn\'t resolve to a real SRD species', () async {
-    final jarson = buildSampleJarson();
+    final torvek = buildSampleCharacter();
     // An unresolvable speciesKey (homebrew/uncataloged) - the area phrase
     // is only extracted from the live SRD trait text, and there's no
     // trait to fall back to here; the stored InnateAttack.desc fallback
     // uses different phrasing ("15-ft Cone", not "a 15-foot Cone") that
     // the extractor doesn't recognize, so Notes should come out blank
     // rather than showing something wrong or throwing.
-    jarson.speciesKey = 'homebrew_not_a_real_species';
+    torvek.speciesKey = 'homebrew_not_a_real_species';
 
     final result = await fillCharacterSheetTopSection(
       await _blankBasePdf(),
-      jarson,
+      torvek,
     );
     final document = PdfDocument(inputBytes: result);
     final text = PdfTextExtractor(document).extractText();
@@ -206,16 +206,16 @@ void main() {
   });
 
   test('a weapon name too long for its column shrinks to fit rather than being clipped', () async {
-    final jarson = buildSampleJarson();
-    // Jarson's own real magic weapon - long enough to overflow the
+    final torvek = buildSampleCharacter();
+    // Torvek's own real magic weapon - long enough to overflow the
     // Name column's ~106pt width at the table's normal 9pt font size.
-    final longName = jarson.weapons
-        .firstWhere((w) => w.name == 'Sword of the Failed Dragon Slayer')
+    final longName = torvek.weapons
+        .firstWhere((w) => w.name == 'Emberfang, Blade of the Ashen Vigil')
         .name;
 
     final result = await fillCharacterSheetTopSection(
       await _blankBasePdf(),
-      jarson,
+      torvek,
     );
     final document = PdfDocument(inputBytes: result);
     final text = PdfTextExtractor(document).extractText();
@@ -226,8 +226,8 @@ void main() {
   });
 
   test('only the first 6 weapons are drawn - the table has 6 ruled lines, a 7th is silently dropped rather than overflowing', () async {
-    final jarson = buildSampleJarson();
-    jarson.weapons = [
+    final torvek = buildSampleCharacter();
+    torvek.weapons = [
       for (var i = 1; i <= 7; i++)
         Weapon(
           name: 'Test Weapon $i',
@@ -240,7 +240,7 @@ void main() {
 
     final result = await fillCharacterSheetTopSection(
       await _blankBasePdf(),
-      jarson,
+      torvek,
     );
     final document = PdfDocument(inputBytes: result);
     final text = PdfTextExtractor(document).extractText();
@@ -255,11 +255,11 @@ void main() {
   test(
     'every Saving Throw and Skill shows its real computed modifier',
     () async {
-      final jarson = buildSampleJarson();
+      final torvek = buildSampleCharacter();
 
       final result = await fillCharacterSheetTopSection(
         await _blankBasePdf(),
-        jarson,
+        torvek,
       );
       final document = PdfDocument(inputBytes: result);
       final text = PdfTextExtractor(document).extractText();
@@ -269,7 +269,7 @@ void main() {
         expect(
           text,
           contains(
-            rules.formatModifier(rules.savingThrowModifier(jarson, abilityKey)),
+            rules.formatModifier(rules.savingThrowModifier(torvek, abilityKey)),
           ),
           reason: '$abilityKey save',
         );
@@ -296,13 +296,13 @@ void main() {
       };
       for (final MapEntry(key: skill, value: ability)
           in skillsAndAbilities.entries) {
-        final existing = jarson.skills.where((s) => s.name == skill);
+        final existing = torvek.skills.where((s) => s.name == skill);
         final entry = existing.isNotEmpty
             ? existing.first
             : SkillEntry(name: skill, ability: ability, proficient: false);
         expect(
           text,
-          contains(rules.formatModifier(rules.skillModifier(jarson, entry))),
+          contains(rules.formatModifier(rules.skillModifier(torvek, entry))),
           reason: skill,
         );
       }
@@ -310,12 +310,12 @@ void main() {
   );
 
   test("a Saving Throw or Skill identical to the character's bare ability modifier draws nothing of its own - just the ability bubble's modifier, not repeated once per untrained row too", () async {
-    final jarson = buildSampleJarson();
-    // Jarson has no Intelligence proficiencies at all - not the save,
+    final torvek = buildSampleCharacter();
+    // Torvek has no Intelligence proficiencies at all - not the save,
     // not any of its 5 skills - so every one of those 6 rows should
     // stay blank, leaving the bare INT modifier's text appearing
     // exactly once on the whole page (the ability bubble itself).
-    expect(jarson.savingThrowProficiencies, isNot(contains('int')));
+    expect(torvek.savingThrowProficiencies, isNot(contains('int')));
     for (final skill in [
       'Arcana',
       'History',
@@ -324,18 +324,18 @@ void main() {
       'Religion',
     ]) {
       expect(
-        jarson.skills.any((s) => s.name == skill && s.proficient),
+        torvek.skills.any((s) => s.name == skill && s.proficient),
         isFalse,
         reason: skill,
       );
     }
     final bareInt = rules.formatModifier(
-      rules.abilityModifier(jarson.abilityScores.intel),
+      rules.abilityModifier(torvek.abilityScores.intel),
     );
 
     final result = await fillCharacterSheetTopSection(
       await _blankBasePdf(),
-      jarson,
+      torvek,
     );
     final document = PdfDocument(inputBytes: result);
     final text = PdfTextExtractor(document).extractText();
@@ -346,12 +346,12 @@ void main() {
   });
 
   test('CLASS FEATURES shows every class/subclass feature name and its short sheet text, not the full SRD text', () async {
-    final jarson = buildSampleJarson();
-    expect(jarson.features, isNotEmpty);
+    final torvek = buildSampleCharacter();
+    expect(torvek.features, isNotEmpty);
 
     final result = await fillCharacterSheetTopSection(
       await _blankBasePdf(),
-      jarson,
+      torvek,
     );
     final document = PdfDocument(inputBytes: result);
     final text = PdfTextExtractor(document).extractText();
@@ -360,9 +360,9 @@ void main() {
     // Word-wrapping splits lines anywhere, so compare with all runs of
     // whitespace collapsed to one space.
     final flat = text.replaceAll(RegExp(r'\s+'), ' ');
-    for (final feature in jarson.features.where((f) => f.source != 'species')) {
+    for (final feature in torvek.features.where((f) => f.source != 'species')) {
       expect(flat, contains(feature.name), reason: feature.name);
-      final short = rules.sheetText(jarson, feature);
+      final short = rules.sheetText(torvek, feature);
       expect(
         flat,
         contains(short.substring(0, short.length.clamp(0, 20))),
@@ -374,13 +374,13 @@ void main() {
   });
 
   test('SPECIES TRAITS only shows species-sourced features, not class/subclass ones', () async {
-    final jarson = buildSampleJarson();
-    final speciesFeatures = jarson.features.where((f) => f.source == 'species');
+    final torvek = buildSampleCharacter();
+    final speciesFeatures = torvek.features.where((f) => f.source == 'species');
     expect(speciesFeatures, isNotEmpty);
 
     final result = await fillCharacterSheetTopSection(
       await _blankBasePdf(),
-      jarson,
+      torvek,
     );
     final document = PdfDocument(inputBytes: result);
     final text = PdfTextExtractor(document).extractText();
@@ -397,20 +397,20 @@ void main() {
   });
 
   test('FEATS shows every feat name, with real SRD description text where available (and none for non-SRD content like Great Weapon Master)', () async {
-    final jarson = buildSampleJarson();
-    expect(jarson.feats, isNotEmpty);
-    expect(jarson.feats.any((f) => f.name == 'Great Weapon Master'), isTrue);
-    expect(jarson.feats.any((f) => f.name == 'Alert'), isTrue);
+    final torvek = buildSampleCharacter();
+    expect(torvek.feats, isNotEmpty);
+    expect(torvek.feats.any((f) => f.name == 'Great Weapon Master'), isTrue);
+    expect(torvek.feats.any((f) => f.name == 'Alert'), isTrue);
 
     final result = await fillCharacterSheetTopSection(
       await _blankBasePdf(),
-      jarson,
+      torvek,
     );
     final document = PdfDocument(inputBytes: result);
     final text = PdfTextExtractor(document).extractText();
     document.dispose();
 
-    for (final feat in jarson.feats) {
+    for (final feat in torvek.feats) {
       expect(text, contains(feat.name), reason: feat.name);
     }
     // Alert's bundled short sheet text - matched with a regex since
@@ -419,11 +419,11 @@ void main() {
   });
 
   test('an overlong Class Features list spills from column 1 into column 2 rather than being dropped entirely', () async {
-    final jarson = buildSampleJarson();
+    final torvek = buildSampleCharacter();
     // Enough features, each with enough text, to certainly exceed column
     // 1's ~233pt height - if column 2 isn't used, the later ones (F, G,
     // H...) would be silently dropped instead of continuing there.
-    jarson.features = [
+    torvek.features = [
       for (final letter in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'])
         GrantedFeature(
           name: 'Test Feature $letter',
@@ -437,7 +437,7 @@ void main() {
 
     final result = await fillCharacterSheetTopSection(
       await _blankBasePdf(),
-      jarson,
+      torvek,
     );
     final document = PdfDocument(inputBytes: result);
     final text = PdfTextExtractor(document).extractText();
@@ -449,16 +449,16 @@ void main() {
   });
 
   test('EQUIPMENT TRAINING & PROFICIENCIES shows the class\'s real Weapon Proficiencies text, and omits an unresolved background Tool Proficiency choice rather than printing the raw prompt', () async {
-    final jarson = buildSampleJarson();
-    final classInfo = srdCatalog.byKey(jarson.classKey!)!;
-    final backgroundInfo = srdCatalog.backgroundsByKey[jarson.backgroundKey]!;
+    final torvek = buildSampleCharacter();
+    final classInfo = srdCatalog.byKey(torvek.classKey!)!;
+    final backgroundInfo = srdCatalog.backgroundsByKey[torvek.backgroundKey]!;
     expect(classInfo.traits['Weapon Proficiencies'], isNotNull);
     expect(backgroundInfo.toolProficiency, isNotNull); // Soldier's Gaming Set
-    expect(jarson.toolProficiencyChoices, isEmpty); // never resolved
+    expect(torvek.toolProficiencyChoices, isEmpty); // never resolved
 
     final result = await fillCharacterSheetTopSection(
       await _blankBasePdf(),
-      jarson,
+      torvek,
     );
     final document = PdfDocument(inputBytes: result);
     final text = PdfTextExtractor(document).extractText();
@@ -474,12 +474,12 @@ void main() {
   });
 
   test('EQUIPMENT TRAINING & PROFICIENCIES prefers the character\'s resolved Tool Proficiency choices over the raw class/background prompt text', () async {
-    final jarson = buildSampleJarson();
-    jarson.toolProficiencyChoices = ['Dice'];
+    final torvek = buildSampleCharacter();
+    torvek.toolProficiencyChoices = ['Dice'];
 
     final result = await fillCharacterSheetTopSection(
       await _blankBasePdf(),
-      jarson,
+      torvek,
     );
     final document = PdfDocument(inputBytes: result);
     final text = PdfTextExtractor(document).extractText();
@@ -490,7 +490,7 @@ void main() {
   });
 
   test('page 2 draws Appearance, Backstory & Personality, Alignment, and Languages', () async {
-    final jarson = buildSampleJarson()
+    final torvek = buildSampleCharacter()
       ..appearance = 'Scarred crimson scales, missing a horn.'
       ..notes = 'Grew up in a mercenary company after the war.'
       ..alignment = 'Lawful Good'
@@ -498,7 +498,7 @@ void main() {
 
     final result = await fillCharacterSheetTopSection(
       await _blankBasePdf(),
-      jarson,
+      torvek,
     );
     final document = PdfDocument(inputBytes: result);
     final page2Text = PdfTextExtractor(document)
@@ -512,20 +512,20 @@ void main() {
   });
 
   test('page 2 leaves Alignment and Languages blank rather than drawing empty boxes when unset', () async {
-    final jarson = buildSampleJarson();
-    expect(jarson.alignment, isNull);
-    expect(jarson.languages, isEmpty);
+    final torvek = buildSampleCharacter();
+    expect(torvek.alignment, isNull);
+    expect(torvek.languages, isEmpty);
 
     final result = await fillCharacterSheetTopSection(
       await _blankBasePdf(),
-      jarson,
+      torvek,
     );
 
     expect(result, isNotEmpty); // just needs to not throw
   });
 
   test('page 2 EQUIPMENT lists every Carried Item with quantity and Attuned caption, and Magic Item Attunement lists only the attuned ones (max 3)', () async {
-    final jarson = buildSampleJarson()
+    final torvek = buildSampleCharacter()
       ..inventory = [
         InventoryEntry(name: "Explorer's Pack", quantity: 1),
         InventoryEntry(name: 'Ration', quantity: 5),
@@ -534,7 +534,7 @@ void main() {
 
     final result = await fillCharacterSheetTopSection(
       await _blankBasePdf(),
-      jarson,
+      torvek,
     );
     final document = PdfDocument(inputBytes: result);
     final page2Text = PdfTextExtractor(document)
@@ -548,11 +548,11 @@ void main() {
   });
 
   test('no raw markdown syntax (bold/italic markers) survives into the exported sheet anywhere', () async {
-    final jarson = buildSampleJarson();
+    final torvek = buildSampleCharacter();
 
     final result = await fillCharacterSheetTopSection(
       await _blankBasePdf(),
-      jarson,
+      torvek,
     );
     final document = PdfDocument(inputBytes: result);
     final text = PdfTextExtractor(document).extractText();
@@ -563,7 +563,7 @@ void main() {
   });
 
   test('page 2 spellcasting: ability, save DC, slot totals, cantrips and prepared spells (not unprepared ones), plus damage cantrips in the page 1 weapons table', () async {
-    final c = buildSampleJarson();
+    final c = buildSampleCharacter();
     c.classKey = 'srd-2024_wizard-class';
     c.level = 5;
     c.weapons = [];
@@ -599,7 +599,7 @@ void main() {
   });
 
   test("SPECIES TRAITS is filled for a character with no species traits stored (every New Character one), and FEATS leaves out Ability Score Improvement", () async {
-    final c = buildSampleJarson();
+    final c = buildSampleCharacter();
     c.features = c.features.where((f) => f.source != 'species').toList();
     c.feats = [
       ...c.feats,
@@ -619,7 +619,7 @@ void main() {
   });
 
   test('when Class Features cannot all fit even at the smallest size, the oldest are dropped and the most recently gained are kept', () async {
-    final c = buildSampleJarson();
+    final c = buildSampleCharacter();
     c.features = [
       for (var i = 1; i <= 40; i++)
         GrantedFeature(
@@ -651,7 +651,7 @@ void main() {
   test(
     'Temp HP is left blank - it changes in play and gets pencilled in',
     () async {
-      final c = buildSampleJarson()..tempHp = 37;
+      final c = buildSampleCharacter()..tempHp = 37;
       final result = await fillCharacterSheetTopSection(
         await _blankBasePdf(),
         c,
@@ -664,7 +664,7 @@ void main() {
   );
 
   test('Size uses the chosen size', () async {
-    final c = buildSampleJarson()
+    final c = buildSampleCharacter()
       ..speciesKey = 'srd-2024_human-species'
       ..sizeChoice = 'Small';
     final result = await fillCharacterSheetTopSection(await _blankBasePdf(), c);
@@ -675,7 +675,7 @@ void main() {
   });
 
   test('COINS prints each nonzero denomination', () async {
-    final c = buildSampleJarson()..currency = const Currency(gp: 123, pp: 4);
+    final c = buildSampleCharacter()..currency = const Currency(gp: 123, pp: 4);
     final result = await fillCharacterSheetTopSection(await _blankBasePdf(), c);
     final document = PdfDocument(inputBytes: result);
     final page2 = PdfTextExtractor(document).extractText(startPageIndex: 1);
