@@ -10,6 +10,62 @@ character sheet.
 It works offline. Characters and homebrew are stored on your device, with
 no account or server.
 
+<p>
+  <img src="docs/screenshots/phone-overview.png" alt="Overview tab on a phone-sized screen: ability scores, species traits and background" width="260">
+  <img src="docs/screenshots/phone-combat.png" alt="Combat tab on a phone-sized screen: HP, AC, initiative, weapons and resources" width="260">
+</p>
+
+![Combat tab on a desktop window, with the sheet's tabs in a panel on the left](docs/screenshots/combat.png)
+
+## Download and install
+
+Get the latest version from the
+**[Releases page](https://github.com/jeyeager65/dnd-sheet/releases/latest)**.
+
+### Android
+
+1. Download `dnd-sheet-<version>-android-arm64.apk` on your phone or
+   tablet. It needs Android 7.0 or later on a 64-bit ARM device, which
+   covers nearly every current phone.
+2. Open the file. Android will ask you to allow installs from your
+   browser or file manager (**Install unknown apps**). Allow it, then
+   tap **Install**.
+3. Google Play Protect may say it doesn't recognize the app, because it
+   isn't from the Play Store. Choose **Install anyway**.
+
+To update, install the new APK over the old one, which keeps your
+characters. The builds aren't signed with a permanent key yet, so if
+Android refuses with "App not installed" or a message about a conflict
+with an existing package, **export your characters and homebrew first**,
+then uninstall the old app, install the new one and import them.
+
+### Windows
+
+1. Download `dnd-sheet-<version>-windows-x64.zip`.
+2. Unzip it anywhere, for example into your Documents folder, and run
+   `dnd_sheet.exe`. Keep the files together: the program needs the
+   files next to it.
+3. The first time, Windows SmartScreen may say "Windows protected your
+   PC", because the app isn't signed by a known publisher. Click **More
+   info**, then **Run anyway**.
+
+To update, unzip the new version over the old folder. Your characters
+aren't stored in that folder, so they're kept.
+
+## Your data and backups
+
+Characters and homebrew are saved automatically on your device:
+- **Windows:** in `%APPDATA%\Jason Yeager\D&D Sheet\`.
+- **Android:** in the app's private storage.
+
+Uninstalling the app on Android deletes them. To back up, or to move
+characters between devices, use **Export** on My Characters and on My
+Homebrew. Each saves a JSON file you can later **Import** on any device.
+A character export includes the homebrew it uses.
+
+The version you're running is shown under **About** (the ⓘ button on My
+Characters).
+
 ## Features
 
 **Building and leveling characters**
@@ -40,6 +96,8 @@ no account or server.
 - A searchable **Reference** covers the SRD rules, spells, equipment,
   conditions and more.
 
+![A magic weapon on the Combat tab: attack and damage breakdown, properties, Graze mastery, a special feature and its consecutive-hit counter](docs/screenshots/weapon.png)
+
 **Character sheet PDF**
 - Export your character onto the official 2024 character sheet. Long
   feature text is shortened to fit, and you can edit the short text per
@@ -50,133 +108,28 @@ no account or server.
   spells, weapons, armor, gear, tools, magic items and languages.
   Homebrew can carry real mechanics: bonuses, resistances, granted
   spells, ability score increases and option choices.
+- Magic weapons can be set up in one place: the base weapon they're a
+  kind of (so Weapon Mastery and proficiency apply), rarity, attunement,
+  a magic bonus, special features, and effects. A special feature gives
+  the weapon a consecutive-hit counter on the Combat tab.
 - Mark an entry as **Official** to type in content from books you own
   that isn't in the SRD (see [Content and licensing](#content-and-licensing)).
 
+![Editing a homebrew magic weapon: base weapon, stats, rarity, attunement, magic bonus and special features](docs/screenshots/homebrew.png)
+
 **Sharing and backup**
-- Export and import characters and homebrew as JSON files. A character
-  export includes the homebrew it uses.
+- Export and import characters and homebrew as JSON files.
 
 **Desktop**
 - On a wide window, the sheet's tabs and the Reference categories move
   into a panel on the left.
 
-## Download
+![Reference on a desktop window, showing the Fireball spell](docs/screenshots/reference.png)
 
-Builds are produced by GitHub Actions (see [Building with GitHub
-Actions](#building-with-github-actions)):
+## Building it yourself
 
-- **Android:** `dnd-sheet-<version>-android-arm64.apk`, for 64-bit ARM
-  phones and tablets (nearly all current Android devices).
-- **Windows:** `dnd-sheet-<version>-windows-x64.zip`. Unzip it and run
-  `dnd_sheet.exe`.
-
-The version the app is running is shown under **About** (the ⓘ button
-on My Characters).
-
-The Android build is signed with a debug key (see [Android
-signing](#android-signing)). If an install over an earlier build fails
-with a signature error, uninstall the old app first. Export your
-characters before you do, because uninstalling deletes them.
-
-## Repository layout
-
-| Path | What it is |
-|---|---|
-| [`mobile/`](mobile) | The Flutter app for Android and Windows. |
-| [`mobile/lib/domain/`](mobile/lib/domain) | Game rules: modifiers, leveling, resources, spellcasting, rests, PDF filling. |
-| [`mobile/lib/data/`](mobile/lib/data) | The SRD catalog, storage (Hive), homebrew, import and export. |
-| [`mobile/lib/screens/`](mobile/lib/screens) | The UI. |
-| [`mobile/assets/srd/`](mobile/assets/srd) | SRD 5.2.1 data as JSON, plus `sheet-text.json` (short feature text for the PDF). |
-| [`mobile/assets/official/`](mobile/assets/official) | An optional, gitignored place for your own non-SRD content. |
-| [`srd-data-pull/`](srd-data-pull) | Scripts that turn the SRD markdown into the JSON in `mobile/assets/srd/`. |
-| [`.github/workflows/`](.github/workflows) | CI: tests and Android and Windows builds. |
-
-## Building locally
-
-Requirements:
-- [Flutter](https://docs.flutter.dev/get-started/install) 3.47 or later
-  (stable channel).
-- **Android:** the Android SDK and JDK 17 or later. Android Studio
-  includes both.
-- **Windows:** Visual Studio 2022 with the *Desktop development with
-  C++* workload.
-
-```sh
-cd mobile
-flutter pub get
-flutter test
-
-# Android: only the arm64-v8a APK
-flutter build apk --release --split-per-abi --target-platform android-arm64
-# -> build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
-
-# Windows
-flutter build windows --release
-# -> build/windows/x64/runner/Release/  (the whole folder is the app)
-```
-
-If Flutter can't find the Android SDK or Java, set `ANDROID_HOME` to the
-SDK folder and `JAVA_HOME` to a JDK. Android Studio's bundled JDK is in
-its `jbr` folder.
-
-### Android signing
-
-Release APKs are currently signed with the debug key, as set in
-[`mobile/android/app/build.gradle.kts`](mobile/android/app/build.gradle.kts).
-That's fine for personal use and sideloading. A Play Store release would
-need a real signing key.
-
-## Building with GitHub Actions
-
-[`.github/workflows/build.yml`](.github/workflows/build.yml) runs on
-every push and pull request to `main`, and can also be started by hand
-from the Actions tab.
-
-1. **Test:** `flutter analyze` and `flutter test`.
-2. **Android:** builds the arm64-v8a release APK.
-3. **Windows:** builds the release and zips the `Release` folder.
-
-Each run's APK and zip are attached to it as downloadable artifacts.
-
-### Versioning
-
-The version number is set in one place: the `version:` line in
-[`mobile/pubspec.yaml`](mobile/pubspec.yaml), for example `1.2.0`. CI
-builds with that version and uses the workflow run number as the build
-number. The build number is Android's `versionCode`, so each CI build
-installs over the previous one.
-
-- **Ordinary builds** are labeled with the run number, for example
-  `dnd-sheet-1.2.0-build.57-android-arm64.apk`.
-- **Releases:** bump `version:` in `pubspec.yaml`, commit, and push a
-  matching tag:
-
-  ```sh
-  git tag v1.2.0
-  git push origin v1.2.0
-  ```
-
-  The files are then named with just the version (for example
-  `dnd-sheet-1.2.0-android-arm64.apk`), and a GitHub Release is created
-  with both attached. If the tag doesn't match `pubspec.yaml`, the build
-  fails.
-
-## Updating the SRD data
-
-The JSON in `mobile/assets/srd/` is generated from a markdown copy of
-SRD 5.2.1 in `srd-data-pull/source/srd-markdown/`. Each
-`srd-data-pull/scripts/parse-*.js` script reads one part of it and writes
-JSON to `srd-data-pull/data/`. To regenerate:
-
-```sh
-cd srd-data-pull
-node scripts/parse-spells.js    # or whichever parse-*.js script you changed
-# then copy the updated file(s) from data/ to ../mobile/assets/srd/
-```
-
-`sheet-text.json` isn't generated. It's short, hand-written summaries of
-SRD features for the PDF sheet.
+See [BUILDING.md](BUILDING.md) for the repository layout, local builds,
+the GitHub Actions builds and releases, and regenerating the SRD data.
 
 ## Content and licensing
 
